@@ -19,7 +19,7 @@ try {
     $s = db()->prepare('INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)');
     $s->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT)]);
 } catch (PDOException $e) {
-    if ((int)$e->errorInfo[1] === 1062) fail(409, 'Email already registered.');  // UNIQUE(email)
+    if (db_error($e) === 'unique') fail(409, 'Email already registered.');  // UNIQUE(email)
     throw $e;
 }
 
@@ -30,7 +30,7 @@ $_SESSION['user_id'] = $id;
 $recoveryCode = strtoupper(bin2hex(random_bytes(6)));
 db()->prepare(
     'INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
-     VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 10 YEAR))'
+     VALUES (?, ?, NOW() + INTERVAL \'10 years\')'
 )->execute([$id, hash('sha256', $recoveryCode)]);
 
 ok([

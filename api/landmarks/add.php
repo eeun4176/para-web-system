@@ -11,9 +11,10 @@ if ($public && !is_admin()) fail(403, 'Only admins can create public landmarks.'
 
 $l = clean_landmark($in, true);
 
-$s = db()->prepare('INSERT INTO landmarks (user_id, name, category, description, is_public, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?)');
+$s = db()->prepare('INSERT INTO landmarks (user_id, name, category, description, is_public, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id');
 $s->execute([$public ? null : $uid, $l['name'], $l['category'], $l['description'], $public ? 1 : 0, $l['lat'], $l['lng']]);
+$id = (int) $s->fetchColumn();   // read before audit(), which inserts its own row
 
 if ($public) audit('landmark_public_add', $l['name'], 'Category: ' . $l['category']);
 
-ok(['landmark' => ['id' => (int) db()->lastInsertId(), 'isPublic' => $public] + $l], 201);
+ok(['landmark' => ['id' => $id, 'isPublic' => $public] + $l], 201);

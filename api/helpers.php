@@ -181,6 +181,11 @@ function clean_number(array $in, string $key, float $min, float $max, string $la
 }
 
 // ---------- Audit log (admin actions) ----------
+// Names the kind of constraint a failed query broke (PostgreSQL SQLSTATE codes): 'unique', 'fk' or null
+function db_error(PDOException $e): ?string {
+    return ['23505' => 'unique', '23503' => 'fk'][$e->getCode()] ?? null;
+}
+
 function audit(string $action, string $target, string $details = ''): void {
     $uid = $_SESSION['user_id'] ?? null;
     $n = db()->prepare('SELECT name FROM users WHERE id = ?');
@@ -211,13 +216,13 @@ function client_ip(): string {
 }
 function login_locked(string $email): bool {
     $s = db()->prepare('SELECT COUNT(*) FROM login_attempts WHERE email = ? AND ip = ?
-                        AND attempted_at > (NOW() - INTERVAL ' . LOGIN_LOCK_MINUTES . ' MINUTE)');
+                        AND attempted_at > (NOW() - INTERVAL \'' . LOGIN_LOCK_MINUTES . ' minutes\')');
     $s->execute([$email, client_ip()]);
     return (int)$s->fetchColumn() >= MAX_LOGIN_ATTEMPTS;
 }
 function record_failed_login(string $email): void {
     db()->prepare('INSERT INTO login_attempts (email, ip) VALUES (?, ?)')->execute([$email, client_ip()]);
-    db()->exec('DELETE FROM login_attempts WHERE attempted_at < (NOW() - INTERVAL 1 DAY)');
+    db()->exec("DELETE FROM login_attempts WHERE attempted_at < (NOW() - INTERVAL '1 day')");
 }
 function clear_failed_logins(string $email): void {
     db()->prepare('DELETE FROM login_attempts WHERE email = ? AND ip = ?')->execute([$email, client_ip()]);

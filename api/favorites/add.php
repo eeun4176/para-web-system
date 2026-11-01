@@ -47,11 +47,6 @@ $duplicate->execute([
 
 $duplicateId = $duplicate->fetchColumn();
 
-error_log('FAVORITES DUPLICATE CHECK: uid=' . $uid
-    . ', matched_id=' . var_export($duplicateId, true)
-    . ', database=' . $db->query('SELECT DATABASE()')->fetchColumn()
-    . ', server=' . $db->query('SELECT @@hostname')->fetchColumn());
-
 if ($duplicateId !== false) {
     fail(409, 'This route is already in your favorites.');
 }
@@ -78,7 +73,7 @@ try {
     ]);
 
 } catch (PDOException $e) {
-    if ((int) $e->errorInfo[1] === 1452) {
+    if (db_error($e) === 'fk') {
         fail(422, 'Invalid transport or passenger type.');
     }
     throw $e;

@@ -5,10 +5,10 @@ require_method('GET');
 require_admin();
 
 // 1) Trips per day, last 14 days (days with no trips count as 0)
-$today = db()->query('SELECT CURDATE()')->fetchColumn();
+$today = db()->query('SELECT CURRENT_DATE')->fetchColumn();
 $counts = [];
 foreach (db()->query('SELECT DATE(created_at) AS d, COUNT(*) AS c FROM trips
-                      WHERE created_at >= (CURDATE() - INTERVAL 13 DAY) GROUP BY DATE(created_at)') as $r) {
+                      WHERE created_at >= (CURRENT_DATE - INTERVAL \'13 days\') GROUP BY DATE(created_at)') as $r) {
     $counts[$r['d']] = (int)$r['c'];
 }
 $perDay = [];

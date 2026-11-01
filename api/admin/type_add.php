@@ -42,7 +42,7 @@ try {
         audit('type_add', $label, 'New passenger type "' . $code . '"');
     }
 } catch (PDOException $e) {
-    if ((int)$e->errorInfo[1] === 1062) fail(409, 'That code already exists.');
+    if (db_error($e) === 'unique') fail(409, 'That code already exists.');
     throw $e;
 }
 

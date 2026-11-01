@@ -26,7 +26,7 @@ if ((int)$row['is_active'] === 1) {
 try {
     db()->prepare("DELETE FROM $table WHERE code = ?")->execute([$code]);
 } catch (PDOException $e) {
-    if ((int)$e->errorInfo[1] === 1451) {   // foreign key: saved trips or favorites use it
+    if (db_error($e) === 'fk') {   // foreign key: saved trips or favorites use it
         fail(409, 'This type is used by saved trips or favorites. Deactivate it instead.');
     }
     throw $e;

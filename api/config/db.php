@@ -1,24 +1,41 @@
 <?php
-// Database connection (PDO). Edit these 4 constants to match your setup.
-const DB_HOST = 'localhost';
-const DB_NAME = 'para_db';
-const DB_USER = 'para_app';     // limited user, created with create_db_user.sql
-const DB_PASS = 'para_123';    // change this in BOTH db.php and create_db_user.sql
+// Database connection (PDO, PostgreSQL on Supabase).
+// Vercel: set DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS in Project Settings -> Environment Variables.
+// Local (XAMPP): copy db.local.example.php to db.local.php and fill it in (db.local.php is git-ignored).
+
+function db_config(): array {
+    static $cfg = null;
+    if ($cfg === null) {
+        $local = is_file(__DIR__ . '/db.local.php') ? require __DIR__ . '/db.local.php' : [];
+        $cfg = [];
+        foreach (['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASS'] as $key) {
+            $env = getenv($key);
+            $cfg[$key] = ($env !== false && $env !== '') ? $env : ($local[$key] ?? null);
+        }
+        $cfg['DB_PORT'] = $cfg['DB_PORT'] ?: '5432';
+        $cfg['DB_NAME'] = $cfg['DB_NAME'] ?: 'postgres';
+        if (!$cfg['DB_HOST'] || !$cfg['DB_USER'] || $cfg['DB_PASS'] === null) {
+            throw new RuntimeException('Database is not configured (set DB_* env vars or api/config/db.local.php).');
+        }
+    }
+    return $cfg;
+}
 
 function db(): PDO {
     static $pdo = null;
     if ($pdo === null) {
+        $c = db_config();
         $pdo = new PDO(
-            'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4',
-            DB_USER,
-            DB_PASS,
+            'pgsql:host=' . $c['DB_HOST'] . ';port=' . $c['DB_PORT'] . ';dbname=' . $c['DB_NAME'] . ';sslmode=require',
+            $c['DB_USER'],
+            $c['DB_PASS'],
             [
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // throw on SQL errors
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES   => false,                  // real prepared statements
-                PDO::MYSQL_ATTR_FOUND_ROWS   => true,                   // rowCount() = rows matched
+                PDO::ATTR_EMULATE_PREPARES   => false,                  // real prepared statements (needs Supabase *session* pooler)
             ]
         );
+        $pdo->exec("SET TIME ZONE 'Asia/Manila'");   // Supabase runs in UTC; show and group dates in PH time
     }
     return $pdo;
 }

@@ -53,7 +53,7 @@ try {
     $update = db()->prepare('UPDATE users SET email = ? WHERE id = ?');
     $update->execute([$email, $uid]);
 } catch (PDOException $e) {
-    if (($e->errorInfo[1] ?? null) == 1062) {
+    if (db_error($e) === 'unique') {
         fail(409, 'This email address is already registered.', [
             'email' => 'This email address is already registered.'
         ]);
