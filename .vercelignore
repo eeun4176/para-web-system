@@ -1,9 +1,9 @@
 # Not uploaded to Vercel
 # XAMPP-only PHP (Vercel would serve these as plain text; vercel.json rewrites the admin URLs to api/pages/ instead)
-client/*.php
-index.php
+/client/*.php
+/index.php
 # Server-only files that must never be public
-database
-api/logs
-api/config/db.local.php
-api/config/.htaccess
+/database
+/api/logs
+/api/config/db.local.php
+/api/config/.htaccess
