@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/**/*.php": { "runtime": "vercel-php@0.9.0" }
+    "api/index.php": { "runtime": "vercel-php@0.9.0" }
   },
   "redirects": [
     { "source": "/", "destination": "/client/index.html", "permanent": false }
@@ -8,7 +8,11 @@
   "rewrites": [
     {
       "source": "/client/:page(admin|admin-audit|admin-fares|admin-landmarks|admin-users).php",
-      "destination": "/api/pages/:page.php"
+      "destination": "/api/index.php?__route=pages/:page"
+    },
+    {
+      "source": "/api/:route(.+)\\.php",
+      "destination": "/api/index.php?__route=:route"
     }
   ]
 }
