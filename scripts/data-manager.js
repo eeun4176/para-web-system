@@ -1,4 +1,4 @@
-// DATA MANAGER (landmarks). Same job as before, but the data lives in MySQL via api/landmarks/*.php.
+// DATA MANAGER (landmarks). Same job as before, but the data lives in the PostgreSQL database via api/landmarks/*.php.
 // A small in-memory cache keeps the UI fast; the server is the source of truth.
 
 const DataManager = {

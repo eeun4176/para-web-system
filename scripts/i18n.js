@@ -60,7 +60,11 @@ const FIL = {
         'Sabihin kay Para kung saan ka pupunta. Ipapakita niya ang ruta, tatantiyahin ang oras ng biyahe at kukuwentahin ang eksaktong pamasahe sa jeep o bus.',
     'Start Your Commute': 'Simulan ang Biyahe',
     'Watch Demo': 'Panoorin ang Demo',
-    'The demo video is coming soon.': 'Malapit nang ilabas ang demo video.',
+    'See Para in Action': 'Panoorin si Para',
+    'A one-minute tour: search, road route, fare with discounts, saved trips, and the admin side.':
+        'Isang minutong silip: paghahanap, ruta sa kalsada, pamasahe na may diskwento, mga naka-save na biyahe, at ang panig ng admin.',
+    'Para on Facebook': 'Si Para sa Facebook',
+    'Para on Instagram': 'Si Para sa Instagram',
     'Map showing a jeepney route from Tungko to Muzon': 'Mapa ng ruta ng jeep mula Tungko hanggang Muzon',
     'Your fare: ₱13.00': 'Pamasahe mo: ₱13.00',
     'Modern jeepney · Student': 'Modern jeepney · Estudyante',

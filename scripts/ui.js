@@ -383,12 +383,6 @@ $(function () {
 
     playHeroMap();
 
-    // "Watch Demo" has no video yet: say so instead of jumping to the top of the page
-    $('#watch-demo-btn[href="#"]').on('click', function (e) {
-        e.preventDefault();
-        showNotification('The demo video is coming soon.', 'info');
-    });
-
     if ($('#features-line').length) {
         buildFeatureLine();
         $(window).on('scroll', updateFeatureLine);
