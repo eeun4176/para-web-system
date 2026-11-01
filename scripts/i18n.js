@@ -467,6 +467,7 @@ const I18N_ATTRS = ['placeholder', 'title', 'aria-label'];
 const i18nEnglish = new WeakMap();   // text node or element -> its English text / { attribute: English }
 const i18nShown = new WeakMap();     // text node -> what we put there (to notice when a script changes it)
 
+// The Filipino version of an English text, or null when it is not in the lists.
 function toFilipino(english) {
     const key = english.replace(/\s+/g, ' ').trim();
     if (!key) return null;
@@ -480,6 +481,7 @@ function toFilipino(english) {
     return english.match(/^\s*/)[0] + out + english.match(/\s*$/)[0];
 }
 
+// Shows one piece of text in the chosen language (remembering its English).
 function translateTextNode(node) {
     const parent = node.parentNode;
     if (!parent || !parent.closest || SKIP_TAGS.has(parent.nodeName) || parent.closest('[translate="no"]')) return;
@@ -491,6 +493,7 @@ function translateTextNode(node) {
     if (node.nodeValue !== shown) node.nodeValue = shown;
 }
 
+// Same for the placeholder, tooltip and screen-reader label of an element.
 function translateAttributes(el) {
     let saved = i18nEnglish.get(el);
     for (const attr of I18N_ATTRS) {
@@ -504,6 +507,7 @@ function translateAttributes(el) {
     }
 }
 
+// Translates an element and everything inside it.
 function translateTree(root) {
     if (root.nodeType === 3) return translateTextNode(root);
     if (root.nodeType !== 1 || SKIP_TAGS.has(root.nodeName)) return;
@@ -526,12 +530,14 @@ function englishOf(el) {
 }
 
 let englishTitle = null;
+// Translates the browser tab title.
 function translateTitle() {
     if (englishTitle === null || (document.title !== englishTitle && document.title !== toFilipino(englishTitle))) englishTitle = document.title;
     const wanted = paraLang === 'fil' ? (toFilipino(englishTitle) ?? englishTitle) : englishTitle;
     if (document.title !== wanted) document.title = wanted;   // setting it, even to the same text, counts as a change
 }
 
+// Puts the whole page in the chosen language and updates the EN / FIL button.
 function applyLanguage() {
     document.documentElement.lang = paraLang === 'fil' ? 'fil' : 'en';
     if (document.body) translateTree(document.body);
@@ -542,6 +548,7 @@ function applyLanguage() {
     });
 }
 
+// Switches language and remembers the choice.
 function setLanguage(lang) {
     paraLang = lang === 'fil' ? 'fil' : 'en';
     try { localStorage.setItem('para_lang', paraLang); } catch (e) { /* not remembered, still switches now */ }

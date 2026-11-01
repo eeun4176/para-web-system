@@ -8,6 +8,7 @@ const WALK_FROM_ROAD_M     = 150;   // farther than this from a road: walk the l
 const TRICYCLE_FROM_ROAD_M = 600;   // farther than this: ride a tricycle (special trip) for the last part
 const LONG_TRIP_KM         = 8;     // longer trips may need a transfer to another jeepney/bus
 
+// The walk / tricycle / long-trip note for a trip (from the road distance and how far the stop is from a road).
 function access_info(float $distKm, ?float $fromRoadM): array {
     if ($fromRoadM !== null && $fromRoadM > TRICYCLE_FROM_ROAD_M) {
         $m = (int) round($fromRoadM / 10) * 10;
@@ -39,6 +40,7 @@ function road_input(array $src): array {
     return [$num('roadKm', 200), $num('fromRoadM', 5000)];
 }
 
+// Straight-line distance in km between two points on Earth.
 function haversine_km(float $lat1, float $lon1, float $lat2, float $lon2): float {
     $r = 6371;
     $dLat = deg2rad($lat2 - $lat1);

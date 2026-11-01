@@ -1,4 +1,6 @@
 <?php
+// Admin fare management: edit vehicle fares and passenger discounts, add or deactivate types.
+// Only signed-in admins get the page; anyone else is sent to the right sign-in page.
 require_once __DIR__ . '/../config/session.php';   // DB-backed session (shared with the API)
 
 require_once __DIR__ . '/../config/db.php';

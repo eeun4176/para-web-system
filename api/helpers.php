@@ -21,9 +21,11 @@ function respond(array $data, int $status = 200) {
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
 }
+// Sends a success reply as JSON.
 function ok(array $data = [], int $status = 200) {
     respond(['success' => true] + $data, $status);
 }
+// Sends an error reply as JSON (with field errors when given) and stops.
 function fail(int $status, string $message, array $errors = []) {
     $out = ['success' => false, 'message' => $message];
     if ($errors) $out['errors'] = $errors;
@@ -67,6 +69,7 @@ function csrf_token(): string {
     if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(32));
     return $_SESSION['csrf'];
 }
+// Stops the request unless it carries this session's CSRF token (blocks forged requests).
 function require_csrf() {
     $sent = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
     if (!is_string($sent) || !hash_equals(csrf_token(), $sent)) {
@@ -90,12 +93,14 @@ const SJDM_LAT = [14.68, 14.88];
 const SJDM_LNG = [121.01, 121.17];
 const CATEGORIES = ['school','hospital','terminal','market','church','park','food','other'];
 
+// A positive whole number id, or a 422 error.
 function valid_id($value): int {
     $id = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
     if ($id === false) fail(422, 'Invalid id.');
     return $id;
 }
 
+// Checks and tidies the fields of a landmark (name, category, description, location).
 function clean_landmark(array $in, bool $needCoords): array {
     $errors   = [];
     $name     = trim((string)($in['name'] ?? ''));
@@ -154,9 +159,11 @@ function current_role(): ?string {
     $role = $s->fetchColumn();
     return $role === false ? null : $role;
 }
+// True when the signed-in user is an admin.
 function is_admin(): bool {
     return current_role() === 'admin';
 }
+// Stops the request unless the signed-in user is an admin.
 function require_admin(): int {
     $uid = require_login();
     if (!is_admin()) fail(403, 'Admin access required.');
@@ -186,6 +193,7 @@ function db_error(PDOException $e): ?string {
     return ['23505' => 'unique', '23503' => 'fk'][$e->getCode()] ?? null;
 }
 
+// Writes one line to the audit log (who changed what).
 function audit(string $action, string $target, string $details = ''): void {
     $uid = $_SESSION['user_id'] ?? null;
     $n = db()->prepare('SELECT name FROM users WHERE id = ?');
@@ -211,19 +219,23 @@ function diff_text(array $old, array $new, array $labels): string {
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOGIN_LOCK_MINUTES = 15;
 
+// The visitor's IP address (behind Vercel's proxy too).
 function client_ip(): string {
     return substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45);
 }
+// True when this account had too many failed sign-ins in the last minutes.
 function login_locked(string $email): bool {
     $s = db()->prepare('SELECT COUNT(*) FROM login_attempts WHERE email = ? AND ip = ?
                         AND attempted_at > (NOW() - INTERVAL \'' . LOGIN_LOCK_MINUTES . ' minutes\')');
     $s->execute([$email, client_ip()]);
     return (int)$s->fetchColumn() >= MAX_LOGIN_ATTEMPTS;
 }
+// Counts a failed sign-in.
 function record_failed_login(string $email): void {
     db()->prepare('INSERT INTO login_attempts (email, ip) VALUES (?, ?)')->execute([$email, client_ip()]);
     db()->exec("DELETE FROM login_attempts WHERE attempted_at < (NOW() - INTERVAL '1 day')");
 }
+// Forgets the failed sign-ins after a successful one.
 function clear_failed_logins(string $email): void {
     db()->prepare('DELETE FROM login_attempts WHERE email = ? AND ip = ?')->execute([$email, client_ip()]);
 }

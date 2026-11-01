@@ -7,6 +7,7 @@ let tripsCache = [];
 let favoritesCache = [];
 const searchTimers = {};
 
+// The first part of a place name ("SM City SJDM, Tungko" -> "SM City SJDM").
 function firstName(text) {
     return String(text || '').split(',')[0].trim();
 }
@@ -24,6 +25,7 @@ function queueNotification(message, type = 'success') {
     } catch (e) {}
 }
 
+// Shows the message saved before the last page change (e.g. "Welcome back!").
 function showQueuedNotification() {
     try {
         const raw = sessionStorage.getItem('para_flash');
@@ -46,6 +48,7 @@ function applyDarkMode() {
     syncToggleKnob(isDark);
 }
 
+// Dark mode button: switches the theme and remembers it.
 function setupDarkToggle() {
     const btn = document.getElementById('dark-toggle');
     if (!btn) return;
@@ -97,6 +100,7 @@ function isAdminUser() {
 }
 
 
+// Navbar and phone menu for the current user: Log In / Sign Up for guests, the profile menu for members.
 function updateNavAuth() {
     const user = Auth.getCurrentUser();
 
@@ -138,6 +142,7 @@ function updateNavAuth() {
 }
 
 
+// Asks for confirmation, logs out and goes to the right sign-in page.
 async function doLogout() {
     const wasAdmin = isAdminUser();
     const sure = await confirmDialog({
@@ -164,7 +169,7 @@ async function doLogout() {
     renderFavoritesList();
     closeAllPanels();
 
-    window.location.href = wasAdmin ? 'admin-login.html' : 'auth.html';
+    window.location.replace(wasAdmin ? 'admin-login.html' : 'auth.html');   // replace: Back can't return to the signed-in page
 }
 
 // MODAL HELPERS
@@ -175,12 +180,14 @@ function openModal(id) {
     popIn(overlay.querySelector('.modal'));
 }
 
+// Closes a dialog with its closing animation.
 function closeModal(id) {
     const overlay = document.getElementById(id);
     if (!overlay || !overlay.classList.contains('open')) return;
     popOut(overlay.querySelector('.modal'), () => overlay.classList.remove('open'));
 }
 
+// Clicking the dark area around a dialog closes it.
 function setupModalOverlayClose() {
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
         overlay.addEventListener('click', e => {
@@ -189,6 +196,7 @@ function setupModalOverlayClose() {
     });
 }
 
+// Esc closes the open dialog or panel.
 function setupEscKey() {
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
@@ -205,10 +213,12 @@ function setupEscKey() {
 // The last places picked in either search box (shown when a box is focused while empty)
 const RECENT_PLACES_KEY = 'para_recent_places';
 
+// The places picked lately (saved in this browser).
 function recentPlaces() {
     try { return JSON.parse(localStorage.getItem(RECENT_PLACES_KEY)) || []; } catch (e) { return []; }
 }
 
+// Adds a picked place to the recent places (max 5).
 function rememberPlace(loc) {
     if (loc.isCurrent) return;
     const list = recentPlaces().filter(p => !sameLocation(p, loc));
@@ -232,6 +242,7 @@ function currentLocation() {
     });
 }
 
+// Search box with suggestions: recent places, current location, saved landmarks and places in SJDM.
 function setupSearchInput(inputId, dropdownId, onSelect) {
     const input = document.getElementById(inputId);
     const dropdown = document.getElementById(dropdownId);
@@ -240,12 +251,14 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
     let activeIndex = -1;
     let searchVersion = 0;
 
+    // Hides the suggestions list.
     function closeDropdown() {
         dropdown.classList.remove('open');
         dropdown.innerHTML = '';
         activeIndex = -1;
     }
 
+    // Highlights the suggestion picked with the arrow keys.
     function updateActiveItem(items) {
         items.forEach((item, index) => {
             const active = index === activeIndex;
@@ -258,6 +271,7 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
         }
     }
 
+    // Uses a place: fills the box, remembers it and puts it on the map.
     function pick(loc) {
         input.value = loc.name;
         closeDropdown();
@@ -265,6 +279,7 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
         onSelect(loc);
     }
 
+    // Handles a click or Enter on a suggestion (including "Use My Current Location").
     async function selectItem(item) {
         if (!item) return;
 
@@ -314,6 +329,7 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
         return span;
     }
 
+    // Adds one suggestion row.
     function addItem(loc, iconName, detailText, query) {
         const item = document.createElement('div');
         item.className = 'search-dropdown-item';
@@ -344,6 +360,7 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
         dropdown.appendChild(item);
     }
 
+    // Adds a small heading between suggestion groups.
     function addHeading(title) {
         const heading = document.createElement('div');
         heading.className = 'search-dropdown-item search-section-heading';
@@ -351,6 +368,7 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
         dropdown.appendChild(heading);
     }
 
+    // Adds a heading and its suggestions.
     function addSection(title, results, source, query) {
         if (!results.length) return;
         addHeading(title);
@@ -531,6 +549,7 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
     });
 }
 
+// True when two places are within a few metres of each other.
 function sameLocation(a, b) {
     if (!a || !b) return false;
 
@@ -628,6 +647,7 @@ function refreshFareCalculation() {
     fareTimer = setTimeout(runFareCalculation, 150);
 }
 
+// Shows the fare result, or Para's hint when there is no result yet.
 function setResultVisible(visible) {
     $('#result-card').toggleClass('active', visible);
     $('#para-hint').css('display', visible ? 'none' : 'flex');
@@ -637,6 +657,7 @@ function setResultVisible(visible) {
     }
 }
 
+// Asks the server for the fare of the current trip and shows the result, notes and ETA.
 async function runFareCalculation() {
     if (!$('#result-card').length) return;
     const transport = $('#transport-select').val();
@@ -726,6 +747,7 @@ function getCurrentRoute() {
 let autoSaveInProgress = false;
 let pendingAutoSaveRoute = null;
 
+// Saves the calculated trip to Recent Trips (signed-in users only, once per trip).
 async function autoSaveRecentTrip(route) {
     if (!Auth.isLoggedIn() || !route) return;
 
@@ -778,6 +800,7 @@ const SAVED_PANES = {
     landmarks: () => renderLandmarksList($('#landmarks-search').val().trim().toLowerCase())
 };
 
+// Switches the panel between Trip and Saved.
 function showCalcTab(tab) {
     $('.calc-tab').each(function () {
         const on = $(this).data('tab') === tab;
@@ -789,6 +812,7 @@ function showCalcTab(tab) {
     if (tab === 'saved') showSavedPane($('.saved-tab.is-active').data('pane') || 'favorites');
 }
 
+// Switches the Saved tab between Favorites, Recent Trips and Landmarks.
 function showSavedPane(pane) {
     $('.saved-tab').each(function () {
         const on = $(this).data('pane') === pane;
@@ -828,6 +852,7 @@ function closeAllPanels() {
     if ($('.calc-tab').length) showCalcTab('trip');
 }
 
+// Wires the panel tabs, collapse button, phone handle and saved lists.
 function setupPanels() {
     $('.calc-tab').on('click', function () { showCalcTab($(this).data('tab')); });
     $('.saved-tab').on('click', function () { showSavedPane($(this).data('pane')); });
@@ -847,6 +872,7 @@ function setupLandmarkList() {
     });
 }
 
+// Fills the landmarks list (with the search filter).
 function renderLandmarksList(filter = '') {
     const $list = $('#landmarks-list');
     if (!$list.length) return;
@@ -877,6 +903,7 @@ function renderLandmarksList(filter = '') {
     });
 }
 
+// Opens a landmark from the list on the map.
 function onLandmarkListClick(id) {
     const lm = DataManager.getLandmark(id);
     if (!lm) return;
@@ -901,6 +928,7 @@ function openAddLandmarkModal(lat, lng) {
     openModal('add-landmark-modal');
 }
 
+// Checks and saves a new landmark from the Add Landmark dialog.
 async function submitAddLandmark() {
     const name = document.getElementById('lm-name')?.value.trim();
     const category = document.getElementById('lm-category')?.value;
@@ -937,6 +965,7 @@ function openViewLandmarkModal(id) {
     openModal('view-landmark-modal');
 }
 
+// Asks for confirmation, then deletes the landmark.
 async function deleteLandmarkConfirm() {
     if (!currentViewLandmarkId) return;
     const id = currentViewLandmarkId;
@@ -975,6 +1004,7 @@ function openEditLandmark() {
     openModal('edit-landmark-modal');
 }
 
+// Saves the changes made in the Edit Landmark dialog.
 async function submitEditLandmark() {
     const id = document.getElementById('edit-lm-id')?.value;
     const name = document.getElementById('edit-lm-name')?.value.trim();
@@ -1064,6 +1094,7 @@ function setupTrips() {
     });
 }
 
+// Loads the recent trips of the signed-in user.
 async function loadTrips() {
     if (!$('#trips-list').length) return;
     if (!Auth.isLoggedIn()) { tripsCache = []; renderTripsList(); return; }
@@ -1079,6 +1110,7 @@ async function loadTrips() {
     }
 }
 
+// Fills the Recent Trips list.
 function renderTripsList() {
     const $list = $('#trips-list');
     if (!$list.length) return;
@@ -1163,6 +1195,7 @@ function setupFavorites() {
     });
 }
 
+// Loads the favorite routes of the signed-in user.
 async function loadFavorites() {
     if (!$('#favorites-list').length) return;
     if (!Auth.isLoggedIn()) { favoritesCache = []; renderFavoritesList(); return; }
@@ -1178,6 +1211,7 @@ async function loadFavorites() {
     }
 }
 
+// Fills the Favorites list.
 function renderFavoritesList() {
     const $list = $('#favorites-list');
     if (!$list.length) return;
@@ -1255,8 +1289,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// CONFIRM DIALOG (replaces the browser's plain confirm box). Usage:
-//   const sure = await confirmDialog({ title, message, confirmText, danger });
+// CONFIRM DIALOG: Para's own Yes / No dialog in place of the browser's plain confirm box.
+// Resolves to true (confirmed) or false (cancelled, Esc or a click outside).
 function confirmDialog({ title = 'Are you sure?', message = '', confirmText = 'Confirm', cancelText = 'Cancel', danger = false } = {}) {
     return new Promise(resolve => {
         const $overlay = $('<div class="pc-overlay" role="dialog" aria-modal="true">');
@@ -1307,21 +1341,25 @@ function buildProfileMenu(user) {
     return $wrap[0];
 }
 
+// Full address of a profile picture from any page.
 function profilePictureUrl(path) {
     return (window.location.pathname.indexOf('/client/') !== -1 ? '../' : '') + path;
 }
 
+// Closes every open profile menu.
 function closeProfileMenus() {
     $('.profile-menu').removeClass('open');
     $('.profile-btn').attr('aria-expanded', 'false');
 }
 
+// Clicking anywhere else closes the profile menu.
 function setupProfileMenus() {
     $(document).on('click', e => {
         if (!$(e.target).closest('.profile-wrap').length) closeProfileMenus();
     });
 }
 
+// Dialog listing the saved landmarks, favorites or trips, with remove / use buttons.
 function openSavedModal(tab) {
     const titles = { landmarks: 'Your landmarks', favourites: 'Your favourite routes', trips: 'Your recent trips' };
     const endpoints = { landmarks: 'landmarks/list.php', favourites: 'favorites/list.php', trips: 'trips/list.php' };
@@ -1392,6 +1430,7 @@ function openSavedModal(tab) {
 }
 
 
+// Fills the profile menu: who is signed in, settings, saved items and Log Out.
 async function fillProfileMenu($menu) {
     const user = Auth.getCurrentUser();
     $menu.empty();

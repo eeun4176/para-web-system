@@ -16,6 +16,7 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 // Any script can add <i data-lucide="heart"></i>; this turns it into an SVG on the next frame.
 let iconsQueued = false;
 
+// Turns every <i data-lucide="..."> into its SVG icon.
 function renderIcons() {
     iconsQueued = false;
     if (window.lucide && document.querySelector('i[data-lucide]')) {
@@ -23,6 +24,7 @@ function renderIcons() {
     }
 }
 
+// Renders new icons on the next frame (many changes at once = one render).
 function queueIconRender() {
     if (iconsQueued) return;
     iconsQueued = true;
@@ -54,6 +56,7 @@ function playHeroMap() {
     const clamp = x => Math.max(0, Math.min(1, x));
     const start = performance.now() - 3400;           // start mid-loop so the first view isn't empty
 
+    // One animation frame of the hero map loop.
     function frameStep(now) {
         const t = (now - start) % LOOP;
         pins.forEach((p, i) => p.classList.toggle('on', t >= pinTimes[i] && t < 7500));
@@ -82,6 +85,7 @@ function playHeroMap() {
 // and each dot (and its text) lights up once the line reaches it.
 const featureLine = { ink: null, tip: null, length: 0, samples: [] };
 
+// Builds the winding features line through the dots (and again after a resize).
 function buildFeatureLine() {
     const track = document.getElementById('features-track');
     const svg = document.getElementById('features-line');
@@ -124,6 +128,7 @@ function buildFeatureLine() {
     updateFeatureLine();
 }
 
+// Draws the features line as far as the page is scrolled and lights up the dots it reached.
 function updateFeatureLine() {
     const line = featureLine;
     if (!line.ink) return;
@@ -160,6 +165,7 @@ const CHIP_ICONS = {
     regular: 'user', student: 'graduation-cap', senior: 'person-standing', pwd: 'accessibility'
 };
 
+// Builds one chip per option of the hidden <select>.
 function buildChips($select, $chips) {
     $chips.empty();
     $select.find('option').each(function () {
@@ -179,6 +185,7 @@ function buildChips($select, $chips) {
     syncChips($select, $chips);
 }
 
+// Highlights the chip of the selected option.
 function syncChips($select, $chips) {
     $chips.find('.chip').each(function () {
         const selected = $(this).data('value') === $select.val();
@@ -186,6 +193,7 @@ function syncChips($select, $chips) {
     });
 }
 
+// Connects a <select> to its chips both ways.
 function setupChips(selectId, chipsId) {
     const $select = $('#' + selectId);
     const $chips = $('#' + chipsId);
@@ -254,6 +262,7 @@ const TOAST_LOOK = {
     info:    { icon: 'info',           title: 'Good to know' }
 };
 
+// Shows a toast message in the bottom-right corner.
 function showToast(type, message, title) {
     const look = TOAST_LOOK[type] || TOAST_LOOK.success;
     let $stack = $('#notification-container');
@@ -283,6 +292,7 @@ let lastPressed = null;
 document.addEventListener('pointerdown', e => { lastPressed = e.target.closest('button, a, [role="button"]'); }, true);
 document.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') lastPressed = document.activeElement; }, true);
 
+// Distance from the centre of a dialog to the button that opened it.
 function offsetFromButton(dialog, button) {
     if (!button || !button.isConnected || !button.getClientRects().length) return null;
     const b = button.getBoundingClientRect();
@@ -290,6 +300,7 @@ function offsetFromButton(dialog, button) {
     return { x: (b.left + b.width / 2) - (d.left + d.width / 2), y: (b.top + b.height / 2) - (d.top + d.height / 2) };
 }
 
+// Plays the dialog opening animation (it grows out of its button).
 function popIn(dialog) {
     if (!dialog || !dialog.animate) return;
     dialog._openedBy = lastPressed;

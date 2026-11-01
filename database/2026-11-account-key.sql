@@ -1,4 +1,4 @@
--- Migration (run once in the Supabase SQL Editor on a database created before November 2026).
+-- Migration for databases created before November 2026: adds the admin account key.
 -- The admin now signs in with an account key + password instead of an email (admin-login.html).
 -- This file only changes the table. The admin account itself is NOT in this repository (the repo is
 -- public): create it with the separate one-time script that was shared privately with the team.

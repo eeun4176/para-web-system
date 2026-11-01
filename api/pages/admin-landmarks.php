@@ -1,4 +1,6 @@
 <?php
+// Admin public landmarks: list, search, add (by clicking the map) and delete landmarks everyone sees.
+// Only signed-in admins get the page; anyone else is sent to the right sign-in page.
 require_once __DIR__ . '/../config/session.php';   // DB-backed session (shared with the API)
 
 require_once __DIR__ . '/../config/db.php';

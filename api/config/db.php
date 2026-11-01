@@ -3,6 +3,7 @@
 // Vercel: set DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS in Project Settings -> Environment Variables.
 // Local (XAMPP): copy db.local.example.php to db.local.php and fill it in (db.local.php is git-ignored).
 
+// Database settings: db.local.php on your computer, environment variables on Vercel.
 function db_config(): array {
     static $cfg = null;
     if ($cfg === null) {
@@ -22,6 +23,7 @@ function db_config(): array {
     return $cfg;
 }
 
+// The shared database connection (opened once per request).
 function db(): PDO {
     static $pdo = null;
     if ($pdo === null) {

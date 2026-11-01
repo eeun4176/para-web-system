@@ -1,8 +1,8 @@
 <?php
 // Admin navigation shared by the admin pages: a left sidebar that can be collapsed to icons
 // (a slide-in drawer on phones) + the page header with the title, dark mode and profile menu.
-// Usage, right after <body>: set $activePage ('dashboard', 'fares', 'landmarks', 'users', 'audit' or
-// 'settings'), then require __DIR__ . '/partials/admin-nav.php'.
+// Each admin page includes it right after <body>; its $activePage ('dashboard', 'fares', 'landmarks',
+// 'users', 'audit' or 'settings') marks the current link and picks the header title.
 // Drawer open/close and the profile menu: scripts/app.js. Collapse button: scripts/admin.js.
 
 if (!isset($activePage)) exit;   // opened directly in the browser: show nothing

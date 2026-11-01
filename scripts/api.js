@@ -3,6 +3,7 @@
 // - Loads the CSRF token from auth/me.php and attaches it to every POST
 // - Turns every failure into { status, message, errors } so the UI can show it
 
+// Makes text safe to put inside HTML (no tags or scripts can be injected).
 function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => (
         { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]

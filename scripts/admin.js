@@ -1,14 +1,17 @@
 // ADMIN DASHBOARD (talks to api/admin/*.php; the server checks the admin role on every request)
 const money = n => '₱' + Number(n).toFixed(2);
 
+// A table cell with a number box (fare tables).
 function numCell(name, value, step) {
     return $('<td>').append($('<input type="number">').attr({ name: name, step: step, min: 0 }).val(value));
 }
 
+// The small Active / Inactive label.
 function pill(active) {
     return $('<span class="role-pill">').addClass(active ? 'admin' : 'inactive').text(active ? 'Active' : 'Inactive');
 }
 
+// One full-width row with a message, for empty tables.
 function emptyRow($tbody, cols, text) {
     $tbody.empty().append($('<tr>').append($('<td class="empty">').attr('colspan', cols).text(text)));
 }
@@ -34,6 +37,7 @@ function countUp($el, value, format) {
     })(start);
 }
 
+// Fills the dashboard number cards from api/admin/stats.php.
 async function loadStats() {
     skeletonCards($('#stat-grid'), 6, 'stat-card');
     const res = await API.get('admin/stats.php');
@@ -62,6 +66,7 @@ async function loadStats() {
 
 // "Saved trips" card pill. Stats and charts load at the same time, so whichever finishes last shows it.
 let tripsDelta = null;
+// Shows the "+N vs last week" label once both the stats and the charts have loaded.
 function showTripsDelta() {
     if (tripsDelta) $('#trips-delta').prop('hidden', false).toggleClass('down', tripsDelta.down).text(tripsDelta.text);
 }
@@ -71,6 +76,7 @@ function shortDate(isoDate) {
     return new Date(isoDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+// Message in place of a chart that has no data yet.
 function emptyChart($box, text) {
     $box.empty().append($('<p class="chart-empty">').text(text));
 }
@@ -90,6 +96,7 @@ function drawBarList($box, rows) {
     });
 }
 
+// Draws the dashboard charts (trips per day, by vehicle, top destinations) from api/admin/charts.php.
 async function loadCharts() {
     const $dayBox = $('#chart-trips').empty();
     for (let i = 0; i < 14; i++) {
@@ -203,10 +210,12 @@ function todayLabel(date = new Date()) {
 // ---- Dashboard calendar: trips saved per day (api/admin/calendar.php) ----
 let calMonth = null;   // first day of the month on screen
 
+// Today's date in the Philippines, as YYYY-MM-DD.
 function manilaToday() {
     return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });   // "2026-11-01"
 }
 
+// Draws one month of the calendar with the number of trips saved each day.
 async function loadCalendar(month) {
     calMonth = month;
     const year = month.getFullYear();
@@ -251,6 +260,7 @@ async function loadCalendar(month) {
     }
 }
 
+// Wires the calendar buttons (previous, today, next, pick a day) and shows this month.
 function setupCalendar() {
     const start = new Date(manilaToday() + 'T00:00:00');
     const go = step => loadCalendar(new Date(calMonth.getFullYear(), calMonth.getMonth() + step, 1));
@@ -298,6 +308,7 @@ const ADMIN_MAP_STYLES = {
 };
 let sjdmOutline = null;   // the boundary GeoJSON, fetched once for every map on the page
 
+// Creates an admin map with the same look and limits as the passenger map.
 function createAdminMap(container, addLayers) {
     const themeNow = () => document.documentElement.classList.contains('dark') ? 'dark' : 'light';
     let theme = themeNow();
@@ -378,6 +389,7 @@ function formErrors($form, errors) {
     });
 }
 
+// Fills the admin settings page and saves name / password changes.
 function setupSettings(user) {
     const fill = u => {
         $('#admin-name').text(u.name);
@@ -467,6 +479,7 @@ async function loadFares() {
     revealBlocks($('#transport-table tbody, #passenger-table tbody'));
 }
 
+// Save, activate / deactivate, delete and add buttons of the fare tables.
 function setupFareControls() {
     // Typing in a row marks it as changed and turns its Save button on
     $('.type-table').on('input', 'input', function () {
@@ -621,6 +634,7 @@ async function loadPublicLandmarks() {
 let newLandmarkSpot = null;     // { lat, lng } chosen on the map
 let newLandmarkMarker = null;   // green pin showing that spot
 
+// Map where the admin clicks the spot of a new public landmark.
 function setupAddLandmarkMap() {
     const map = createAdminMap('admin-landmark-map');
 
@@ -637,6 +651,7 @@ function setupAddLandmarkMap() {
     $('#add-landmark-btn').on('click', addPublicLandmark);
 }
 
+// Saves the new public landmark (api/landmarks/add.php) and refreshes the table.
 async function addPublicLandmark() {
     const name = $('#new-lm-name').val().trim();
     if (!name) { showNotification('Enter the landmark name.', 'warning'); return; }
@@ -667,6 +682,7 @@ async function addPublicLandmark() {
     }
 }
 
+// Delete buttons of the public landmarks table.
 function setupPublicLandmarks() {
     $('#public-table').on('click', '.del-public', async function () {
         const $tr = $(this).closest('tr');
@@ -714,6 +730,7 @@ async function loadUsers() {
     refilter('users-table');
 }
 
+// Delete buttons of the users table (with a confirmation).
 function setupUsers() {
     $('#users-table').on('click', '.del-user', async function () {
         const $tr = $(this).closest('tr');
@@ -744,6 +761,7 @@ function auditGroup(action) {
     return 'fares';
 }
 
+// Fills the audit log table from api/admin/audit_list.php.
 async function loadAudit() {
     const $tb = $('#audit-table tbody');
     skeletonTable($tb, 5);

@@ -1,3 +1,5 @@
+// ACCOUNT SETTINGS PAGE (account-settings.html): profile, security, commute preferences and activity
+// of the signed-in passenger, all loaded and saved through api/auth/*.php.
 (function () {
     let activeTab = 'trips';
     const $ = window.jQuery;
@@ -7,6 +9,7 @@
         showToast(type || 'success', message);
     }
 
+    // Dark mode button and the navbar of this page.
     function setupThemeAndNav() {
         const dark = localStorage.getItem('para_dark') === 'true';
         document.body.classList.toggle('dark', dark);
@@ -26,6 +29,7 @@
         });
     }
 
+    // Navbar for the current user (profile picture menu or Log In).
     function updateNav(user) {
         if (!user) {
             $('#nav-auth-area').empty().append($('<a class="nav-auth-btn" href="auth.html">').text('Log In'));
@@ -53,6 +57,7 @@
         });
     }
 
+    // Fills the profile menu of this page.
     function renderProfileMenu($menu, user) {
         $menu.empty().append(
             $('<div class="settings-profile-identity">').append(
@@ -82,6 +87,7 @@
         });
     }
 
+    // Dialog listing the saved landmarks, favorites or trips, with remove / use buttons.
     function openSavedModal(tab) {
         const labels = { landmarks: 'Landmarks', trips: 'Recent Trips', favourites: 'Favourites' };
         const endpoints = { landmarks: 'landmarks/list.php', trips: 'trips/list.php', favourites: 'favorites/list.php' };
@@ -160,6 +166,7 @@
         });
     }
 
+    // Shows the profile picture, or the first letter of the name.
     function renderAvatar($target, user) {
         $target.empty();
         if (user.profilePicture) {
@@ -169,6 +176,7 @@
         }
     }
 
+    // Lets the user pick a new profile picture and uploads it (max 2 MB).
     function changePicture() {
         const input = $('<input type="file" accept="image/jpeg,image/png,image/webp" hidden>');
         input.on('change', function () {
@@ -195,6 +203,7 @@
         input.on('change', () => input.remove());
     }
 
+    // Fills the commute preference dropdowns with the saved defaults.
     async function loadPreferences(user) {
         try {
             const res = await API.get('fares.php');
@@ -208,6 +217,7 @@
         }
     }
 
+    // Small form dialog (used for name, email and password changes).
     function promptDialog(title, fields, submitText, handler) {
         const overlay = $('<div class="pc-overlay">'), modal = $('<div class="pc-modal">').append($('<h2>').text(title));
         const inputs = {};
@@ -226,10 +236,14 @@
         modal.append($('<div class="pc-actions">').append(cancel, save)); overlay.append(modal).on('click', e => { if (e.target === overlay[0]) close(); }).appendTo('body'); popIn(modal[0]); inputs[fields[0].key].trigger('focus');
     }
 
+    // Edit Name dialog.
     function openName() { promptDialog('Edit Name', [{ key: 'name', label: 'Display name', autocomplete: 'name', maxlength: 100 }], 'Save Changes', async data => { if (!data.name) throw { message: 'Name is required.' }; const res = await API.post('auth/update_profile.php', data); Auth.user = res.user; updateNav(res.user); fillProfile(await API.get('auth/profile.php')); notify('Your name was updated.', 'success'); }); }
+    // Change Email dialog (needs the recovery code).
     function openEmail() { promptDialog('Change Email', [{ key: 'email', label: 'Email address', type: 'email', autocomplete: 'email' }, { key: 'recoveryCode', label: 'Recovery code', maxlength: 12 }], 'Change Email', async data => { data.recoveryCode = data.recoveryCode.toUpperCase(); const res = await API.post('auth/change_email.php', data); Auth.user = res.user; updateNav(res.user); fillProfile(await API.get('auth/profile.php')); notify('Your email was updated.', 'success'); }); }
+    // Change Password dialog (needs the current password and the recovery code).
     function openPassword() { promptDialog('Change Password', [{ key: 'currentPassword', label: 'Current password', type: 'password', autocomplete: 'current-password' }, { key: 'recoveryCode', label: 'Recovery code', maxlength: 12 }, { key: 'newPassword', label: 'New password', type: 'password', autocomplete: 'new-password' }, { key: 'confirmPassword', label: 'Confirm new password', type: 'password', autocomplete: 'new-password' }], 'Change Password', async data => { if (data.newPassword.length < 8) throw { message: 'New password must be at least 8 characters.' }; if (data.newPassword !== data.confirmPassword) throw { message: 'Passwords do not match.' }; data.recoveryCode = data.recoveryCode.toUpperCase(); delete data.confirmPassword; await API.post('auth/change_password.php', data); notify('Your password was changed.', 'success'); }); }
 
+    // Loads the items of the open saved-items tab.
     async function loadSaved() {
         const endpoint = { trips: 'trips/list.php', favorites: 'favorites/list.php', landmarks: 'landmarks/list.php' }[activeTab];
         const deleteEndpoint = { trips: 'trips/delete.php', favorites: 'favorites/delete.php', landmarks: 'landmarks/delete.php' }[activeTab];
@@ -298,6 +312,7 @@
         } catch (err) { list.empty().append($('<p class="empty-state">').text(API.describe(err))); }
     }
 
+    // Edit dialog for one of your landmarks.
     function openLandmarkEditor(item) {
         promptDialog('Edit landmark', [
             { key: 'name', label: 'Landmark name', maxlength: 120, value: item.name },
@@ -316,7 +331,9 @@
         });
     }
 
+    // Saves the default passenger and vehicle types.
     async function savePreferences() { const button = $('#save-preferences').prop('disabled', true); try { await API.post('auth/preferences.php', { defaultPassenger: $('#default-passenger').val(), defaultTransport: $('#default-transport').val() }); notify('Commute preferences saved.', 'success'); } catch (err) { notify(API.describe(err), 'error'); } finally { button.prop('disabled', false); } }
+    // Asks for confirmation, then logs out.
     function confirmLogout() {
         const overlay = $('<div class="pc-overlay">');
         const modal = $('<div class="pc-modal">').append(
@@ -332,7 +349,7 @@
             confirm.prop('disabled', true);
             try {
                 await Auth.logout();
-                window.location.href = 'auth.html';
+                window.location.replace('auth.html');
             } catch (err) {
                 notify(API.describe(err), 'error');
                 confirm.prop('disabled', false);
@@ -349,7 +366,7 @@
     $(async function () {
         setupThemeAndNav();
         const user = await Auth.ready();
-        if (!user) { window.location.href = 'auth.html#login'; return; }
+        if (!user) { window.location.replace('auth.html#login'); return; }
         // Admins have their own settings page inside the admin panel (no passenger navigation there)
         if (user.role === 'admin') { window.location.replace('admin-settings.php'); return; }
         updateNav(user);

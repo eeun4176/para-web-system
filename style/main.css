@@ -479,9 +479,14 @@ html.dark .route-frame {
     max-width: 980px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 0.9fr 1.1fr;
+    grid-template-columns: 1.1fr 0.9fr;
     align-items: center;
     gap: 64px;
+}
+
+/* Para on the right here (the Features section above has him on the left) */
+.meet-para-img {
+    order: 2;
 }
 
 .meet-para-img img {
@@ -640,6 +645,10 @@ html.dark .route-frame {
         grid-template-columns: 1fr;
         gap: 32px;
         text-align: center;
+    }
+
+    .meet-para-img {
+        order: 0;   /* phones: picture first, then the text */
     }
 
     .meet-para-img img {

@@ -70,6 +70,7 @@ const PASSENGER_PAGES = ['', 'index.html', 'calculate.html', 'aboutus.html'];
 // Signed-in passengers only need the calculator: Home and About are for guests.
 const GUEST_PAGES = ['', 'index.html', 'aboutus.html'];
 
+// Where a user goes after signing in: admins to the dashboard, passengers to the calculator.
 function homePageFor(user) {
     if (!user) return 'index.html';
     return user.role === 'admin' ? 'admin.php' : 'calculate.html';
@@ -94,6 +95,7 @@ function applyMemberNav(user) {
     $('#navbar-logo').attr('alt', 'Para: back to the calculator').closest('a').attr({ href: 'calculate.html', title: 'Back to the calculator' });
 }
 
+// True on the passenger pages (Home, Calculate, About).
 function isPassengerPage() {
     const page = window.location.pathname.split('/').pop();
     return PASSENGER_PAGES.includes(page);
@@ -126,6 +128,7 @@ const FORGOT_FIELDS = {
 let authBusy = false;
 
 
+// Shows one of the three forms (log in, sign up, forgot password).
 function showAuthPage(page, updateHistory = true) {
     if (!['login', 'signup', 'forgot'].includes(page)) {
         page = 'login';
@@ -140,11 +143,13 @@ function showAuthPage(page, updateHistory = true) {
     }
 }
 
+// Removes the red error state and messages from every form field.
 function clearFieldErrors() {
     $('.field-error').remove();
     $('.auth-input-group').removeClass('has-error');
 }
 
+// Marks the fields the server or the checks below rejected, with their messages.
 function showFieldErrors(errors, idMap) {
     Object.entries(errors || {}).forEach(([field, msg]) => {
         const id = idMap[field];
@@ -166,6 +171,7 @@ function setAuthDone(btnSelector) {
     $(btnSelector).removeClass('loading').addClass('ok');
 }
 
+// Checks the log-in form, signs in through api/auth/login.php and opens the calculator.
 async function doLogin() {
     if (authBusy) return;
     clearFieldErrors();
@@ -183,7 +189,7 @@ async function doLogin() {
         const res = await Auth.login(email, password);
         setAuthDone('#login-submit');
         queueNotification('Welcome back, ' + res.user.name + '!', 'success');
-        setTimeout(() => { window.location.href = homePageFor(res.user); }, 700);
+        setTimeout(() => { window.location.replace(homePageFor(res.user)); }, 700);
     } catch (err) {
         showFieldErrors(err.errors, LOGIN_FIELDS);
         showNotification(API.describe(err), 'error');
@@ -191,6 +197,7 @@ async function doLogin() {
     }
 }
 
+// Checks the sign-up form, creates the account and shows the one-time recovery code.
 async function doSignup() {
     if (authBusy) return;
     clearFieldErrors();
@@ -225,6 +232,7 @@ async function doSignup() {
     }
 }
 
+// Resets the password with the email + recovery code (api/auth/reset_password.php).
 async function doForgot() {
     if (authBusy) return;
     clearFieldErrors();
@@ -280,7 +288,7 @@ async function doAdminLogin() {
         await Auth.adminLogin(accountKey, password);
         setAuthDone('#admin-login-submit');
         queueNotification('Welcome, Administrator!', 'success');
-        setTimeout(() => { window.location.href = 'admin.php'; }, 700);
+        setTimeout(() => { window.location.replace('admin.php'); }, 700);
     } catch (err) {
         showFieldErrors(err.errors, fields);
         showNotification(API.describe(err), 'error');
@@ -321,7 +329,7 @@ async function onGoogleCredential(response) {
     try {
         const res = await Auth.loginWithGoogle(response.credential);
         queueNotification('Welcome, ' + res.user.name + '!', 'success');
-        window.location.href = homePageFor(res.user);
+        window.location.replace(homePageFor(res.user));
     } catch (err) {
         showNotification(API.describe(err), 'error');
         authBusy = false;
@@ -348,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
 showAuthPage(initialPage, false);
 Auth.ready().then(() => {
     if (Auth.isLoggedIn()) {
-        window.location.href = homePageFor(Auth.user);
+        window.location.replace(homePageFor(Auth.user));
     }
 });
 
@@ -367,7 +375,7 @@ Auth.ready().then(() => {
     $('#forgot-submit').on('click', doForgot);
     $('#signup-recovery-continue').on('click', () => {
         queueNotification('Welcome to Para, ' + Auth.getCurrentUser().name + '!', 'success');
-        window.location.href = homePageFor(Auth.user);
+        window.location.replace(homePageFor(Auth.user));
     });
 
     const nav = (linkId, page) => $('#' + linkId).on('click', e => { e.preventDefault(); showAuthPage(page); });

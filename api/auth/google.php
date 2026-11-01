@@ -15,7 +15,7 @@ $credential = (string)(input()['credential'] ?? '');
 if ($credential === '') fail(422, 'Missing Google sign-in token.');
 
 // ---------- Step 1: ask Google to check the token ----------
-// shortcut: one HTTP call to Google per sign-in; switch to checking the signature locally (JWKS) if logins get heavy.
+// Limit: one HTTP call to Google per sign-in; switch to checking the signature locally (JWKS) if logins get heavy.
 function google_token_info(string $token): ?array {
     $ch = curl_init('https://oauth2.googleapis.com/tokeninfo');
     curl_setopt_array($ch, [

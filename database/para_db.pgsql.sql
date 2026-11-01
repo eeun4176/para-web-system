@@ -1,6 +1,6 @@
 -- Para database for Supabase (PostgreSQL).
 -- Converted from the phpMyAdmin/MariaDB dump (para_db.sql, Oct 31 2026).
--- Run once in Supabase → SQL Editor. Safe to re-run only on an empty database.
+-- Creates the whole Para database (tables, keys, starting fares) on an empty Supabase / PostgreSQL database.
 -- PHP connects as the "postgres" role, which bypasses Row Level Security;
 -- RLS is enabled with no policies so Supabase's public REST API cannot read these tables.
 

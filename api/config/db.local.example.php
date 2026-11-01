@@ -1,5 +1,5 @@
 <?php
-// Copy this file to db.local.php (same folder) and fill in your Supabase values.
+// Template for db.local.php: the Supabase connection details used when running Para on your own computer.
 // Supabase -> Project -> Connect -> "Session pooler". db.local.php is git-ignored; never commit real passwords.
 return [
     'DB_HOST' => 'aws-0-ap-southeast-1.pooler.supabase.com',

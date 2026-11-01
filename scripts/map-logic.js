@@ -33,10 +33,12 @@ var routeController       = null;
 var currentRoad = null;             // { km, fromRoadM, coords }
 var roadOptions = [];               // every road route OSRM found for this trip (the first is the fastest)
 
+// True when the site is in dark mode.
 function isDarkMode() {
   return document.documentElement.classList.contains('dark');
 }
 
+// Creates the calculator map, its controls and the right-click "save landmark" action.
 function initMap() {
   if (map) return;
 
@@ -181,6 +183,7 @@ function growBox([[west, south], [east, north]], fraction) {
 function isPointInsideBoundary(lat, lng, boundaryData) {
   if (!boundaryData || !Array.isArray(boundaryData.features)) return false;
 
+  // Ray-casting test: is the point inside this polygon ring?
   function isInsideRing(point, ring) {
     let inside = false;
     for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
@@ -208,10 +211,12 @@ function isPointInsideBoundary(lat, lng, boundaryData) {
   });
 }
 
+// True when the point is inside the area Para searches (SJDM plus the presentation area).
 function isLocationInsideCoverage(lat, lng) {
   return isPointInsideBoundary(lat, lng, sjdmBoundaryData) || isPointInsideBoundary(lat, lng, rodriguezBoundaryData);
 }
 
+// True when the point is inside San Jose del Monte.
 function isLocationInsideSJDM(lat, lng) {
   return isPointInsideBoundary(lat, lng, sjdmBoundaryData);
 }
@@ -227,6 +232,7 @@ function _nameChip(text) {
   return chip;
 }
 
+// Puts the start marker on the map and redraws the route.
 function setOriginMarker(lat, lng, label) {
   if (originMarker) originMarker.remove();
   const el = document.createElement('div');
@@ -237,6 +243,7 @@ function setOriginMarker(lat, lng, label) {
   _drawRoute();
 }
 
+// Puts the destination pin on the map and redraws the route.
 function setDestinationMarker(lat, lng, label) {
   if (destinationMarker) destinationMarker.remove();
   const el = document.createElement('div');
@@ -248,11 +255,13 @@ function setDestinationMarker(lat, lng, label) {
   _drawRoute();
 }
 
+// Removes the start marker and the route.
 function clearOriginMarker() {
   if (originMarker) { originMarker.remove(); originMarker = null; }
   _drawRoute();
 }
 
+// Removes the destination pin and the route.
 function clearDestinationMarker() {
   if (destinationMarker) { destinationMarker.remove(); destinationMarker = null; }
   _drawRoute();
@@ -290,7 +299,7 @@ function _zoomToLine(coordinates) {
 
 // Gets the road route from OSRM and draws it; falls back to a dashed straight line if the routing
 // service is unavailable. Either way, the fare is recalculated afterwards (with the road distance if known).
-// shortcut: OSRM's public demo server is rate-limited and has no uptime promise; fine for a class demo,
+// Limit: OSRM's public demo server is rate-limited and has no uptime promise; fine for a class demo,
 // host OSRM or use a paid router if Para goes public.
 async function _drawRoute() {
   const requestId = ++routeRequestId;
@@ -426,6 +435,7 @@ function showVehicle(transportCode) {
   })(start);
 }
 
+// Hides the moving vehicle and stops its animation.
 function hideVehicle() {
   showVehicle.run = (showVehicle.run || 0) + 1;   // stops a running animation
   if (vehicleMarker) vehicleMarker.getElement().hidden = true;
@@ -460,12 +470,14 @@ function addLandmarkMarker(lm) {
     .addTo(map);
 }
 
+// Takes a deleted landmark off the map.
 function removeLandmarkMarker(id) {
   if (!landmarkMarkers[id]) return;
   landmarkMarkers[id].remove();
   delete landmarkMarkers[id];
 }
 
+// Moves the map to a landmark and opens its details.
 function panToLandmark(lm) {
   if (map) map.flyTo({ center: [lm.lng, lm.lat], zoom: 16 });
 }
@@ -476,7 +488,7 @@ let searchController = null;
 
 // Place search: Photon first (it understands half-typed words like "tungk" or "sm cit"),
 // Nominatim when Photon is down or finds nothing. Both are free OpenStreetMap services.
-// shortcut: public Photon/Nominatim servers have fair-use limits; fine for a class demo, self-host if Para goes public.
+// Limit: public Photon/Nominatim servers have fair-use limits; fine for a class demo, self-host if Para goes public.
 async function searchLocations(query) {
   if (!query || query.trim().length < 2) return [];
   const box = coverageBox();
@@ -517,6 +529,7 @@ function cleanPlaces(places) {
   });
 }
 
+// Asks Photon for places matching the text (understands half-typed words).
 async function searchPhoton(query, box, signal) {
   const [[west, south], [east, north]] = box;
   const params = new URLSearchParams({ q: query, limit: '12', lang: 'en', bbox: [west, south, east, north].join(',') });
@@ -535,6 +548,7 @@ async function searchPhoton(query, box, signal) {
   }));
 }
 
+// Asks Nominatim for places matching the text (used when Photon finds nothing).
 async function searchNominatim(query, box, signal) {
   const [[west, south], [east, north]] = box;
   const params = new URLSearchParams({
