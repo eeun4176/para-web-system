@@ -12,49 +12,9 @@ function firstName(text) {
 }
 
 
-// NOTIFICATIONS
+// NOTIFICATIONS: bottom-right toasts with a timer line (drawn by showToast in ui.js)
 function showNotification(message, type = 'success') {
-    const container = document.getElementById('notification-container');
-    if (!container) return;
-
-    const allowedTypes = ['success', 'error', 'warning', 'info'];
-    if (!allowedTypes.includes(type)) type = 'success';
-
-    // Keep only the latest four notifications
-    while (container.children.length >= 4) {
-        container.firstElementChild.remove();
-    }
-
-    const div = document.createElement('div');
-    div.className = 'notification ' + type;
-    div.setAttribute('role', type === 'error' ? 'alert' : 'status');
-
-    const text = document.createElement('span');
-    text.className = 'notification-message';
-    text.textContent = message;
-
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'notification-close';
-    closeBtn.type = 'button';
-    closeBtn.textContent = '×';
-    closeBtn.setAttribute('aria-label', 'Dismiss notification');
-
-    let hideTimer;
-
-    function dismissNotification() {
-        if (div.classList.contains('hiding')) return;
-
-        clearTimeout(hideTimer);
-        div.classList.add('hiding');
-        setTimeout(() => div.remove(), 350);
-    }
-
-    closeBtn.addEventListener('click', dismissNotification);
-
-    div.append(text, closeBtn);
-    container.appendChild(div);
-
-    hideTimer = setTimeout(dismissNotification, 2300);
+    showToast(type, message);
 }
 
 // A message that must survive a page change
@@ -98,37 +58,22 @@ function setupDarkToggle() {
     });
 }
 
+// The sun/moon icon swap is done in CSS (global.css: .toggle-knob .icon-light / .icon-dark)
 function syncToggleKnob(isDark) {
     const knob = document.querySelector('#dark-toggle .toggle-knob');
     if (!knob) return;
     knob.classList.toggle('is-dark', isDark);
-    const icon = knob.querySelector('img');
-    if (icon) {
-        icon.src = isDark
-            ? '../assets/dark-icon.png'
-            : '../assets/light-icon.png';
-    }
-}
-
-// SIDEBAR
-function setupSidebar() {
-    const openBtn = document.getElementById('hamburger-btn');
-    const overlay = document.getElementById('sidebar-overlay');
-    const closeBtn = document.getElementById('sidebar-close');
-    openBtn?.addEventListener('click', () => overlay?.classList.add('active'));
-    closeBtn?.addEventListener('click', () => overlay?.classList.remove('active'));
-    overlay?.addEventListener('click', e => {
-        if (e.target === overlay) overlay.classList.remove('active');
-    });
 }
 
 // SCROLL ANIMATIONS
 function setupScrollAnimations() {
     const observer = new IntersectionObserver(
         entries => entries.forEach(entry => {
-            if (entry.isIntersecting) entry.target.classList.add('visible');
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);   // fade in once, not every time it scrolls past
         }),
-        { threshold: 0.15 }
+        { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
     );
     document.querySelectorAll('.anim-on-scroll').forEach(el => observer.observe(el));
 }
@@ -169,39 +114,32 @@ function updateNavAuth() {
         el.innerHTML = '';
 
         if (kind === 'nav') {
-            // Show the ADMIN badge only to administrator accounts.
-            if (user && user.role === 'admin') {
-                const badge = document.createElement('span');
-                badge.className = 'nav-admin-badge';
-                badge.textContent = 'ADMIN';
-                badge.setAttribute('aria-label', 'Administrator account');
-                el.appendChild(badge);
-            }
-
-            // Keep the existing profile icon and dropdown.
-            el.appendChild(buildProfileMenu(user));
+            // Guests get two clear buttons; logged-in users get their profile picture with a menu
+            if (user) el.appendChild(buildProfileMenu(user));
+            else $(el).append(
+                '<a href="auth.html#login" class="nav-login-link">Log in</a>',
+                '<a href="auth.html#signup" class="nav-auth-btn">Sign up</a>'
+            );
             continue;
         }
 
         if (user) {
-            const btn = document.createElement('button');
-            btn.className = 'sidebar-auth-btn';
-            btn.type = 'button';
-            btn.textContent = 'Log Out';
-            btn.addEventListener('click', doLogout);
-            el.appendChild(btn);
+            $('<button type="button" class="sidebar-auth-btn">')
+                .append('<i data-lucide="log-out" aria-hidden="true"></i>', $('<span>').text('Log Out'))
+                .on('click', doLogout)
+                .appendTo(el);
         } else {
-            const a = document.createElement('a');
-            a.href = 'auth.html';
-            a.className = 'sidebar-auth-btn';
-            a.textContent = 'Log In';
-            el.appendChild(a);
+            $(el).append(
+                '<a href="auth.html#signup" class="sidebar-auth-btn">Sign up</a>',
+                '<a href="auth.html#login" class="sidebar-auth-btn outline">Log in</a>'
+            );
         }
     }
 }
 
 
 async function doLogout() {
+    const wasAdmin = isAdminUser();
     const sure = await confirmDialog({
         title: 'Log out?',
         message: 'You will need to log in again to see your trips, favorites and landmarks.',
@@ -226,12 +164,22 @@ async function doLogout() {
     renderFavoritesList();
     closeAllPanels();
 
-    window.location.href = 'auth.html';
+    window.location.href = wasAdmin ? 'admin-login.html' : 'auth.html';
 }
 
 // MODAL HELPERS
-function openModal(id) { document.getElementById(id)?.classList.add('open'); }
-function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+function openModal(id) {
+    const overlay = document.getElementById(id);
+    if (!overlay) return;
+    overlay.classList.add('open');
+    popIn(overlay.querySelector('.modal'));
+}
+
+function closeModal(id) {
+    const overlay = document.getElementById(id);
+    if (!overlay || !overlay.classList.contains('open')) return;
+    popOut(overlay.querySelector('.modal'), () => overlay.classList.remove('open'));
+}
 
 function setupModalOverlayClose() {
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
@@ -314,9 +262,8 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
             item.setAttribute('aria-selected', 'false');
 
             const icon = document.createElement('i');
-            icon.className = source === 'saved'
-                ? 'fi fi-rr-marker item-icon'
-                : 'fi fi-rr-search item-icon';
+            icon.className = 'item-icon';
+            icon.dataset.lucide = source === 'saved' ? 'map-pin' : 'search';
             icon.setAttribute('aria-hidden', 'true');
 
             const details = document.createElement('div');
@@ -334,7 +281,7 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
                     ? `Public Landmark · ${loc.category || 'other'}`
                     : `Personal Landmark · ${loc.category || 'other'}`;
             } else {
-                category.textContent = 'External Place';
+                category.textContent = loc.detail || 'Place in SJDM';
             }
 
             details.append(name, category);
@@ -360,13 +307,9 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
             return;
         }
 
+        // Wait until typing pauses (Nominatim allows about one request per second)
         searchTimers[inputId] = setTimeout(async () => {
-            dropdown.textContent = '';
-
-            const loading = document.createElement('div');
-            loading.className = 'search-dropdown-item loading';
-            loading.textContent = 'Searching saved landmarks and other places...';
-            dropdown.appendChild(loading);
+            skeletonRows($(dropdown), 3);   // shimmering placeholders while searching (ui.js)
             dropdown.classList.add('open');
 
             try {
@@ -456,7 +399,6 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
 
             } catch (err) {
                 if (version !== searchVersion) return;
-
                 console.error('[LocationSearch] Search failed:', err);
                 dropdown.innerHTML = '';
 
@@ -465,7 +407,7 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
                 error.textContent = 'Could not load search results. Please try again.';
                 dropdown.appendChild(error);
             }
-        }, 180);
+        }, 350);
     });
 
     input.addEventListener('keydown', function (e) {
@@ -534,8 +476,7 @@ function setupCalcListeners() {
         }
 
         originData = loc;
-        setOriginMarker(loc.lat, loc.lng, firstName(loc.name));
-        refreshFareCalculation();
+        setOriginMarker(loc.lat, loc.lng, firstName(loc.name));   // redraws the route, then recalculates
     });
 
     setupSearchInput('dest-input', 'dest-dropdown', loc => {
@@ -550,15 +491,13 @@ function setupCalcListeners() {
 
         destData = loc;
         setDestinationMarker(loc.lat, loc.lng, firstName(loc.name));
-        refreshFareCalculation();
     });
 
-        // Clear the selected location when its input is manually changed.
+    // Clear the selected location when its input is changed by hand
     $('#origin-input').on('input', function () {
         if (originData && this.value.trim() !== originData.name) {
             originData = null;
             clearOriginMarker();
-            refreshFareCalculation();
         }
     });
 
@@ -566,7 +505,6 @@ function setupCalcListeners() {
         if (destData && this.value.trim() !== destData.name) {
             destData = null;
             clearDestinationMarker();
-            refreshFareCalculation();
         }
     });
 
@@ -581,7 +519,6 @@ function setupCalcListeners() {
         else clearOriginMarker();                       // no stale marker if one side was empty
         if (destData) setDestinationMarker(destData.lat, destData.lng, firstName(destData.name));
         else clearDestinationMarker();
-        refreshFareCalculation();
     });
 
     $('#transport-select, #passenger-select').on('change', refreshFareCalculation);
@@ -606,6 +543,10 @@ function refreshFareCalculation() {
 function setResultVisible(visible) {
     $('#result-card').toggleClass('active', visible);
     $('#para-hint').css('display', visible ? 'none' : 'flex');
+    if (!visible) {
+        $('#summary-fare').text('');
+        if (typeof setEtaBubble === 'function') setEtaBubble('');
+    }
 }
 
 async function runFareCalculation() {
@@ -613,6 +554,11 @@ async function runFareCalculation() {
     const transport = $('#transport-select').val();
     const passenger = $('#passenger-select').val();
     const $hint = $('#para-hint-text');
+
+    $('#summary-route').text(originData && destData
+        ? firstName(originData.name) + ' → ' + firstName(destData.name)
+        : 'Where to Today?');
+    $('#access-banner').hide().text('');      // never show an old note next to a new result
 
     if (!originData || !destData) {
         $hint.html('<strong>Select an origin and destination to see the fare!</strong>');
@@ -625,16 +571,21 @@ async function runFareCalculation() {
         return;
     }
 
+    // The road route is still loading: wait for it (map-logic.js recalculates when it arrives)
+    if (routeController) return;
+
     const myId = ++fareRequestId;
-    $hint.text('Calculating your fare...');
+    // Show the result card with shimmering placeholders until the server answers
+    $('#result-card').addClass('is-loading');
+    setResultVisible(true);
     try {
         const routeForSave = getCurrentRoute();
-        const fare = await fetchFare(originData, destData, transport, passenger);
+        const fare = await fetchFare(originData, destData, transport, passenger, currentRoad);
         if (myId !== fareRequestId) return;
 
         $('#res-origin').text(firstName(originData.name));
         $('#res-dest').text(firstName(destData.name));
-        $('#res-distance').text(fare.distance + ' km');
+        $('#res-distance').text(fare.distance + ' km' + (fare.distanceSource === 'road' ? ' by road' : ' (straight line)'));
         $('#res-eta').text('~' + fare.durationMin + ' min (arrive ~' + fare.arrivalTime + ')');
         $('#res-base').text('₱' + fare.baseFare);
         $('#res-excess').text('₱' + fare.excessFare);
@@ -643,20 +594,29 @@ async function runFareCalculation() {
             ? '-₱' + fare.discountAmount + ' (' + fare.discountRate + '% off)'
             : 'None');
         $('#res-total').text('₱' + fare.total);
+        $('#summary-fare').text('₱' + fare.total);
         setResultVisible(true);
         autoSaveRecentTrip(routeForSave);
 
-        const $banner = $('#access-banner');
-        if (fare.access === 'walk' || fare.access === 'special_trip') {
-            $banner.attr('class', 'access-banner ' + fare.access).text(fare.accessMessage).show();
-        } else {
-            $banner.hide().text('');
+        // Walk / tricycle / long-trip note from the server (api/fare_logic.php: access_info)
+        const icons = { walk: 'footprints', special_trip: 'bike', far: 'repeat' };
+        if (icons[fare.access]) {
+            $('#access-banner').attr('class', 'access-banner ' + fare.access).css('display', 'flex').empty().append(
+                $('<i>').attr('data-lucide', icons[fare.access]), $('<span>').text(fare.accessMessage)
+            ).show();
         }
+
+        // On the map: ETA above the destination, and the chosen vehicle drives the route
+        setEtaBubble(fare.durationMin + ' min');
+        showVehicle(transport);
+        if (window.innerWidth <= 900) setPanelCollapsed(true);   // phones: show the route, keep the fare in the pill
     } catch (err) {
         if (myId !== fareRequestId) return;
         setResultVisible(false);
         $hint.text('Could not calculate the fare. ' + API.describe(err));
         showNotification(API.describe(err), 'error');
+    } finally {
+        if (myId === fareRequestId) $('#result-card').removeClass('is-loading');
     }
 }
 
@@ -668,7 +628,9 @@ function getCurrentRoute() {
     return {
         originName: firstName(originData.name), originLat: originData.lat, originLng: originData.lng,
         destName: firstName(destData.name), destLat: destData.lat, destLng: destData.lng,
-        transport: transport, passenger: passenger
+        transport: transport, passenger: passenger,
+        roadKm: currentRoad ? currentRoad.km : null,
+        fromRoadM: currentRoad ? currentRoad.fromRoadM : null
     };
 }
 
@@ -692,7 +654,7 @@ async function autoSaveRecentTrip(route) {
 
             await API.post('trips/add.php', routeToSave);
 
-            if ($('#trips-panel').hasClass('open')) {
+            if (!$('.saved-pane[data-pane="trips"]').prop('hidden')) {
                 await loadTrips();
             }
         }
@@ -714,43 +676,76 @@ function applySavedRoute(r) {
     destData = { name: r.destName, lat: r.destLat, lng: r.destLng };
     $('#origin-input').val(r.originName);
     $('#dest-input').val(r.destName);
-    $('#transport-select').val(r.transport);
-    $('#passenger-select').val(r.passenger);
+    // trigger('change') so the vehicle/passenger chips (ui.js) highlight the loaded choice
+    $('#transport-select').val(r.transport).trigger('change');
+    $('#passenger-select').val(r.passenger).trigger('change');
     setOriginMarker(originData.lat, originData.lng, firstName(originData.name));
     setDestinationMarker(destData.lat, destData.lng, firstName(destData.name));
-    refreshFareCalculation();
 }
 
-// DROPDOWN PANELS (Favorites / Recent Trips / My Landmarks)
+// CALCULATE PANEL: Trip / Saved tabs, the Favorites / Recent / Landmarks switch, and collapsing
+const SAVED_PANES = {
+    favorites: () => loadFavorites(),
+    trips: () => loadTrips(),
+    landmarks: () => renderLandmarksList($('#landmarks-search').val().trim().toLowerCase())
+};
+
+function showCalcTab(tab) {
+    $('.calc-tab').each(function () {
+        const on = $(this).data('tab') === tab;
+        $(this).toggleClass('is-active', on).attr('aria-selected', String(on));
+    });
+    $('.calc-tabpanel').each(function () {
+        $(this).prop('hidden', $(this).data('panel') !== tab);
+    });
+    if (tab === 'saved') showSavedPane($('.saved-tab.is-active').data('pane') || 'favorites');
+}
+
+function showSavedPane(pane) {
+    $('.saved-tab').each(function () {
+        const on = $(this).data('pane') === pane;
+        $(this).toggleClass('is-active', on).attr('aria-selected', String(on));
+    });
+    $('.saved-pane').each(function () {
+        $(this).prop('hidden', $(this).data('pane') !== pane);
+    });
+    SAVED_PANES[pane]();
+}
+
+// The panel morphs between the card and the pill: measure both sizes, then animate from one to the other
+function setPanelCollapsed(collapsed) {
+    const panel = document.getElementById('calc-panel');
+    $('#panel-collapse').attr('aria-expanded', String(!collapsed));
+    if (!panel || panel.classList.contains('is-collapsed') === collapsed) return;
+
+    const from = panel.getBoundingClientRect();
+    panel.classList.toggle('is-collapsed', collapsed);
+    const to = panel.getBoundingClientRect();
+    if (prefersReducedMotion) return;
+
+    const radius = (rect, pill) => (pill ? rect.height / 2 : 22) + 'px';
+    panel.animate([
+        { width: from.width + 'px', height: from.height + 'px', borderRadius: radius(from, !collapsed) },
+        { width: to.width + 'px', height: to.height + 'px', borderRadius: radius(to, collapsed) }
+    ], { duration: 460, easing: 'cubic-bezier(.22, 1, .36, 1)' });
+
+    // The new content fades in once the shape has started moving
+    $(panel).children(collapsed ? '.panel-summary' : '.panel-head, .panel-body').each(function () {
+        this.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, delay: 140, easing: 'ease-out', fill: 'backwards' });
+    });
+}
+
+// Picking a saved item (or pressing Esc) brings the Trip tab back
 function closeAllPanels() {
-    $('.landmarks-panel').removeClass('open');
-    $('.overlay-item > button').attr('aria-expanded', 'false');
+    if ($('.calc-tab').length) showCalcTab('trip');
 }
 
 function setupPanels() {
-    const panels = [
-        { btn: '#favorites-toggle-btn', panel: '#favorites-panel', onOpen: loadFavorites },
-        { btn: '#trips-toggle-btn', panel: '#trips-panel', onOpen: loadTrips },
-        { btn: '#landmarks-toggle-btn', panel: '#landmarks-panel', onOpen: () => {
-            renderLandmarksList();
-            $('#landmarks-search').trigger('focus');
-        } }
-    ];
-    panels.forEach(p => {
-        $(p.btn).on('click', function (e) {
-            e.stopPropagation();
-            const willOpen = !$(p.panel).hasClass('open');
-            closeAllPanels();
-            if (willOpen) {
-                $(p.panel).addClass('open');
-                $(this).attr('aria-expanded', 'true');
-                p.onOpen();
-            }
-        });
-    });
-    $(document).on('click', e => {
-        if (!$(e.target).closest('.overlay-item').length) closeAllPanels();
-    });
+    $('.calc-tab').on('click', function () { showCalcTab($(this).data('tab')); });
+    $('.saved-tab').on('click', function () { showSavedPane($(this).data('pane')); });
+    $('#panel-collapse').on('click', () => setPanelCollapsed(true));
+    $('#panel-summary').on('click', () => setPanelCollapsed(false));
+    $('#sheet-handle').on('click', () => setPanelCollapsed(!$('#calc-panel').hasClass('is-collapsed')));
 }
 
 // LANDMARKS LIST
@@ -785,7 +780,7 @@ function renderLandmarksList(filter = '') {
     }
     filtered.forEach(lm => {
         $('<div class="landmark-list-item">').attr('data-id', lm.id).append(
-            '<i class="fi fi-rr-marker lm-icon" aria-hidden="true"></i>',
+            '<i data-lucide="map-pin" class="lm-icon" aria-hidden="true"></i>',
             $('<div class="lm-info">').append(
                 $('<h5>').text(lm.name),
                 $('<span>').text((lm.isPublic ? 'Public · ' : '') + lm.category)
@@ -984,10 +979,12 @@ function setupTrips() {
 async function loadTrips() {
     if (!$('#trips-list').length) return;
     if (!Auth.isLoggedIn()) { tripsCache = []; renderTripsList(); return; }
+    skeletonRows($('#trips-list'), 3);
     try {
         const res = await API.get('trips/list.php');
         tripsCache = res.trips;
         renderTripsList();
+        revealBlocks($('#trips-list'));
     } catch (err) {
         $('#trips-list').html('<div class="lm-empty">Could not load your trips.</div>');
         showNotification(API.describe(err), 'error');
@@ -1010,7 +1007,7 @@ function renderTripsList() {
         const detail = t.transportLabel + ' · ' + t.passengerLabel + ' · ₱' + t.totalFare.toFixed(2)
             + ' · ' + t.durationMin + ' min · ' + String(t.createdAt).slice(0, 10);
         $('<div class="landmark-list-item">').attr('data-id', t.id).append(
-            '<i class="fi fi-rr-time-past lm-icon" aria-hidden="true"></i>',
+            '<i data-lucide="history" class="lm-icon" aria-hidden="true"></i>',
             $('<div class="lm-info">').append(
                 $('<h5>').text(firstName(t.originName) + ' → ' + firstName(t.destName)),
                 $('<span>').text(detail)
@@ -1045,7 +1042,7 @@ function setupFavorites() {
             await API.post('favorites/add.php', Object.assign({ label }, route));
             closeModal('add-favorite-modal');
             showNotification('Added to your favorites!', 'success');
-            if ($('#favorites-panel').hasClass('open')) loadFavorites();
+            loadFavorites();
         } catch (err) {
             $('#fav-label-error').text(API.describe(err));
         } finally {
@@ -1081,10 +1078,12 @@ function setupFavorites() {
 async function loadFavorites() {
     if (!$('#favorites-list').length) return;
     if (!Auth.isLoggedIn()) { favoritesCache = []; renderFavoritesList(); return; }
+    skeletonRows($('#favorites-list'), 3);
     try {
         const res = await API.get('favorites/list.php');
         favoritesCache = res.favorites;
         renderFavoritesList();
+        revealBlocks($('#favorites-list'));
     } catch (err) {
         $('#favorites-list').html('<div class="lm-empty">Could not load your favorites.</div>');
         showNotification(API.describe(err), 'error');
@@ -1105,7 +1104,7 @@ function renderFavoritesList() {
     $list.empty();
     favoritesCache.forEach(f => {
         $('<div class="landmark-list-item">').attr('data-id', f.id).append(
-            '<i class="fi fi-rr-star lm-icon" aria-hidden="true"></i>',
+            '<i data-lucide="star" class="lm-icon" aria-hidden="true"></i>',
             $('<div class="lm-info">').append(
                 $('<h5>').text(f.label),
                 $('<span>').text(firstName(f.originName) + ' → ' + firstName(f.destName) + ' · ' + f.transportLabel)
@@ -1122,7 +1121,6 @@ document.addEventListener('DOMContentLoaded', () => {
     showQueuedNotification();
     applyDarkMode();
     setupDarkToggle();
-    setupSidebar();
     setupScrollAnimations();
     setupBackToTop();
     setupModalOverlayClose();
@@ -1176,8 +1174,8 @@ function confirmDialog({ title = 'Are you sure?', message = '', confirmText = 'C
         const $overlay = $('<div class="pc-overlay" role="dialog" aria-modal="true">');
         const done = value => {
             $(document).off('keydown.paraconfirm');
-            $overlay.remove();
             resolve(value);
+            popOut($overlay.find('.pc-modal')[0], () => $overlay.remove());
         };
         const $confirm = $('<button type="button" class="pc-btn">')
             .addClass(danger ? 'pc-danger' : 'pc-primary').text(confirmText).on('click', () => done(true));
@@ -1190,6 +1188,7 @@ function confirmDialog({ title = 'Are you sure?', message = '', confirmText = 'C
         $overlay.on('click', e => { if (e.target === $overlay[0]) done(false); });
         $(document).on('keydown.paraconfirm', e => { if (e.key === 'Escape') done(false); });
         $overlay.appendTo('body');
+        popIn($overlay.find('.pc-modal')[0]);
         $confirm.trigger('focus');
     });
 }
@@ -1203,7 +1202,7 @@ function buildProfileMenu(user) {
             ? $('<img>').attr({ src: profilePictureUrl(user.profilePicture), alt: '' })
             : $('<span>').text(user.name.trim().charAt(0).toUpperCase() || '?'));
     }
-    else $btn.append('<i class="fi fi-rr-user" aria-hidden="true"></i>');
+    else $btn.append('<i data-lucide="user" aria-hidden="true"></i>');
     const $menu = $('<div class="profile-menu" role="dialog" aria-label="Profile">');
     $wrap.append($btn, $menu);
     $btn.on('click', e => {
@@ -1245,9 +1244,11 @@ function openSavedModal(tab) {
         $('<h2>').text(titles[tab]),
         $('<div class="saved-modal-list" aria-live="polite">').append($('<p class="pm-sub">').text('Loading...'))
     );
-    const close = () => $overlay.remove();
+    const close = () => popOut($modal[0], () => $overlay.remove());
     $modal.prepend($('<button type="button" class="saved-modal-close" aria-label="Close">').text('×').on('click', close));
     $overlay.append($modal).on('click', e => { if (e.target === $overlay[0]) close(); }).appendTo('body');
+    popIn($modal[0]);
+    skeletonRows($modal.find('.saved-modal-list'), 3);
 
     API.get(endpoints[tab]).then(res => {
         const items = res.items || res.trips || res.favorites || res.landmarks || [];
@@ -1296,6 +1297,7 @@ function openSavedModal(tab) {
             }
             $row.append($actions).appendTo($list);
         });
+        revealBlocks($list);
     }).catch(err => {
         $modal.find('.saved-modal-list').empty().append($('<p class="pm-sub">').text(API.describe(err)));
     });
@@ -1342,28 +1344,27 @@ async function fillProfileMenu($menu) {
     }
 
     $menu.append(
-        $('<a class="pm-btn pm-primary" href="account-settings.html">')
-            .append('<i class="fi fi-rr-settings-sliders" aria-hidden="true"></i>', $('<span>').text('Account Settings'), '<i class="fi fi-rr-angle-small-right pm-chevron" aria-hidden="true"></i>')
+        $('<a class="pm-btn pm-primary">').attr('href', isAdmin ? 'admin-settings.php' : 'account-settings.html')
+            .append('<i data-lucide="settings" aria-hidden="true"></i>', $('<span>').text('Account Settings'), '<i data-lucide="chevron-right" class="pm-chevron" aria-hidden="true"></i>')
             .on('click', closeProfileMenus)
     );
     if (!isAdmin && !isAdminPage && !isAdminSettings) {
         [
-            ['Landmarks', 'landmarks', 'fi-rr-marker'],
-            ['Favourites', 'favourites', 'fi-rr-heart'],
-            ['Recent Trips', 'trips', 'fi-rr-time-past']
+            ['Landmarks', 'landmarks', 'map-pin'],
+            ['Favourites', 'favourites', 'heart'],
+            ['Recent Trips', 'trips', 'history']
         ].forEach(([label, tab, icon]) => $menu.append(
             $('<button type="button" class="pm-btn pm-outline pm-action">')
                 .attr('data-saved-tab', tab)
-                .append($('<i>').addClass('fi ' + icon).attr('aria-hidden', 'true'), $('<span>').text(label), $('<i class="fi fi-rr-angle-small-right pm-chevron" aria-hidden="true">'))
+                .append($('<i>').attr({ 'data-lucide': icon, 'aria-hidden': 'true' }), $('<span>').text(label), $('<i data-lucide="chevron-right" class="pm-chevron" aria-hidden="true">'))
                 .on('click', function () { closeProfileMenus(); openSavedModal($(this).data('saved-tab')); })
         ));
     }
 
     $menu.append(
-        $('<p class="pm-sub pm-helper">')
-            .text(isAdminPage
-                ? 'Manage public fares, landmarks, users, and audit records from the admin panel.'
-                : 'Update your profile and manage saved commute information from Account Settings.')
+        $('<button type="button" class="pm-btn pm-logout">')
+            .append('<i data-lucide="log-out" aria-hidden="true"></i>', $('<span>').text('Log Out'))
+            .on('click', () => { closeProfileMenus(); doLogout(); })
     );
 }
 
@@ -1371,18 +1372,16 @@ async function fillProfileMenu($menu) {
 function injectUiStyles() {
     if (document.getElementById('para-ui-styles')) return;
     const css = `
-    #notification-container{top:90px;left:50%;right:auto;transform:translateX(-50%);max-width:min(420px,92vw);width:max-content;z-index:99999;align-items:stretch}
-    .notification{font-size:.97rem;font-weight:600;padding:15px 20px;border-left-width:6px;box-shadow:0 12px 34px rgba(0,0,0,.28)}
     .pc-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px}
     .pc-modal{background:var(--bg-card);color:var(--text);border-radius:var(--radius);padding:26px;width:100%;max-width:400px;box-shadow:var(--shadow-lg)}
-    .pc-modal h2{font-size:1.1rem;font-weight:800;margin-bottom:10px}
+    .pc-modal h2{font-size:1.1rem;font-weight:650;margin-bottom:10px}
     .pc-modal p{font-size:.92rem;color:var(--text-muted);line-height:1.5}
     .pc-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
     .pc-btn{padding:9px 22px;border-radius:24px;font-size:.9rem;font-weight:700;cursor:pointer;border:none;font-family:inherit}
-    .pc-primary{background:var(--green);color:#fff}.pc-primary:hover{background:var(--green-dark)}
+    .pc-primary{background:var(--primary);color:var(--on-primary)}.pc-primary:hover{background:var(--primary-hover)}
     .pc-danger{background:var(--red);color:#fff}.pc-danger:hover{background:#c0392b}
     .pc-outline{background:transparent;color:var(--text);border:1.5px solid var(--border)}
-    .pc-outline:hover{border-color:var(--green);color:var(--green)}
+    .pc-outline:hover{border-color:var(--primary);color:var(--primary)}
     .saved-modal{position:relative;max-width:560px}
     .saved-modal-close{position:absolute;top:14px;right:16px;border:0;background:transparent;color:var(--text-muted);font-size:1.6rem;line-height:1;cursor:pointer}
     .saved-modal-list{display:grid;gap:9px;max-height:min(55vh,430px);overflow:auto;margin-top:16px}
@@ -1395,28 +1394,30 @@ function injectUiStyles() {
     .pm-btn.pm-action{font-family:inherit}
     .profile-wrap{position:relative;margin-right:8px}
     #nav-auth-area{display:flex;align-items:center;gap:8px}
-    .nav-admin-badge{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;background:var(--green);color:#fff;border-radius:10px;padding:5px 9px;font-size:.68rem;font-weight:800;letter-spacing:.06em;line-height:1}
-    .profile-btn{width:36px;height:36px;border-radius:50%;border:2px solid var(--green);background:var(--bg-card);color:var(--green);font-weight:800;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit}
+    .profile-btn{width:38px;height:38px;border-radius:50%;border:2px solid var(--primary);background:var(--bg-card);color:var(--primary);font-weight:650;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit}
     .profile-btn img,.pm-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover}
     .profile-btn:hover{background:var(--green-light)}
-    .profile-menu{display:none;position:absolute;top:calc(100% + 14px);right:0;width:292px;background:var(--bg-card);color:var(--text);border:1px solid rgba(46,204,113,.2);border-radius:20px;box-shadow:0 16px 38px rgba(0,0,0,.16);padding:16px;z-index:1200}
-    .profile-menu.open{display:block}
+    .profile-menu{visibility:hidden;opacity:0;transform:translateY(-6px) scale(.97);transform-origin:top right;transition:opacity .18s ease,transform .25s cubic-bezier(.22,1,.36,1),visibility 0s linear .25s;position:absolute;top:calc(100% + 14px);right:0;width:292px;background:var(--bg-card);color:var(--text);border:1px solid rgba(46,204,113,.2);border-radius:20px;box-shadow:0 16px 38px rgba(0,0,0,.16);padding:16px;z-index:1200}
+    .profile-menu.open{visibility:visible;opacity:1;transform:none;transition:opacity .18s ease,transform .25s cubic-bezier(.22,1,.36,1)}
+    .pm-btn.pm-logout{background:none;color:var(--red);border:1px solid var(--border)}
+    .pm-btn.pm-logout:hover{background:rgba(231,76,60,.1);color:var(--red);box-shadow:none}
     .pm-identity{display:flex;align-items:center;gap:11px;padding:4px 3px 14px;border-bottom:1px solid var(--border)}
-    .pm-avatar{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;font-size:1.1rem;font-weight:800;box-shadow:0 4px 10px rgba(46,204,113,.2);overflow:hidden}
+    .pm-avatar{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:50%;background:var(--primary);color:var(--on-primary);font-size:1.1rem;font-weight:650;box-shadow:0 4px 10px rgba(46,204,113,.2);overflow:hidden}
     .pm-identity-copy{min-width:0}
-    .pm-name{font-weight:800;font-size:1rem;line-height:1.2;overflow-wrap:anywhere}
+    .pm-name{font-weight:650;font-size:1rem;line-height:1.2;overflow-wrap:anywhere}
     .pm-email{font-size:.78rem;color:var(--text-muted);word-break:break-all;margin-top:4px}
-    .pm-role{display:inline-flex;margin-top:12px;padding:4px 9px;border-radius:999px;background:var(--green-light);color:var(--green-dark);font-size:.7rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+    .pm-role{display:inline-flex;margin-top:12px;padding:4px 9px;border-radius:999px;background:var(--green-light);color:var(--primary-hover);font-size:.7rem;font-weight:650;letter-spacing:.04em;text-transform:uppercase}
     .pm-sub{font-size:.84rem;color:var(--text-muted);line-height:1.45;margin:6px 0 12px}
     .pm-helper{padding-top:12px;margin:12px 0 0;border-top:1px solid var(--border);font-size:.78rem}
-    .pm-badge{display:inline-block;background:var(--green);color:#fff;border-radius:10px;padding:2px 10px;font-size:.72rem;font-weight:700;margin-bottom:8px}
-    .pm-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px;border-radius:10px;border:none;background:var(--green);color:#fff;font-weight:700;font-size:.88rem;cursor:pointer;font-family:inherit;margin-top:10px;box-sizing:border-box;transition:background .2s ease,transform .2s ease,box-shadow .2s ease}
+    .pm-badge{display:inline-block;background:var(--primary);color:var(--on-primary);border-radius:10px;padding:2px 10px;font-size:.72rem;font-weight:700;margin-bottom:8px}
+    .pm-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px;border-radius:10px;border:none;background:var(--primary);color:var(--on-primary);font-weight:700;font-size:.88rem;cursor:pointer;font-family:inherit;margin-top:10px;box-sizing:border-box;transition:background .2s ease,transform .2s ease,box-shadow .2s ease}
     .pm-btn i:first-child{width:17px;text-align:center}.pm-chevron{margin-left:auto;font-size:1.1rem}
-    .pm-btn:hover{background:var(--green-dark);color:#fff;transform:translateY(-1px);box-shadow:0 5px 12px rgba(46,204,113,.2)}
-    .pm-outline{background:transparent;color:var(--green);border:1.5px solid var(--green)}
-    .pm-outline:hover{background:var(--green-light);color:var(--green-dark)}
+    .pm-btn:hover{background:var(--primary-hover);color:var(--on-primary);transform:translateY(-1px);box-shadow:0 5px 12px rgba(46,204,113,.2)}
+    .pm-outline{background:transparent;color:var(--primary);border:1.5px solid var(--primary)}
+    .pm-outline:hover{background:var(--green-light);color:var(--primary-hover)}
     .pm-danger{background:var(--red)}.pm-danger:hover{background:#c0392b;box-shadow:0 5px 12px rgba(231,76,60,.2)}
-    .access-banner{display:none;margin-top:12px;padding:10px 12px;border-radius:10px;font-size:.84rem;font-weight:700;line-height:1.4}
+    .access-banner{display:none;align-items:flex-start;gap:8px;margin-top:12px;padding:10px 12px;border-radius:12px;font-size:.84rem;font-weight:700;line-height:1.4}.access-banner .lucide{flex:none;width:16px;height:16px;margin-top:1px}
+    .access-banner.far{background:var(--bg-soft);color:var(--text-main);border:1px solid var(--border)}
     .access-banner.walk{background:#e8f4fd;color:#1a5f8a;border:1px solid #b6dcf3}
     .access-banner.special_trip{background:#fff3e0;color:#9a5b00;border:1px solid #ffd699}
     body.dark .access-banner.walk{background:#12303f;color:#9bd0ee;border-color:#1f4d66}
@@ -1425,7 +1426,7 @@ function injectUiStyles() {
     .pc-field{margin-top:12px}
     .pc-field label{display:block;font-size:.82rem;font-weight:600;color:var(--text-muted);margin-bottom:5px}
     .pc-input{width:100%;padding:10px 12px;background:var(--bg-input);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:.9rem;box-sizing:border-box}
-    .pc-input:focus{outline:none;border-color:var(--green)}
+    .pc-input:focus{outline:none;border-color:var(--primary)}
     .pc-error{color:var(--red);font-size:.78rem;margin:4px 0 0;min-height:0}
     @media (max-width:768px){.profile-menu{position:fixed;top:84px;right:12px;left:12px;width:auto}}
     `;

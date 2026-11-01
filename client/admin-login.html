@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Para - Admin Sign In</title>
+    <meta name="robots" content="noindex" />
+
+    <link rel="icon" type="image/png" href="../assets/img/favicon.png" />
+    <link rel="stylesheet" href="../style/global.css" />
+    <link rel="stylesheet" href="../style/features.css" />
+    <link rel="stylesheet" href="../style/auth.css" />
+
+    <!-- Apply dark mode before the page renders so there's no flash -->
+    <script src="../scripts/early-theme.js"></script>
+</head>
+
+<body>
+
+    <div id="notification-container" role="status" aria-live="polite"></div>
+
+    <!-- ADMIN SIGN IN: same look as the passenger login (auth.html), but with an account key instead of an email.
+         Handled by auth.js (doAdminLogin) and api/auth/admin_login.php. -->
+    <div class="auth-split">
+
+        <!-- LEFT: brand panel (hidden on phones). The cards are an illustration, not live data. -->
+        <aside class="auth-art sky">
+            <span class="sky-cloud far" aria-hidden="true"></span>
+            <span class="sky-cloud mid" aria-hidden="true"></span>
+            <span class="sky-cloud near" aria-hidden="true"></span>
+            <img src="../assets/img/para-fly.webp" width="575" height="640" alt="" class="auth-para" />
+            <a href="index.html" class="auth-logo"><img src="../assets/logo-wordmark.png" alt="Para home" /></a>
+
+            <div class="auth-stack" aria-hidden="true">
+                <div class="glass g1">
+                    <span class="glass-icon"><i data-lucide="check"></i></span>
+                    <p><b>Fare calculated</b><small>Tungko → Muzon, just now</small></p>
+                    <em>₱13.00</em>
+                </div>
+
+                <div class="glass g2">
+                    <p class="glass-key">Your trips this week</p>
+                    <p class="glass-value">12 <span><i data-lucide="trending-up"></i> 3 more</span></p>
+                    <div class="glass-bars"><i style="--h:.42"></i><i style="--h:.58"></i><i style="--h:.5"></i><i style="--h:.71"></i><i style="--h:.64"></i><i style="--h:.86"></i><i style="--h:1"></i></div>
+                </div>
+
+                <div class="glass g3">
+                    <span class="glass-avatars"><i><i data-lucide="graduation-cap"></i></i><i><i data-lucide="person-standing"></i></i><i><i data-lucide="accessibility"></i></i></span>
+                    <p><b>Discount applied</b><small>Student, senior and PWD: 20% off</small></p>
+                </div>
+            </div>
+
+
+            <p class="auth-tagline">Know your fare before you ride.<small>Para · fare and route guide for San Jose del Monte</small></p>
+        </aside>
+
+        <main class="auth-main">
+            <div class="auth-topbar">
+                <a href="index.html" class="auth-mlogo"><img src="../assets/logo-wordmark.png" alt="Para home" /></a>
+                <button id="dark-toggle" class="dark-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false">
+                    <span class="toggle-knob"><i data-lucide="sun" class="icon-light"></i><i data-lucide="moon" class="icon-dark"></i></span>
+                </button>
+            </div>
+
+            <section id="admin-login" class="auth-page" aria-labelledby="admin-login-title">
+                <div class="auth-card">
+                    <p class="eyebrow"><i data-lucide="shield-check"></i> Administrator</p>
+                    <h1 id="admin-login-title">Admin Sign In</h1>
+                    <p class="auth-sub">Use the account key and password given to the Para administrator.</p>
+
+                    <div class="auth-field">
+                        <div class="auth-input-group">
+                            <i data-lucide="key-round" class="auth-lead"></i>
+                            <span class="float-field"><input type="text" id="admin-key" placeholder=" " autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="40" /><label for="admin-key">Account key</label></span>
+                        </div>
+                    </div>
+
+                    <div class="auth-field">
+                        <div class="auth-input-group">
+                            <i data-lucide="lock" class="auth-lead"></i>
+                            <span class="float-field"><input type="password" id="admin-password" placeholder=" " autocomplete="current-password" /><label for="admin-password">Password</label></span>
+                            <button type="button" class="auth-input-icon" id="toggle-pw-admin" aria-label="Show password">
+                                <i data-lucide="eye-off" class="pw-off"></i><i data-lucide="eye" class="pw-on"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button class="btn-auth" id="admin-login-submit" type="button"><span class="lbl">Sign in</span><span class="busy">Signing in</span><span class="done"><i data-lucide="check"></i> Signed in</span></button>
+
+                    <p class="auth-link-row">Not an administrator? <a href="auth.html">Go to the passenger login</a></p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/lucide@1.66.0/dist/umd/lucide.min.js"></script>
+    <script src="../scripts/api.js"></script>
+    <script src="../scripts/auth.js"></script>
+    <script src="../scripts/app.js"></script>
+    <script src="../scripts/ui.js"></script>
+
+</body>
+
+</html>

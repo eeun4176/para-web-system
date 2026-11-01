@@ -27,6 +27,9 @@ if (!password_verify($password, $hash) || !$u) {
 
 clear_failed_logins($email);
 
+// Admins have their own sign-in page (account key + password)
+if ($u['role'] === 'admin') fail(403, 'Administrators sign in on the admin sign-in page.');
+
 if (password_needs_rehash($u['password_hash'], PASSWORD_DEFAULT)) {
     db()->prepare('UPDATE users SET password_hash = ? WHERE id = ?')
         ->execute([password_hash($password, PASSWORD_DEFAULT), $u['id']]);

@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';   // DB-backed session (shared 
 require_once __DIR__ . '/../config/db.php';
 
 if (empty($_SESSION['user_id'])) {
-    header('Location: auth.html');
+    header('Location: admin-login.html');
     exit;
 }
 
@@ -17,7 +17,7 @@ try {
         session_unset();
         session_destroy();
 
-        header('Location: auth.html');
+        header('Location: admin-login.html');
         exit;
     }
 
@@ -39,121 +39,73 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin - Para</title>
 
-    <link rel="icon" type="image/png" href="../assets/logo-1.png" />
+    <link rel="icon" type="image/png" href="../assets/img/favicon.png" />
 
     <link rel="stylesheet" href="../style/global.css" />
     <link rel="stylesheet" href="../style/admin.css" />
-
-    <link rel="stylesheet"
-        href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css" />
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" />
     <script src="../scripts/early-theme.js"></script>
 </head>
 
-<body>
+<body class="admin-body">
 
-    <!-- NAVBAR (the "Admin" link is added automatically for admins) -->
-    <nav class="navbar" role="navigation" aria-label="Main navigation">
-        <div class="navbar-inner">
-            <div class="nav-logo-container">
-                <a href="admin.php">
-                    <img src="../assets/logo-2.png" id="navbar-logo" alt="Para logo" />
-                </a>
-            </div>
-
-            <div class="nav-right">
-                <button id="dark-toggle" class="dark-toggle" aria-label="Toggle dark mode" aria-pressed="false">
-                    <div class="toggle-knob">
-                        <img src="../assets/light-icon.png" alt="Mode icon" />
-                    </div>
-                </button>
-                <div id="nav-auth-area">
-                    <a href="auth.html" class="nav-auth-btn">Log In</a>
-                </div>
-                <button class="hamburger-btn" id="hamburger-btn" aria-label="Open menu">
-                    <img src="../assets/menu.png" alt="Menu" />
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    
-    <nav class="admin-subnav" aria-label="Admin navigation">
-        <a href="admin.php" class="active" aria-current="page">Dashboard</a>
-        <a href="admin-fares.php">Fare Management</a>
-        <a href="admin-landmarks.php">Public Landmarks</a>
-        <a href="admin-users.php">Users</a>
-        <a href="admin-audit.php">Audit Log</a>
-    </nav>
-
-
-    <div class="sidebar-overlay" id="sidebar-overlay">
-        <aside class="sidebar" role="dialog" aria-label="Mobile navigation">
-            <button class="sidebar-close" id="sidebar-close" aria-label="Close menu">&times;</button>
-            <div id="sidebar-auth-area">
-                <a href="auth.html" class="sidebar-auth-btn">Log In</a>
-            </div>
-        </aside>
-    </div>
+    <?php $activePage = 'dashboard'; require __DIR__ . '/partials/admin-nav.php'; ?>
 
     <div id="notification-container" role="status" aria-live="polite"></div>
 
-    <main>
+    <main class="admin-main">
     <div class="admin-wrap">
-        <h1 class="admin-title">Admin Dashboard</h1>
-
         <div class="admin-card" id="admin-denied" style="display: none;">
-            <h2>Admins only</h2>
+            <h2>Admins Only</h2>
             <p class="admin-hint">You need an admin account to see this page.</p>
             <a href="index.html">Back to home</a>
         </div>
 
         <div id="admin-content" style="display: none;">
 
+            <!-- Numbers (filled by admin.js: loadStats) -->
+            <div class="stat-grid" id="stat-grid"></div>
+
+            <!-- Charts drawn with plain HTML bars (admin.js: loadCharts) -->
+            <div class="dash-two">
+                <section class="admin-card">
+                    <div class="card-head"><h2>Trips per Day</h2><span class="admin-cap">Last 14 days</span></div>
+                    <div class="day-bars" id="chart-trips"></div>
+                    <p class="chart-readout" id="trips-readout"></p>
+                </section>
+
+                <section class="admin-card">
+                    <div class="card-head"><h2>Trips by Vehicle</h2><span class="admin-cap">Share of trips</span></div>
+                    <div class="bar-list" id="chart-vehicle"></div>
+                </section>
+            </div>
+
+            <!-- Where people go (admin.js: loadHeatmap). The calendar is the icon in the header. -->
             <section class="admin-card">
-                <h2>Overview</h2>
-                <div class="stat-grid" id="stat-grid"></div>
+                <div class="card-head"><h2>Where People Go</h2><span class="admin-cap">Trip destinations, last 90 days</span></div>
+                <div class="heat-map" id="heat-map" role="img" aria-label="Heat map of trip destinations in SJDM"></div>
+                <p class="heat-legend">Fewer trips <i></i> More trips</p>
             </section>
 
             <section class="admin-card">
-                <h2>Charts</h2>
-                <div class="chart-grid">
-                    <div class="chart-card">
-                        <h3>Trips per day (last 14 days)</h3>
-                        <div class="chart-box">
-                            <canvas id="chart-trips"></canvas>
-                            <p class="chart-empty" id="empty-trips">No trips yet.</p>
-                        </div>
-                    </div>
-
-                    <div class="chart-card">
-                        <h3>Trips by vehicle type</h3>
-                        <div class="chart-box">
-                            <canvas id="chart-vehicle"></canvas>
-                            <p class="chart-empty" id="empty-vehicle">No trips yet.</p>
-                        </div>
-                    </div>
-
-                    <div class="chart-card">
-                        <h3>Most common destinations</h3>
-                        <div class="chart-box">
-                            <canvas id="chart-dest"></canvas>
-                            <p class="chart-empty" id="empty-dest">No trips yet.</p>
-                        </div>
-                    </div>
-                </div>
+                <div class="card-head"><h2>Most Common Destinations</h2><span class="admin-cap">Saved trips</span></div>
+                <div class="bar-list" id="chart-dest"></div>
             </section>
 
         </div>
     </div>
+
 </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/lucide@1.66.0/dist/umd/lucide.min.js"></script>
     <script src="../scripts/api.js"></script>
     <script src="../scripts/auth.js"></script>
     <script src="../scripts/data-manager.js"></script>
     <script src="../scripts/app.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
     <script src="../scripts/admin.js"></script>
+    <script src="../scripts/ui.js"></script>
 
 </body>
 

@@ -6,7 +6,7 @@ require_method('GET');
 
 $user = null;
 if (!empty($_SESSION['user_id'])) {
-    $s = db()->prepare('SELECT id, name, email, role, profile_picture FROM users WHERE id = ?');
+    $s = db()->prepare('SELECT id, name, email, account_key, role, profile_picture FROM users WHERE id = ?');
     $s->execute([$_SESSION['user_id']]);
     $user = $s->fetch() ?: null;
     if (!$user) unset($_SESSION['user_id']);
@@ -14,6 +14,7 @@ if (!empty($_SESSION['user_id'])) {
 if ($user) {
     $user['id'] = (int)$user['id'];
     $user['profilePicture'] = $user['profile_picture'];
-    unset($user['profile_picture']);
+    $user['accountKey'] = $user['account_key'];
+    unset($user['profile_picture'], $user['account_key']);
 }
 ok(['loggedIn' => $user !== null, 'user' => $user, 'csrf' => csrf_token()]);

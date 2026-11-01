@@ -17,7 +17,7 @@ $label = trim((string)($in['label'] ?? ''));
 
 $errors = [];
 if (!preg_match('/^[a-z][a-z0-9_]{1,' . ($maxCode - 1) . '}$/', $code)) {
-    $errors['code'] = 'Code: lowercase letters, numbers and underscores, starting with a letter (2 to ' . $maxCode . ' characters).';
+    $errors['code'] = 'Code: Lowercase letters, numbers and underscores, starting with a letter (2 to ' . $maxCode . ' characters).';
 }
 if ($label === '' || mb_strlen($label) > $maxLabel) $errors['label'] = 'Label is required (max ' . $maxLabel . ' characters).';
 

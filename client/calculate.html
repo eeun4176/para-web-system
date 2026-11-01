@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Calculate - Para</title>
 
-    <link rel="icon" type="image/png" href="../assets/logo-1.png" />
+    <link rel="icon" type="image/png" href="../assets/img/favicon.png" />
 
     <link rel="stylesheet" href="../style/global.css" />
     <link rel="stylesheet" href="../style/calculate.css" />
@@ -14,44 +14,35 @@
 
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" />
 
-    <link rel="stylesheet"
-        href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css" />
-    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-brands/css/uicons-brands.css" />
-    <!-- Apply dark mode before page renders so there's no flash -->
+    <!-- Apply dark mode before the page renders so there's no flash -->
     <script src="../scripts/early-theme.js"></script>
 </head>
 
-<body>
+<body class="calc-body">
 
     <!-- NAVBAR -->
-    <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <nav class="navbar is-glass" id="navbar" aria-label="Main navigation">
         <div class="navbar-inner">
 
             <div class="nav-logo-container">
                 <a href="index.html">
-                    <img src="../assets/logo-2.png" id="navbar-logo" alt="Para logo" />
+                    <img src="../assets/logo-wordmark.png" id="navbar-logo" alt="Para home" />
                 </a>
             </div>
 
             <ul class="nav-links" aria-label="Site navigation">
                 <li><a href="index.html">Home</a></li>
-                <li><a href="calculate.html" class="active">Calculate</a></li>
+                <li><a href="calculate.html" class="active" aria-current="page">Calculate</a></li>
                 <li><a href="aboutus.html">About Us</a></li>
             </ul>
 
             <div class="nav-right">
-                <button id="dark-toggle" class="dark-toggle" aria-label="Toggle dark mode" aria-pressed="false">
-                    <div class="toggle-knob">
-                        <img src="../assets/light-icon.png" alt="Mode icon" />
-                    </div>
+                <button id="dark-toggle" class="dark-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false">
+                    <span class="toggle-knob"><i data-lucide="sun" class="icon-light"></i><i data-lucide="moon" class="icon-dark"></i></span>
                 </button>
-                <div id="nav-auth-area">
-                    <a href="auth.html" class="nav-auth-btn">Log In</a>
-                </div>
+                <div id="nav-auth-area"></div>
 
-                <button class="hamburger-btn" id="hamburger-btn" aria-label="Open menu">
-                    <img src="../assets/menu.png" alt="Menu" />
-                </button>
+                <button class="hamburger-btn lines" id="hamburger-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="sidebar-overlay"><span></span><span></span><span></span></button>
             </div>
 
         </div>
@@ -60,15 +51,13 @@
     <!-- Sidebar for mobile and tablet -->
     <div class="sidebar-overlay" id="sidebar-overlay">
         <aside class="sidebar" role="dialog" aria-label="Mobile navigation">
-            <button class="sidebar-close" id="sidebar-close" aria-label="Close menu">&times;</button>
+            <button class="sidebar-close" id="sidebar-close" type="button" aria-label="Close menu"><i data-lucide="x"></i></button>
             <ul class="sidebar-nav">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="calculate.html" class="active">Calculate</a></li>
-                <li><a href="aboutus.html">About Us</a></li>
+                <li><a href="index.html"><i data-lucide="house"></i> Home</a></li>
+                <li><a href="calculate.html" class="active"><i data-lucide="calculator"></i> Calculate</a></li>
+                <li><a href="aboutus.html"><i data-lucide="info"></i> About Us</a></li>
             </ul>
-            <div id="sidebar-auth-area">
-                <a href="auth.html" class="sidebar-auth-btn">Log In</a>
-            </div>
+            <div id="sidebar-auth-area"></div>
         </aside>
     </div>
 
@@ -77,175 +66,178 @@
 
     <main>
 
-        <!-- CALCULATE LAYOUT -->
+        <!-- CALCULATE LAYOUT: the map fills the screen, the panel floats on top (a bottom sheet on phones) -->
         <div class="calculate-page-wrap">
             <div class="calc-layout">
 
-                <!-- Left panel: inputs + fare result + hint -->
-                <aside>
-                    <div class="input-card">
+                <aside class="calc-panel" id="calc-panel" aria-label="Trip planner">
+                    <!-- Phones: grab handle to shrink/grow the sheet -->
+                    <button class="sheet-handle" id="sheet-handle" type="button" aria-label="Show or hide the trip panel"></button>
 
-                        <!-- Origin / Destination with swap button -->
-                        <div class="input-row">
-                            <div class="route-icons">
-                                <div class="dot-top"></div>
-                                <div class="route-line"></div>
-                                <div class="dot-bot"></div>
-                            </div>
-                            <div class="route-inputs">
-                                <div class="search-input-wrapper">
-                                    <input type="text" id="origin-input" placeholder="Origin" autocomplete="off"
-                                        aria-label="Origin location" />
-                                    <div class="search-dropdown" id="origin-dropdown" role="listbox"></div>
-                                </div>
-                                <div class="search-input-wrapper">
-                                    <input type="text" id="dest-input" placeholder="Destination" autocomplete="off"
-                                        aria-label="Destination location" />
-                                    <div class="search-dropdown" id="dest-dropdown" role="listbox"></div>
-                                </div>
-                            </div>
-                            <button class="swap-btn" id="swap-btn" title="Swap origin and destination"
-                                aria-label="Swap">
-                                <i class="fi fi-rr-arrows-h-copy"></i>
-                            </button>
+                    <div class="panel-head">
+                        <div class="calc-tabs" role="tablist" aria-label="Panel sections">
+                            <button type="button" class="calc-tab is-active" role="tab" data-tab="trip" aria-selected="true"><i data-lucide="navigation"></i> Trip</button>
+                            <button type="button" class="calc-tab" role="tab" data-tab="saved" aria-selected="false"><i data-lucide="bookmark"></i> Saved</button>
                         </div>
-
-                        <!-- Transportation type (options are refreshed from the database by fare-engine.js) -->
-                        <div class="select-row">
-                            <i class="fi fi-rr-bus select-icon" aria-hidden="true"></i>
-                            <select id="transport-select" aria-label="Transportation type">
-                                <option value="">Transportation</option>
-                                <option value="bus_aircon">Bus (Aircon)</option>
-                                <option value="bus_ordinary">Bus (Ordinary)</option>
-                                <option value="modern_jeepney">Modern Jeepney</option>
-                                <option value="traditional_jeepney">Traditional Jeepney</option>
-                            </select>
-                        </div>
-
-                        <!-- Passenger type -->
-                        <div class="select-row">
-                            <i class="fi fi-rr-user select-icon" aria-hidden="true"></i>
-                            <select id="passenger-select" aria-label="Passenger type">
-                                <option value="">Passenger</option>
-                                <option value="regular">Regular</option>
-                                <option value="student">Student (20% off)</option>
-                                <option value="senior">Senior Citizen (20% off)</option>
-                                <option value="pwd">PWD (20% off)</option>
-                            </select>
-                        </div>
-
-                    </div>
-
-                    <!-- Fare result (hidden until all inputs are filled) -->
-                    <div class="result-card" id="result-card" role="region" aria-label="Fare calculation result">
-                        <h3><i class="fi fi-rr-receipt" aria-hidden="true"></i> Fare Calculation Result</h3>
-                        <div class="result-line">
-                            <span class="label">Origin:</span>
-                            <span class="val" id="res-origin">—</span>
-                        </div>
-                        <div class="result-line">
-                            <span class="label">Destination:</span>
-                            <span class="val" id="res-dest">—</span>
-                        </div>
-                        <div class="result-line">
-                            <span class="label">Distance:</span>
-                            <span class="val" id="res-distance">—</span>
-                        </div>
-                        <div class="result-line">
-                            <span class="label">Est. Travel Time:</span>
-                            <span class="val" id="res-eta">—</span>
-                        </div>
-                        <div class="result-divider"></div>
-                        <div class="result-line">
-                            <span class="label">Base Fare:</span>
-                            <span class="val" id="res-base">—</span>
-                        </div>
-                        <div class="result-line">
-                            <span class="label">Excess Fare:</span>
-                            <span class="val" id="res-excess">—</span>
-                        </div>
-                        <div class="result-line">
-                            <span class="label">Passenger Type:</span>
-                            <span class="val" id="res-ptype">—</span>
-                        </div>
-                        <div class="result-line">
-                            <span class="label">Discount:</span>
-                            <span class="val" id="res-discount">—</span>
-                        </div>
-                        <div class="result-total">
-                            <span>Total:</span>
-                            <span id="res-total">₱0.00</span>
-                        </div>
-                        <div class="access-banner" id="access-banner" role="status"></div>
-                        <p class="result-note">
-                            Distance is measured in a straight line and travel time uses an average speed,
-                            so the actual fare and time may vary.
-                        </p>
-                        <div class="result-actions">
-                        <button type="button" class="btn btn-outline btn-sm" id="fav-btn">
-                         <i class="fi fi-rr-star" aria-hidden="true"></i> Favorite
+                        <button class="panel-collapse" id="panel-collapse" type="button" aria-expanded="true" aria-controls="panel-body" title="Hide panel" aria-label="Hide panel">
+                            <i data-lucide="chevrons-left" class="when-open"></i>
                         </button>
                     </div>
-                    </div>
 
-                    <div class="para-hint" id="para-hint">
-                        <img src="../assets/para-4.png" alt="Para mascot" class="para-mascot" />
-                        <p id="para-hint-text"><strong>Select first at the top to see Fare Price!</strong></p>
-                    </div>
+                    <!-- Shown instead of the panel when it is collapsed -->
+                    <button class="panel-summary" id="panel-summary" type="button" aria-controls="panel-body" aria-label="Show the trip panel">
+                        <i data-lucide="navigation"></i>
+                        <span class="summary-route" id="summary-route">Where to Today?</span>
+                        <b class="summary-fare" id="summary-fare"></b>
+                        <i data-lucide="chevrons-right"></i>
+                    </button>
 
-                </aside>
+                    <div class="panel-body" id="panel-body">
 
-                <div class="map-container">
-                    <div id="map" role="application" aria-label="Interactive SJDM map"></div>
+                        <!-- TRIP: route, vehicle, passenger, fare result -->
+                        <section class="calc-tabpanel" data-panel="trip" role="tabpanel">
+                            <h1 class="calc-title">Where to Today?</h1>
+                            <p class="calc-sub">Search two places in SJDM to see the route and fare.</p>
 
-                    <!-- Floating buttons over the map: Favorites / Recent Trips / My Landmarks -->
-                    <div class="map-overlay-top-right">
+                            <!-- Origin / Destination with swap button -->
+                            <div class="input-row">
+                                <div class="route-icons" aria-hidden="true">
+                                    <div class="dot-top"></div>
+                                    <div class="route-line"></div>
+                                    <div class="dot-bot"></div>
+                                </div>
+                                <div class="route-inputs">
+                                    <div class="search-input-wrapper">
+                                        <input type="text" id="origin-input" placeholder="From: search a place" autocomplete="off"
+                                            aria-label="Origin location" />
+                                        <div class="search-dropdown" id="origin-dropdown" role="listbox"></div>
+                                    </div>
+                                    <div class="search-input-wrapper">
+                                        <input type="text" id="dest-input" placeholder="To: search a place" autocomplete="off"
+                                            aria-label="Destination location" />
+                                        <div class="search-dropdown" id="dest-dropdown" role="listbox"></div>
+                                    </div>
+                                </div>
+                                <button class="swap-btn" id="swap-btn" type="button" title="Swap origin and destination"
+                                    aria-label="Swap origin and destination">
+                                    <i data-lucide="arrow-up-down"></i>
+                                </button>
+                            </div>
 
-                        <div class="overlay-item">
-                            <button class="my-landmarks-btn" id="favorites-toggle-btn" aria-expanded="false"
-                                aria-controls="favorites-panel">
-                                <i class="fi fi-rr-heart" aria-hidden="true"></i> Favorites
-                                <i class="fi fi-rr-angle-small-down" aria-hidden="true"></i>
-                            </button>
-                            <div class="landmarks-panel wide" id="favorites-panel" role="dialog"
-                                aria-label="My favorite routes">
-                                <div class="panel-head"><span>Favorite routes</span></div>
+                            <!-- Vehicle: the chips (ui.js) set this hidden <select>, which app.js reads.
+                                 The options are refreshed from the database by fare-engine.js. -->
+                            <div class="chip-group">
+                                <span class="chip-group-label" id="transport-label">Vehicle</span>
+                                <div class="chips" id="transport-chips" role="group" aria-labelledby="transport-label"></div>
+                                <select id="transport-select" class="chip-source" aria-label="Transportation type">
+                                    <option value="">Transportation</option>
+                                    <option value="bus_aircon">Bus (Aircon)</option>
+                                    <option value="bus_ordinary">Bus (Ordinary)</option>
+                                    <option value="modern_jeepney">Modern Jeepney</option>
+                                    <option value="traditional_jeepney">Traditional Jeepney</option>
+                                </select>
+                            </div>
+
+                            <!-- Passenger type (same idea as Vehicle) -->
+                            <div class="chip-group">
+                                <span class="chip-group-label" id="passenger-label">Passenger</span>
+                                <div class="chips" id="passenger-chips" role="group" aria-labelledby="passenger-label"></div>
+                                <select id="passenger-select" class="chip-source" aria-label="Passenger type">
+                                    <option value="">Passenger</option>
+                                    <option value="regular">Regular</option>
+                                    <option value="student">Student (20% off)</option>
+                                    <option value="senior">Senior Citizen (20% off)</option>
+                                    <option value="pwd">PWD (20% off)</option>
+                                </select>
+                            </div>
+
+                            <!-- Other road routes (map-logic.js fills this when OSRM finds more than one) -->
+                            <div class="chip-group" id="route-options" hidden>
+                                <span class="chip-group-label" id="route-label">Route</span>
+                                <div class="chips" role="group" aria-labelledby="route-label"></div>
+                            </div>
+
+                            <!-- Fare result (hidden until everything is picked) -->
+                            <div class="result-card" id="result-card" role="region" aria-label="Fare calculation result" aria-live="polite">
+                                <div class="result-head">
+                                    <span class="result-label">Your fare</span>
+                                    <span class="result-total" id="res-total">₱0.00</span>
+                                    <span class="result-route"><span id="res-origin">—</span> <i data-lucide="arrow-right"></i> <span id="res-dest">—</span></span>
+                                    <span class="result-meta"><span id="res-distance">—</span> · <span id="res-eta">—</span></span>
+                                </div>
+
+                                <div class="access-banner" id="access-banner" role="status"></div>
+
+                                <details class="result-breakdown">
+                                    <summary>See fare breakdown <i data-lucide="chevron-down"></i></summary>
+                                    <div class="result-line">
+                                        <span class="label">Base fare</span>
+                                        <span class="val" id="res-base">—</span>
+                                    </div>
+                                    <div class="result-line">
+                                        <span class="label">Excess fare</span>
+                                        <span class="val" id="res-excess">—</span>
+                                    </div>
+                                    <div class="result-line">
+                                        <span class="label">Passenger type</span>
+                                        <span class="val" id="res-ptype">—</span>
+                                    </div>
+                                    <div class="result-line">
+                                        <span class="label">Discount</span>
+                                        <span class="val" id="res-discount">—</span>
+                                    </div>
+                                </details>
+
+                                <p class="result-note" id="result-note">
+                                    Distance follows the road route on the map and travel time uses an average speed,
+                                    so the actual fare and time may vary a little.
+                                </p>
+                                <div class="result-actions">
+                                    <button type="button" class="btn btn-outline btn-sm" id="fav-btn">
+                                        <i data-lucide="heart"></i> Save as favorite
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="para-hint" id="para-hint">
+                                <img src="../assets/img/para-hint.webp" width="209" height="260" alt="" class="para-mascot" />
+                                <p id="para-hint-text"><strong>Pick where you're going, and I'll work out your fare!</strong></p>
+                            </div>
+                        </section>
+
+                        <!-- SAVED: favorites, recent trips and landmarks (lists filled by app.js) -->
+                        <section class="calc-tabpanel" data-panel="saved" role="tabpanel" hidden>
+                            <div class="saved-switch" role="tablist" aria-label="Saved items">
+                                <button type="button" class="saved-tab is-active" data-pane="favorites" aria-selected="true">Favorites</button>
+                                <button type="button" class="saved-tab" data-pane="trips" aria-selected="false">Recent</button>
+                                <button type="button" class="saved-tab" data-pane="landmarks" aria-selected="false">Landmarks</button>
+                            </div>
+
+                            <div class="saved-pane" data-pane="favorites">
+                                <p class="saved-hint">Tap a favorite to load it.</p>
                                 <div id="favorites-list"></div>
                             </div>
-                        </div>
 
-                        <div class="overlay-item">
-                            <button class="my-landmarks-btn" id="trips-toggle-btn" aria-expanded="false"
-                                aria-controls="trips-panel">
-                                <i class="fi fi-rr-time-past" aria-hidden="true"></i> Recent Trips
-                                <i class="fi fi-rr-angle-small-down" aria-hidden="true"></i>
-                            </button>
-                            <div class="landmarks-panel wide" id="trips-panel" role="dialog"
-                                aria-label="My recent trips">
-                                <div class="panel-head">
-                                    <span>Tap a trip to run it again</span>
-                                    <span><button type="button" class="link-btn" id="trips-export-btn" style="color: var(--green); margin-right: 10px;">Export JSON</button><button type="button" class="link-btn" id="trips-clear-btn">Clear all</button></span>
+                            <div class="saved-pane" data-pane="trips" hidden>
+                                <div class="saved-pane-head">
+                                    <p class="saved-hint">Tap a trip to run it again.</p>
+                                    <span class="panel-actions"><button type="button" class="link-btn export" id="trips-export-btn">Export JSON</button><button type="button" class="link-btn" id="trips-clear-btn">Clear all</button></span>
                                 </div>
                                 <div id="trips-list"></div>
                             </div>
-                        </div>
 
-                        <div class="overlay-item">
-                            <button class="my-landmarks-btn" id="landmarks-toggle-btn" aria-expanded="false"
-                                aria-controls="landmarks-panel">
-                                <i class="fi fi-rr-star" aria-hidden="true"></i> My Landmarks
-                                <i class="fi fi-rr-angle-small-down" aria-hidden="true"></i>
-                            </button>
-                            <div class="landmarks-panel" id="landmarks-panel" role="dialog"
-                                aria-label="My saved landmarks">
+                            <div class="saved-pane" data-pane="landmarks" hidden>
                                 <input type="text" class="landmarks-search" id="landmarks-search"
                                     placeholder="Search landmarks..." aria-label="Search landmarks" />
                                 <div id="landmarks-list"></div>
+                                <p class="saved-hint"><i data-lucide="mouse-pointer-click"></i> Right-click the map to save a new landmark.</p>
                             </div>
-                        </div>
-
+                        </section>
                     </div>
+                </aside>
 
+                <div class="map-container">
+                    <div id="map" role="application" aria-label="Interactive SJDM map. Right-click to save a landmark."></div>
                 </div>
 
             </div>
@@ -256,7 +248,7 @@
     <!-- MODAL: Add Landmark -->
     <div class="modal-overlay" id="add-landmark-modal" role="dialog" aria-modal="true" aria-labelledby="add-lm-title">
         <div class="modal">
-            <h2 id="add-lm-title"><i class="fi fi-rr-marker" aria-hidden="true"></i> Add a Landmark</h2>
+            <h2 id="add-lm-title"><i data-lucide="map-pin"></i> Add a Landmark</h2>
 
             <div class="form-group">
                 <label for="lm-name">Name:</label>
@@ -300,7 +292,7 @@
     <!-- MODAL: View Landmark -->
     <div class="modal-overlay" id="view-landmark-modal" role="dialog" aria-modal="true" aria-labelledby="view-lm-title">
         <div class="modal">
-            <h2 id="view-lm-title"><i class="fi fi-rr-tag" aria-hidden="true"></i> Landmark Details</h2>
+            <h2 id="view-lm-title"><i data-lucide="tag"></i> Landmark Details</h2>
             <span class="public-badge" id="view-lm-public" style="display: none;">Public landmark</span>
 
             <div class="result-line" style="margin-bottom: 12px;">
@@ -327,7 +319,7 @@
     <!-- MODAL: Edit Landmark -->
     <div class="modal-overlay" id="edit-landmark-modal" role="dialog" aria-modal="true" aria-labelledby="edit-lm-title">
         <div class="modal">
-            <h2 id="edit-lm-title"><i class="fi fi-rr-pencil" aria-hidden="true"></i> Edit Landmark</h2>
+            <h2 id="edit-lm-title"><i data-lucide="pencil"></i> Edit Landmark</h2>
 
             <input type="hidden" id="edit-lm-id" />
 
@@ -365,7 +357,7 @@
     <!-- MODAL: Save Favorite Route -->
     <div class="modal-overlay" id="add-favorite-modal" role="dialog" aria-modal="true" aria-labelledby="add-fav-title">
         <div class="modal">
-            <h2 id="add-fav-title"><i class="fi fi-rr-star" aria-hidden="true"></i> Save Favorite Route</h2>
+            <h2 id="add-fav-title"><i data-lucide="heart"></i> Save Favorite Route</h2>
 
             <div class="form-group">
                 <label for="fav-label">Label:</label>
@@ -383,12 +375,14 @@
     <!-- JS (order matters: libraries, then api.js, then the rest) -->
     <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/lucide@1.66.0/dist/umd/lucide.min.js"></script>
     <script src="../scripts/api.js"></script>
     <script src="../scripts/auth.js"></script>
     <script src="../scripts/fare-engine.js"></script>
     <script src="../scripts/data-manager.js"></script>
     <script src="../scripts/map-logic.js"></script>
     <script src="../scripts/app.js"></script>
+    <script src="../scripts/ui.js"></script>
 
 </body>
 

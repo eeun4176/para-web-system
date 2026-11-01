@@ -1,77 +1,251 @@
-/* HEADER SECTION */
-.about-header {
-    background: linear-gradient(135deg, #a8edbd, #6ddd96);
-    padding: 44px 32px;
-    text-align: center;
-    margin: 24px 24px 0;
-    border-radius: var(--radius);
-}
+/* ABOUT US PAGE (aboutus.html). Para tells the story. */
 
-.about-header h1 {
-    font-size: 2.4rem;
-    font-weight: 900;
-    color: var(--text-main);
-}
-
-/* CONTENT SECTION */
-.about-content {
-    max-width: 1000px;
-    margin: 48px auto;
-    padding: 0 32px;
-    display: flex;
-    justify-content: center;
-    align-items: stretch;
-    gap: 40px;
-}
-
-/* TEXT SECTION */
-.about-text {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.about-text p {
-    font-size: 1rem;
-    line-height: 1.7;
-    color: var(--text);
-    margin-bottom: 15px;
-}
-
-/* MASCOT SECTION */
-.about-mascot {
-    flex: 0 0 400px;
-    display: flex;
+/* ---------- 1. Intro: Para + speech bubble ---------- */
+.about-intro {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 56px 24px 40px;
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
     align-items: center;
+    gap: 48px;
+}
+
+/* Soft green blob behind Para */
+.about-mascot {
+    position: relative;
+}
+
+.about-mascot::before {
+    content: '';
+    position: absolute;
+    inset: 8% 6% 4%;
+    border-radius: 46% 54% 40% 60% / 55% 45% 55% 45%;
+    background: var(--green-light);
+    z-index: -1;
 }
 
 .about-mascot img {
     width: 100%;
-    height: auto;
-    max-height: 100%;
-    object-fit: contain;
-    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
+    max-width: 380px;
+    margin: 0 auto;
 }
 
-/* RESPONSIVE SECTION */
-@media (max-width: 768px) {
-    .about-content {
-        flex-direction: column;
+.about-bubble {
+    position: relative;
+    padding: 32px 34px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+}
+
+/* The little tail of the speech bubble, pointing at Para */
+.about-bubble::before {
+    content: '';
+    position: absolute;
+    left: -11px;
+    top: 56px;
+    width: 20px;
+    height: 20px;
+    background: var(--bg-card);
+    border-left: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    transform: rotate(45deg);
+}
+
+.about-bubble h1 {
+    font-size: clamp(1.8rem, 3.6vw, 2.5rem);
+    line-height: 1.15;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    color: var(--text-main);
+    margin: 6px 0 14px;
+}
+
+.about-bubble p {
+    color: var(--text-muted);
+    font-size: 1.04rem;
+    margin-bottom: 10px;
+}
+
+/* ---------- 2. Mission cards ---------- */
+.about-mission {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 24px 56px;
+    display: grid;
+    grid-template-columns: 1.25fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 20px;
+}
+
+.mission-card {
+    padding: 26px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+    transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease;
+}
+
+/* The big tile on the left takes both rows */
+.mission-big {
+    grid-row: span 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 320px;
+    background: var(--bg-soft);
+}
+
+.mission-big h2 {
+    font-size: 1.7rem;
+}
+
+.mission-big p {
+    max-width: 380px;
+    font-size: 1.04rem;
+}
+
+.mission-big .mission-icon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: auto;
+}
+
+.mission-sample {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-self: flex-start;
+    margin: 28px 0;
+    padding: 18px 22px;
+    border-radius: 18px;
+    background: var(--bg-card);
+    box-shadow: 0 0 0 1px var(--border), 0 10px 26px rgba(0, 0, 0, 0.06);
+}
+
+.mission-sample span {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.mission-sample b {
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text-main);
+}
+
+.mission-sample em {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-style: normal;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1f9d55;
+}
+
+html.dark .mission-sample em {
+    color: var(--accent);
+}
+
+.mission-sample .lucide {
+    width: 15px;
+    height: 15px;
+}
+
+/* Hover one tile: it grows, the others dim and shrink (spring easing above) */
+.mission-card:hover {
+    transform: scale(1.04);
+}
+
+.about-mission:has(.mission-card:hover) .mission-card:not(:hover) {
+    opacity: 0.42;
+    transform: scale(0.94);
+}
+
+.mission-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: var(--green-light);
+    color: var(--green-ink);
+    font-size: 1.3rem;
+}
+
+.mission-card h2 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 16px 0 6px;
+}
+
+.mission-card p {
+    color: var(--text-muted);
+}
+
+/* ---------- 3. Closing line ---------- */
+.about-cta {
+    max-width: 1052px;
+    margin: 0 auto 72px;
+    padding: 72px 36px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    border-radius: 28px;
+}
+
+.about-cta h2 {
+    max-width: 560px;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    line-height: 1.2;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #10202e;
+    margin-bottom: 22px;
+}
+
+html.dark .about-cta h2 {
+    color: #fff;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+    .about-intro {
+        grid-template-columns: 1fr;
+        gap: 24px;
         text-align: center;
     }
 
-    .about-mascot {
-        flex: 0 0 auto;
-        order: 2;
-    }
-
-    .about-text {
-        order: 1;
-    }
-
     .about-mascot img {
-        max-width: 280px;
-        margin: 0 auto;
+        max-width: 260px;
+    }
+
+    .about-bubble::before {
+        left: 50%;
+        top: -11px;
+        transform: translateX(-50%) rotate(135deg);
+    }
+
+    .about-mission {
+        grid-template-columns: 1fr;
+        grid-template-rows: none;
+    }
+
+    .mission-big {
+        grid-row: auto;
+        min-height: 240px;
+    }
+
+    .about-cta {
+        margin: 0 24px 56px;
+        padding: 56px 24px 64px;
     }
 }

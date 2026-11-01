@@ -4,35 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Account Settings - Para</title>
-    <link rel="icon" type="image/png" href="../assets/logo-1.png">
+    <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <link rel="stylesheet" href="../style/global.css">
     <link rel="stylesheet" href="../style/account-settings.css">
-    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css">
     <script src="../scripts/early-theme.js"></script>
 </head>
 <body>
-    <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <nav class="navbar" id="navbar" aria-label="Main navigation">
         <div class="navbar-inner">
-            <div class="nav-logo-container"><a href="index.html"><img src="../assets/logo-2.png" id="navbar-logo" alt="Para logo"></a></div>
+            <div class="nav-logo-container"><a href="index.html"><img src="../assets/logo-wordmark.png" id="navbar-logo" alt="Para home" /></a></div>
             <ul class="nav-links" aria-label="Site navigation">
                 <li><a href="index.html">Home</a></li>
                 <li><a href="calculate.html">Calculate</a></li>
                 <li><a href="aboutus.html">About Us</a></li>
             </ul>
             <div class="nav-right">
-                <button id="dark-toggle" class="dark-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false"><div class="toggle-knob"><img src="../assets/light-icon.png" alt="Mode icon"></div></button>
+                <button id="dark-toggle" class="dark-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false"><span class="toggle-knob"><i data-lucide="sun" class="icon-light"></i><i data-lucide="moon" class="icon-dark"></i></span></button>
                 <div id="nav-auth-area"></div>
-                <button class="hamburger-btn" id="hamburger-btn" type="button" aria-label="Open menu"><img src="../assets/menu.png" alt="Menu"></button>
+                <button class="hamburger-btn lines" id="hamburger-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="sidebar-overlay"><span></span><span></span><span></span></button>
             </div>
         </div>
     </nav>
     <div class="sidebar-overlay" id="sidebar-overlay">
         <aside class="sidebar" role="dialog" aria-label="Mobile navigation">
-            <button class="sidebar-close" id="sidebar-close" type="button" aria-label="Close menu">&times;</button>
+            <button class="sidebar-close" id="sidebar-close" type="button" aria-label="Close menu"><i data-lucide="x"></i></button>
             <ul class="sidebar-nav">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="calculate.html">Calculate</a></li>
-                <li><a href="aboutus.html">About Us</a></li>
+                <li><a href="index.html"><i data-lucide="house"></i> Home</a></li>
+                <li><a href="calculate.html"><i data-lucide="calculator"></i> Calculate</a></li>
+                <li><a href="aboutus.html"><i data-lucide="info"></i> About Us</a></li>
             </ul>
             <div id="sidebar-auth-area"></div>
         </aside>
@@ -41,59 +40,66 @@
 
     <main class="settings-page">
         <div class="settings-shell">
-            <a class="back-link" id="settings-back-link" href="index.html">Back To Home</a>
+            <!-- Who you are: a big picture beside your name -->
             <header class="settings-hero">
                 <div class="avatar-wrap">
                     <div class="avatar" id="settings-avatar">?</div>
-                    <button class="avatar-edit" id="change-picture" type="button" aria-label="Change profile picture"><i class="fi fi-rr-camera"></i></button>
+                    <button class="avatar-edit" id="change-picture" type="button" aria-label="Change profile picture"><i data-lucide="camera"></i></button>
                 </div>
-                <div><p class="eyebrow" id="settings-eyebrow">Account</p><h1 id="settings-title">Account Settings</h1><p class="muted" id="settings-description">Manage your profile, security, preferences, and saved information.</p></div>
+                <div class="hero-id">
+                    <p class="eyebrow">Account Settings</p>
+                    <h1 id="hero-name">Loading...</h1>
+                    <p class="muted" id="hero-email"></p>
+                </div>
+                <button class="settings-button outline hero-logout" id="logout" type="button"><i data-lucide="log-out"></i> Log out</button>
             </header>
-            <div class="settings-grid">
-                <section class="settings-card">
-                    <div class="card-heading"><h2 id="personal-card-title">Personal information</h2><p id="personal-card-description">Update the details associated with your account.</p></div>
-                    <div class="detail-list">
-                        <div><span>Name</span><strong id="profile-name">Loading...</strong></div>
-                        <div><span>Email</span><strong id="profile-email">Loading...</strong></div>
-                        <div><span>Member since</span><strong id="profile-member-since">Loading...</strong></div>
-                    </div>
-                    <div class="button-row"><button class="settings-button outline" id="edit-name">Edit name</button><button class="settings-button outline" id="change-email">Change email</button></div>
-                </section>
-                <section class="settings-card">
-                    <div class="card-heading"><h2>Security</h2><p id="security-card-description">Both your current password and recovery code are required.</p></div>
-                    <button class="settings-button outline" id="change-password">Change password</button>
-                </section>
-                <section class="settings-card user-only">
-                    <div class="card-heading"><h2>Commute preferences</h2><p>Choose the defaults used on the fare calculator.</p></div>
-                    <div class="form-grid">
-                        <label>Passenger type<select id="default-passenger"><option value="">Loading...</option></select></label>
-                        <label>Transportation<select id="default-transport"><option value="">Loading...</option></select></label>
-                    </div>
-                    <button class="settings-button primary" id="save-preferences">Save preferences</button>
-                </section>
-                <section class="settings-card user-only">
-                    <div class="card-heading"><h2>Account overview</h2><p>Your saved Para activity.</p></div>
-                    <div class="stats-grid">
-                        <div><strong id="stat-trips">—</strong><span>Trips</span></div><div><strong id="stat-fare">—</strong><span>Total fare</span></div><div><strong id="stat-favorites">—</strong><span>Favorites</span></div><div><strong id="stat-landmarks">—</strong><span>Landmarks</span></div>
-                    </div>
-                </section>
+
+            <!-- One section at a time (the highlight slides between the buttons, see ui.js) -->
+            <div class="seg settings-tabs" role="tablist" aria-label="Settings sections">
+                <button type="button" class="seg-btn is-active" role="tab" data-tab="profile" aria-selected="true"><i data-lucide="user"></i> Profile</button>
+                <button type="button" class="seg-btn" role="tab" data-tab="security" aria-selected="false"><i data-lucide="shield-check"></i> Security</button>
+                <button type="button" class="seg-btn" role="tab" data-tab="preferences" aria-selected="false"><i data-lucide="sliders-horizontal"></i> Preferences</button>
+                <button type="button" class="seg-btn" role="tab" data-tab="activity" aria-selected="false"><i data-lucide="chart-column"></i> Activity</button>
             </div>
-            <section class="settings-card admin-only admin-overview" id="admin-overview">
-                <div class="card-heading"><p class="eyebrow">At a glance</p><h2>Operations overview</h2><p>Monitor activity without leaving your account workspace.</p></div>
-                <div class="admin-stat-grid" id="settings-admin-stats"></div>
-                <div class="admin-chart-grid">
-                    <div class="settings-chart-card"><h3>Trips per day</h3><div class="settings-chart-box"><canvas id="settings-chart-trips"></canvas><p id="settings-empty-trips">No trips yet.</p></div></div>
-                    <div class="settings-chart-card"><h3>Vehicle mix</h3><div class="settings-chart-box"><canvas id="settings-chart-vehicle"></canvas><p id="settings-empty-vehicle">No trips yet.</p></div></div>
-                    <div class="settings-chart-card"><h3>Top destinations</h3><div class="settings-chart-box"><canvas id="settings-chart-dest"></canvas><p id="settings-empty-dest">No trips yet.</p></div></div>
+
+            <section class="settings-card settings-panel" data-panel="profile" role="tabpanel">
+                <div class="card-heading"><h2>Personal Information</h2><p>Update the details on your account.</p></div>
+                <div class="detail-list">
+                    <div><span>Name</span><strong id="profile-name">Loading...</strong><button class="settings-button outline" id="edit-name" type="button">Edit</button></div>
+                    <div><span>Email</span><strong id="profile-email">Loading...</strong><button class="settings-button outline" id="change-email" type="button">Change</button></div>
+                    <div><span>Member since</span><strong id="profile-member-since">Loading...</strong></div>
                 </div>
             </section>
-            <div class="page-actions"><button class="settings-button danger" id="logout">Log out</button></div>
+
+            <section class="settings-card settings-panel" data-panel="security" role="tabpanel" hidden>
+                <div class="card-heading"><h2>Security</h2><p>Changing your password needs your current password and your recovery code.</p></div>
+                <div class="detail-list">
+                    <div><span>Password</span><strong>••••••••</strong><button class="settings-button outline" id="change-password" type="button">Change</button></div>
+                </div>
+            </section>
+
+            <section class="settings-card settings-panel" data-panel="preferences" role="tabpanel" hidden>
+                <div class="card-heading"><h2>Commute Preferences</h2><p>The fare calculator starts with these.</p></div>
+                <div class="form-grid">
+                    <label>Passenger type<select id="default-passenger"><option value="">Loading...</option></select></label>
+                    <label>Transportation<select id="default-transport"><option value="">Loading...</option></select></label>
+                </div>
+                <button class="settings-button primary" id="save-preferences" type="button">Save preferences</button>
+            </section>
+
+            <section class="settings-card settings-panel" data-panel="activity" role="tabpanel" hidden>
+                <div class="card-heading"><h2>Your Activity</h2><p>What you have saved in Para.</p></div>
+                <div class="stats-grid">
+                    <div><strong id="stat-trips">—</strong><span>Trips</span></div><div><strong id="stat-fare">—</strong><span>Total fare</span></div><div><strong id="stat-favorites">—</strong><span>Favorites</span></div><div><strong id="stat-landmarks">—</strong><span>Landmarks</span></div>
+                </div>
+            </section>
         </div>
     </main>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://unpkg.com/lucide@1.66.0/dist/umd/lucide.min.js"></script>
     <script src="../scripts/api.js"></script>
     <script src="../scripts/auth.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script src="../scripts/account-settings.js"></script>
+    <script src="../scripts/ui.js"></script>
 </body>
 </html>

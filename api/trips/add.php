@@ -8,7 +8,9 @@ require_once __DIR__ . '/../fare_logic.php';
 require_post();
 $uid = require_passenger();
 
-$r = clean_route(input());
+$in = input();
+$r = clean_route($in);
+[$roadKm, $fromRoadM] = road_input($in);
 
 $fare = compute_fare(
     $r['origin']['lat'],
@@ -16,7 +18,9 @@ $fare = compute_fare(
     $r['dest']['lat'],
     $r['dest']['lng'],
     $r['transport'],
-    $r['passenger']
+    $r['passenger'],
+    $roadKm,
+    $fromRoadM
 );
 
 $db = db();

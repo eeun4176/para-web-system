@@ -7,7 +7,7 @@
   ],
   "rewrites": [
     {
-      "source": "/client/:page(admin|admin-audit|admin-fares|admin-landmarks|admin-users).php",
+      "source": "/client/:page(admin|admin-audit|admin-fares|admin-landmarks|admin-users|admin-settings).php",
       "destination": "/api/index.php?__route=pages/:page"
     },
     {

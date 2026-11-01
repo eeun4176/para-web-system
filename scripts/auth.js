@@ -7,7 +7,7 @@ const Auth = {
     ready() {
         if (!this._ready) {
             this._ready = API.session()
-                .then(res => { this.user = res.user || null; return this.user; })
+                .then(res => { this.user = res.user || null; rememberRole(this.user); return this.user; })
                 .catch(err => { console.warn('[Auth] Could not load session:', err.message); this.user = null; return null; });
         }
         return this._ready;
@@ -38,6 +38,14 @@ const Auth = {
         });
     },
 
+    // Admin sign-in (admin-login.html): account key + password, checked by api/auth/admin_login.php
+    async adminLogin(accountKey, password) {
+        const res = await API.post('auth/admin_login.php', { accountKey, password });
+        API.csrf = res.csrf;
+        this.user = res.user;
+        return res;
+    },
+
     // "Continue with Google": send Google's token to PHP, which checks it and logs us in
     async loginWithGoogle(credential) {
         const res = await API.post('auth/google.php', { credential });
@@ -49,6 +57,7 @@ const Auth = {
     async logout() {
         await API.post('auth/logout.php');
         this.user = null;
+        rememberRole(null);
         await API.session(true).catch(() => {});   // fresh token for the new guest session
     }
 };
@@ -58,8 +67,28 @@ const Auth = {
 // (The server enforces this too: admin pages check the role, and passenger APIs reject admins.)
 const PASSENGER_PAGES = ['', 'index.html', 'calculate.html', 'aboutus.html'];
 
+// Signed-in passengers only need the calculator: Home and About are for guests.
+const GUEST_PAGES = ['', 'index.html', 'aboutus.html'];
+
 function homePageFor(user) {
-    return user && user.role === 'admin' ? 'admin.php' : 'index.html';
+    if (!user) return 'index.html';
+    return user.role === 'admin' ? 'admin.php' : 'calculate.html';
+}
+
+// early-theme.js reads this before the page draws, so a signed-in passenger never sees Home flash.
+// It is only a hint: the session on the server decides (see the check below).
+function rememberRole(user) {
+    try {
+        if (user) localStorage.setItem('para_role', user.role);
+        else localStorage.removeItem('para_role');
+    } catch (e) { /* storage blocked: the check below still redirects */ }
+}
+
+// Hide the Home / About links for signed-in passengers; the logo goes to the calculator
+function applyMemberNav(user) {
+    if (!user || user.role === 'admin') return;
+    $('.nav-links, .sidebar-nav').find('a[href="index.html"], a[href="aboutus.html"]').closest('li').hide();
+    $('#navbar-logo').closest('a').attr('href', 'calculate.html');
 }
 
 function isPassengerPage() {
@@ -67,11 +96,18 @@ function isPassengerPage() {
     return PASSENGER_PAGES.includes(page);
 }
 
-// An admin who opens a passenger page is sent to the admin panel
+// An admin who opens a passenger page is sent to the admin panel;
+// a signed-in passenger who opens Home or About is sent to the calculator
 Auth.ready().then(user => {
     if (user && user.role === 'admin' && isPassengerPage()) {
         window.location.replace('admin.php');
+        return;
     }
+    if (user && GUEST_PAGES.includes(window.location.pathname.split('/').pop())) {
+        window.location.replace('calculate.html');
+        return;
+    }
+    $(() => applyMemberNav(user));
 });
 
 // AUTH PAGE UI
@@ -95,6 +131,7 @@ function showAuthPage(page, updateHistory = true) {
     ['login', 'signup', 'forgot'].forEach(p => {
         $('#auth-' + p).toggleClass('hidden', p !== page);
     });
+    $('#auth-' + page).hide().fadeIn(220);   // soft fade when switching forms
     if (updateHistory) {
         history.pushState({ authPage: page }, '', '#' + page);
     }
@@ -115,9 +152,15 @@ function showFieldErrors(errors, idMap) {
     });
 }
 
+// While waiting for the server the button shows its 'busy' label with a moving shine (auth.css)
 function setAuthBusy(btnSelector, busy) {
     authBusy = busy;
-    $(btnSelector).prop('disabled', busy);
+    $(btnSelector).prop('disabled', busy).toggleClass('loading', busy);
+}
+
+// Success: the button turns green and shows its 'done' label
+function setAuthDone(btnSelector) {
+    $(btnSelector).removeClass('loading').addClass('ok');
 }
 
 async function doLogin() {
@@ -135,8 +178,9 @@ async function doLogin() {
     setAuthBusy('#login-submit', true);
     try {
         const res = await Auth.login(email, password);
+        setAuthDone('#login-submit');
         queueNotification('Welcome back, ' + res.user.name + '!', 'success');
-        setTimeout(() => { window.location.href = homePageFor(res.user); }, 400);
+        setTimeout(() => { window.location.href = homePageFor(res.user); }, 700);
     } catch (err) {
         showFieldErrors(err.errors, LOGIN_FIELDS);
         showNotification(API.describe(err), 'error');
@@ -164,6 +208,7 @@ async function doSignup() {
     setAuthBusy('#signup-submit', true);
     try {
         const res = await Auth.register(name, email, password);
+        setAuthDone('#signup-submit');
         $('#signup-recovery-code').text(res.recoveryCode);
         $('#signup-recovery').removeClass('hidden');
         $('#signup-submit, #signup-name, #signup-email, #signup-password, #signup-agree')
@@ -215,6 +260,41 @@ async function doForgot() {
     }
 }
 
+// ADMIN SIGN-IN PAGE (admin-login.html)
+async function doAdminLogin() {
+    if (authBusy) return;
+    clearFieldErrors();
+    const accountKey = $('#admin-key').val().trim();
+    const password = $('#admin-password').val();
+    const errors = {};
+    if (!accountKey) errors.accountKey = 'Account key is required.';
+    if (!password) errors.password = 'Password is required.';
+    const fields = { accountKey: 'admin-key', password: 'admin-password' };
+    if (Object.keys(errors).length) { showFieldErrors(errors, fields); return; }
+
+    setAuthBusy('#admin-login-submit', true);
+    try {
+        await Auth.adminLogin(accountKey, password);
+        setAuthDone('#admin-login-submit');
+        queueNotification('Welcome, Administrator!', 'success');
+        setTimeout(() => { window.location.href = 'admin.php'; }, 700);
+    } catch (err) {
+        showFieldErrors(err.errors, fields);
+        showNotification(API.describe(err), 'error');
+        setAuthBusy('#admin-login-submit', false);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (!document.getElementById('admin-login')) return;
+    Auth.ready().then(user => {
+        if (user && user.role === 'admin') window.location.replace('admin.php');
+    });
+    setupPwToggle('toggle-pw-admin', 'admin-password');
+    $('#admin-login-submit').on('click', doAdminLogin);
+    $('#admin-key, #admin-password').on('keydown', e => { if (e.key === 'Enter') doAdminLogin(); });
+});
+
 // GOOGLE SIGN-IN (Google Identity Services script is loaded at the bottom of auth.html)
 // Public ID of Para's Google OAuth client. Keep it the same as in api/auth/google.php.
 const GOOGLE_CLIENT_ID = '996359971314-0okl6c7g9t504jm39rla9ob94q2rslre.apps.googleusercontent.com';
@@ -245,12 +325,13 @@ async function onGoogleCredential(response) {
     }
 }
 
-function setupPwToggle(btnId, inputId, iconId) {
+// Show / hide password. The button holds two icons; CSS shows the right one (auth.css: .is-showing)
+function setupPwToggle(btnId, inputId) {
     $('#' + btnId).on('click', function () {
         const $input = $('#' + inputId);
         const show = $input.attr('type') === 'password';
         $input.attr('type', show ? 'text' : 'password');
-        $('#' + iconId).attr('class', show ? 'fi fi-rr-eye' : 'fi fi-rr-eye-crossed');
+        $(this).toggleClass('is-showing', show).attr('aria-label', show ? 'Hide password' : 'Show password');
     });
 }
 
@@ -268,8 +349,8 @@ Auth.ready().then(() => {
     }
 });
 
-    setupPwToggle('toggle-pw-login', 'login-password', 'eye-login');
-    setupPwToggle('toggle-pw-signup', 'signup-password', 'eye-signup');
+    setupPwToggle('toggle-pw-login', 'login-password');
+    setupPwToggle('toggle-pw-signup', 'signup-password');
 
     $(document).on('keydown', e => {
         if (e.key !== 'Enter') return;

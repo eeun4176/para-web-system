@@ -15,5 +15,6 @@ if ($transport === '') $errors['transport'] = 'Transport type is required.';
 if ($passenger === '') $errors['passenger'] = 'Passenger type is required.';
 if ($errors) fail(422, 'Invalid request.', $errors);
 
-$r = compute_fare((float)$q['olat'], (float)$q['olng'], (float)$q['dlat'], (float)$q['dlng'], $transport, $passenger);
+[$roadKm, $fromRoadM] = road_input($q);
+$r = compute_fare((float)$q['olat'], (float)$q['olng'], (float)$q['dlat'], (float)$q['dlng'], $transport, $passenger, $roadKm, $fromRoadM);
 ok(['fare' => $r['fare']]);

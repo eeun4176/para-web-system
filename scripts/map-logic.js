@@ -1,38 +1,37 @@
-// MAP (MapLibre GL + OpenFreeMap: free modern vector map, no API key)
+// MAP (MapLibre GL + OpenFreeMap: free vector map, no API key)
 // Note: MapLibre writes coordinates as [longitude, latitude] (the opposite order of Leaflet).
+//
+// What the calculate page shows:
+//   - a clean grey map (OpenFreeMap "positron"; "dark" in dark mode) with a thin SJDM outline
+//   - origin: a pulsing dot with a name chip; destination: a pin with a name chip and an ETA bubble
+//   - the road route from OSRM as a dark line with a soft green glow, and the chosen vehicle driving it
+//   - the road distance and "how far the stop is from a road" are passed to the fare request (app.js)
 
 const SJDM_CENTER = [121.0520, 14.8183];   // [lng, lat]
 const MAP_STYLES = {
-  light: 'https://tiles.openfreemap.org/styles/liberty',
+  light: 'https://tiles.openfreemap.org/styles/positron',
   dark:  'https://tiles.openfreemap.org/styles/dark'
 };
-const BOUNDARIES = [
-  { name: 'sjdm',      path: '../assets/sjdm-boundary.geojson',      color: '#16a34a' },
-  { name: 'rodriguez', path: '../assets/rodriguez-coverage.geojson', color: '#2563eb' }
-];
-const ROUTE_COLOR = '#3498db';
 const EMPTY_GEOJSON = { type: 'FeatureCollection', features: [] };
 
+// Same icons as the vehicle chips (ui.js)
+const VEHICLE_ICONS = { bus_aircon: 'bus', bus_ordinary: 'bus-front', modern_jeepney: 'tram-front', traditional_jeepney: 'car-front' };
+
 var map                   = null;
+var mapTheme              = null;   // 'light' or 'dark' style currently loaded
 var sjdmBoundaryData      = null;
-var rodriguezBoundaryData = null;
+var rodriguezBoundaryData = null;   // not drawn; only used to accept places in the presentation coverage area
 var originMarker          = null;
 var destinationMarker     = null;
+var vehicleMarker         = null;
 var routeFeature          = null;   // the route line on the map (GeoJSON), or null
 var landmarkMarkers       = {};     // landmark id -> marker
 var routeRequestId        = 0;
 var routeController       = null;
 
-const CATEGORY_COLORS = {
-  school:   '#3498db',
-  hospital: '#e74c3c',
-  terminal: '#27ae60',
-  market:   '#e67e22',
-  church:   '#9b59b6',
-  park:     '#1abc9c',
-  food:     '#f39c12',
-  other:    '#7f8c8d'
-};
+// The road route for the current origin/destination, sent with the fare request (null = not known)
+var currentRoad = null;             // { km, fromRoadM, coords }
+var roadOptions = [];               // every road route OSRM found for this trip (the first is the fastest)
 
 function isDarkMode() {
   return document.documentElement.classList.contains('dark');
@@ -41,20 +40,27 @@ function isDarkMode() {
 function initMap() {
   if (map) return;
 
+  mapTheme = isDarkMode() ? 'dark' : 'light';
   map = new maplibregl.Map({
     container: 'map',
-    style: isDarkMode() ? MAP_STYLES.dark : MAP_STYLES.light,
+    style: MAP_STYLES[mapTheme],
     center: SJDM_CENTER,
-    zoom: 11,
-    minZoom: 9
+    zoom: 12,
+    minZoom: 9,
+    attributionControl: { compact: true }
   });
-  map.addControl(new maplibregl.NavigationControl(), 'bottom-right');   // zoom buttons + compass
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
 
-  // Our own layers (boundaries, route) are removed whenever the map style changes,
+  // Our own layers (boundary, route) are removed whenever the map style changes,
   // so they are added again every time a style finishes loading.
   map.on('style.load', addParaLayers);
 
   loadBoundaries();
+
+  // Click a grey alternative route to use it instead
+  map.on('click', 'route-alt', e => selectRoadOption(e.features[0].properties.index));
+  map.on('mouseenter', 'route-alt', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'route-alt', () => { map.getCanvas().style.cursor = ''; });
 
   // Right-click the map to save a landmark
   map.on('contextmenu', e => {
@@ -65,63 +71,77 @@ function initMap() {
     openAddLandmarkModal(e.lngLat.lat, e.lngLat.lng);
   });
 
-  // Switch to the dark map when the site's dark mode is toggled
+  // Switch to the dark map when the site's dark mode is toggled (only when the theme really changed)
   new MutationObserver(() => {
-    const wanted = isDarkMode() ? MAP_STYLES.dark : MAP_STYLES.light;
-    map.setStyle(wanted, { diff: false });   // full reload, so 'style.load' fires and our layers come back
+    const wanted = isDarkMode() ? 'dark' : 'light';
+    if (wanted === mapTheme) return;
+    mapTheme = wanted;
+    map.setStyle(MAP_STYLES[wanted], { diff: false });   // full reload, so 'style.load' brings our layers back
   }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 }
 
-// BOUNDARIES (SJDM + Rodriguez coverage area)
+// BOUNDARIES
 async function loadBoundaries() {
   try {
-    const [sjdm, rodriguez] = await Promise.all(BOUNDARIES.map(async boundary => {
-      const response = await fetch(boundary.path);
-      if (!response.ok) throw new Error(`Failed to load ${boundary.name} boundary.`);
-      return response.json();
-    }));
+    const [sjdm, rodriguez] = await Promise.all(
+      ['../assets/sjdm-boundary.geojson', '../assets/rodriguez-coverage.geojson'].map(async path => {
+        const response = await fetch(path);
+        if (!response.ok) throw new Error('Failed to load ' + path);
+        return response.json();
+      })
+    );
     sjdmBoundaryData = sjdm;
     rodriguezBoundaryData = rodriguez;
 
     if (map.isStyleLoaded()) addParaLayers();   // otherwise 'style.load' adds them
 
-    // Zoom to the coverage area and keep the user from panning far away
+    // Zoom to SJDM and keep the user from panning far away
     const box = coverageBox();
-    map.fitBounds(box, { padding: 30, animate: false });
-    map.setMaxBounds(growBox(box, 0.15));
+    map.fitBounds(boxAround(sjdm.features.map(f => f.geometry.coordinates)), { padding: 40, animate: false });
+    map.setMaxBounds(growBox(box, 0.25));
   } catch (error) {
     console.error('[MapLogic] Boundary loading error:', error);
   }
 }
 
-// Adds the boundary and route layers (safe to call more than once)
+// Adds the SJDM outline and the route layers (safe to call more than once)
 function addParaLayers() {
-  BOUNDARIES.forEach(boundary => {
-    const data = boundary.name === 'sjdm' ? sjdmBoundaryData : rodriguezBoundaryData;
-    if (!data || map.getSource(boundary.name)) return;
+  const dark = mapTheme === 'dark';
 
-    map.addSource(boundary.name, { type: 'geojson', data: data });
+  if (sjdmBoundaryData && !map.getSource('sjdm')) {
+    map.addSource('sjdm', { type: 'geojson', data: sjdmBoundaryData });
     map.addLayer({
-      id: boundary.name + '-fill', type: 'fill', source: boundary.name,
-      paint: { 'fill-color': boundary.color, 'fill-opacity': 0.05 }
+      id: 'sjdm-outline', type: 'line', source: 'sjdm',
+      paint: { 'line-color': dark ? '#ffffff' : '#1D1F1E', 'line-width': 1.5, 'line-opacity': 0.25, 'line-dasharray': [3, 2] }
     });
-    map.addLayer({
-      id: boundary.name + '-outline', type: 'line', source: boundary.name,
-      paint: { 'line-color': boundary.color, 'line-width': 3, 'line-opacity': 0.9 }
-    });
-  });
+  }
 
   if (!map.getSource('route')) {
     map.addSource('route', { type: 'geojson', data: routeFeature || EMPTY_GEOJSON });
-    // Solid line = road route. Dashed line = straight line shown while the road route loads (or if it fails).
+    const road = ['all', ['!=', ['get', 'direct'], true], ['!=', ['get', 'alt'], true]];
+    // Other possible routes: grey, under the chosen one (click one to use it)
     map.addLayer({
-      id: 'route-road', type: 'line', source: 'route', filter: ['!=', ['get', 'direct'], true],
+      id: 'route-alt', type: 'line', source: 'route', filter: ['==', ['get', 'alt'], true],
       layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint: { 'line-color': ROUTE_COLOR, 'line-width': 5, 'line-opacity': 0.9 }
+      paint: { 'line-color': dark ? '#8a8f8c' : '#9aa19d', 'line-width': 5, 'line-opacity': 0.7 }
     });
+    // Soft green glow under the road route
+    map.addLayer({
+      id: 'route-glow', type: 'line', source: 'route', filter: road,
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#2ECC71', 'line-width': 16, 'line-opacity': 0.28, 'line-blur': 8 }
+    });
+    // The route itself: green, a shade darker than the glow so the line stays crisp
+    map.addLayer({
+      id: 'route-road', type: 'line', source: 'route', filter: road,
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#27AE60', 'line-width': 5 }
+    });
+    // Dashed straight line while the road route loads (or if the routing service fails)
     map.addLayer({
       id: 'route-direct', type: 'line', source: 'route', filter: ['==', ['get', 'direct'], true],
-      paint: { 'line-color': ROUTE_COLOR, 'line-width': 4, 'line-opacity': 0.85, 'line-dasharray': [2.5, 1.75] }
+      layout: { 'line-cap': 'round' },
+      paint: { 'line-color': '#2ECC71', 'line-width': 3, 'line-opacity': 0.7, 'line-dasharray': [1.5, 1.5] }
     });
   }
 }
@@ -142,7 +162,7 @@ function boxAround(coordinates) {
   return west === Infinity ? null : [[west, south], [east, north]];
 }
 
-// Box around SJDM + Rodriguez, or null if the boundary files are not loaded yet
+// Box around SJDM + the Rodriguez coverage area, or null if the boundary files are not loaded yet
 function coverageBox() {
   const shapes = [sjdmBoundaryData, rodriguezBoundaryData]
     .filter(Boolean)
@@ -157,90 +177,74 @@ function growBox([[west, south], [east, north]], fraction) {
   return [[west - padLng, south - padLat], [east + padLng, north + padLat]];
 }
 
-// COVERAGE CHECKS (is a point inside SJDM / Rodriguez?)
+// COVERAGE CHECKS (is a point inside SJDM / the coverage area?)
 function isPointInsideBoundary(lat, lng, boundaryData) {
-    if (!boundaryData || !Array.isArray(boundaryData.features)) {
-        return false;
+  if (!boundaryData || !Array.isArray(boundaryData.features)) return false;
+
+  function isInsideRing(point, ring) {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, yi] = ring[i];
+      const [xj, yj] = ring[j];
+      const intersects = ((yi > point[1]) !== (yj > point[1])) &&
+        (point[0] < (xj - xi) * (point[1] - yi) / (yj - yi) + xi);
+      if (intersects) inside = !inside;
     }
+    return inside;
+  }
 
-    function isInsideRing(point, ring) {
-        let inside = false;
-
-        for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-            const xi = ring[i][0];
-            const yi = ring[i][1];
-            const xj = ring[j][0];
-            const yj = ring[j][1];
-
-            const intersects =
-                ((yi > point[1]) !== (yj > point[1])) &&
-                (point[0] < (xj - xi) * (point[1] - yi) / (yj - yi) + xi);
-
-            if (intersects) inside = !inside;
-        }
-
-        return inside;
-    }
-
-    return boundaryData.features.some(feature => {
-        const geometry = feature.geometry;
-        if (!geometry) return false;
-
-        const polygons = geometry.type === 'Polygon'
-            ? [geometry.coordinates]
-            : geometry.type === 'MultiPolygon'
-                ? geometry.coordinates
-                : [];
-
-        return polygons.some(rings => {
-            if (!rings.length || !isInsideRing([lng, lat], rings[0])) {
-                return false;
-            }
-
-            // Exclude holes inside the polygon.
-            for (let i = 1; i < rings.length; i++) {
-                if (isInsideRing([lng, lat], rings[i])) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
+  return boundaryData.features.some(feature => {
+    const geometry = feature.geometry;
+    if (!geometry) return false;
+    const polygons = geometry.type === 'Polygon' ? [geometry.coordinates]
+      : geometry.type === 'MultiPolygon' ? geometry.coordinates : [];
+    return polygons.some(rings => {
+      if (!rings.length || !isInsideRing([lng, lat], rings[0])) return false;
+      for (let i = 1; i < rings.length; i++) {            // holes
+        if (isInsideRing([lng, lat], rings[i])) return false;
+      }
+      return true;
     });
+  });
 }
 
 function isLocationInsideCoverage(lat, lng) {
-    return (
-        isPointInsideBoundary(lat, lng, sjdmBoundaryData) ||
-        isPointInsideBoundary(lat, lng, rodriguezBoundaryData)
-    );
+  return isPointInsideBoundary(lat, lng, sjdmBoundaryData) || isPointInsideBoundary(lat, lng, rodriguezBoundaryData);
 }
 
 function isLocationInsideSJDM(lat, lng) {
-    return isPointInsideBoundary(lat, lng, sjdmBoundaryData);
+  return isPointInsideBoundary(lat, lng, sjdmBoundaryData);
 }
 
-// ORIGIN / DESTINATION MARKERS
-// A small colored name tag pinned to the map (looks are in calculate.css: .map-label)
-function _labelMarker(lat, lng, text, color) {
-  const tag = document.createElement('div');
-  tag.className = 'map-label';
-  tag.style.background = color;
-  tag.textContent = text;   // textContent, not innerHTML: place names can never inject HTML
-  return new maplibregl.Marker({ element: tag, anchor: 'bottom-left' })
-    .setLngLat([lng, lat])
-    .addTo(map);
+// ORIGIN / DESTINATION MARKERS (looks are in calculate.css: .map-origin, .map-dest, .map-chip)
+function _nameChip(text) {
+  const chip = document.createElement('span');
+  chip.className = 'map-chip';
+  chip.innerHTML = '<i data-lucide="map-pin" aria-hidden="true"></i>';
+  const name = document.createElement('span');
+  name.textContent = text;   // textContent, not innerHTML: place names can never inject HTML
+  chip.appendChild(name);
+  return chip;
 }
 
 function setOriginMarker(lat, lng, label) {
   if (originMarker) originMarker.remove();
-  originMarker = _labelMarker(lat, lng, label, '#27ae60');
+  const el = document.createElement('div');
+  el.className = 'map-origin';
+  el.innerHTML = '<span class="pulse-dot" aria-hidden="true"></span>';
+  el.appendChild(_nameChip(label));
+  originMarker = new maplibregl.Marker({ element: el, anchor: 'left', offset: [-11, 0] }).setLngLat([lng, lat]).addTo(map);
   _drawRoute();
 }
 
 function setDestinationMarker(lat, lng, label) {
   if (destinationMarker) destinationMarker.remove();
-  destinationMarker = _labelMarker(lat, lng, label, '#E67E22');
+  const el = document.createElement('div');
+  el.className = 'map-dest';
+  el.innerHTML = '<span class="eta-bubble" hidden></span>'
+    + '<svg class="dest-pin" viewBox="0 0 24 30" aria-hidden="true"><path d="M12 29C7 22.5 2 17.6 2 11.5a10 10 0 0 1 20 0C22 17.6 17 22.5 12 29z"/><circle cx="12" cy="11.5" r="3.6"/></svg>';
+  el.appendChild(_nameChip(label));
+  destinationMarker = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([lng, lat]).addTo(map);
   _drawRoute();
 }
 
@@ -254,31 +258,54 @@ function clearDestinationMarker() {
   _drawRoute();
 }
 
+// "12 min" bubble above the destination pin (app.js calls this when the fare result arrives)
+function setEtaBubble(text) {
+  const bubble = destinationMarker && destinationMarker.getElement().querySelector('.eta-bubble');
+  if (!bubble) return;
+  bubble.textContent = text || '';
+  bubble.hidden = !text;
+}
+
 // ROUTE LINE
 // Shows a line on the map. isDirect = true draws it dashed. Pass null to remove the line.
-function _showRouteLine(coordinates, isDirect) {
-  routeFeature = coordinates
-    ? { type: 'Feature', properties: { direct: isDirect }, geometry: { type: 'LineString', coordinates: coordinates } }
-    : null;
+// alternatives = [{ index, coords }] are drawn grey underneath.
+function _showRouteLine(coordinates, isDirect, alternatives) {
+  const line = (coords, props) => ({ type: 'Feature', properties: props, geometry: { type: 'LineString', coordinates: coords } });
+  const features = (alternatives || []).map(a => line(a.coords, { alt: true, index: a.index }));
+  if (coordinates) features.push(line(coordinates, { direct: isDirect }));
+  routeFeature = features.length ? { type: 'FeatureCollection', features: features } : null;
   const source = map.getSource('route');
   if (source) source.setData(routeFeature || EMPTY_GEOJSON);
 }
 
+// Leaves room for the "Where to Today?" panel on the left (or the sheet at the bottom on phones)
 function _zoomToLine(coordinates) {
-  map.fitBounds(boxAround(coordinates), { padding: 70, maxZoom: 15 });
+  const phone = window.innerWidth <= 900;
+  const panelOpen = !document.querySelector('.calc-panel.is-collapsed');
+  const padding = phone
+    ? { top: 170, bottom: panelOpen ? Math.round(window.innerHeight * 0.45) : 120, left: 40, right: 40 }
+    : { top: 170, bottom: 70, left: panelOpen ? 440 : 80, right: 110 };   // top: room for the ETA bubble
+  map.fitBounds(boxAround(coordinates), { padding: padding, maxZoom: 16 });
 }
 
-// Draws the road route when possible and falls back to a straight line if the
-// routing service is unavailable. Fare calculation remains server-side.
+// Gets the road route from OSRM and draws it; falls back to a dashed straight line if the routing
+// service is unavailable. Either way, the fare is recalculated afterwards (with the road distance if known).
+// shortcut: OSRM's public demo server is rate-limited and has no uptime promise; fine for a class demo,
+// host OSRM or use a paid router if Para goes public.
 async function _drawRoute() {
   const requestId = ++routeRequestId;
   if (routeController) routeController.abort();
   routeController = null;
+  currentRoad = null;
+  roadOptions = [];
+  renderRouteOptions();
   _showRouteLine(null);
+  hideVehicle();
 
-  refreshFareCalculation();
-
-  if (!originMarker || !destinationMarker) return;
+  if (!originMarker || !destinationMarker) {
+    refreshFareCalculation();
+    return;
+  }
 
   const origin = originMarker.getLngLat();
   const destination = destinationMarker.getLngLat();
@@ -289,34 +316,119 @@ async function _drawRoute() {
   const straightLine = [[origin.lng, origin.lat], [destination.lng, destination.lat]];
   _showRouteLine(straightLine, true);
   _zoomToLine(straightLine);
+  showRouteLoading(true);
 
   try {
     const url = 'https://router.project-osrm.org/route/v1/driving/'
       + `${origin.lng},${origin.lat};${destination.lng},${destination.lat}`
-      + '?overview=full&geometries=geojson';
+      + '?overview=full&geometries=geojson&alternatives=true';
     const response = await fetch(url, { signal: controller.signal });
-
-    if (!response.ok) {
-      throw new Error(`Routing HTTP error: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`Routing HTTP error: ${response.status}`);
 
     const data = await response.json();
     if (requestId !== routeRequestId) return;
-    if (data.code !== 'Ok' || !data.routes?.length) {
-      throw new Error(data.message || 'No road route found');
-    }
+    if (data.code !== 'Ok' || !data.routes?.length) throw new Error(data.message || 'No road route found');
 
-    const roadLine = data.routes[0].geometry.coordinates;
-    _showRouteLine(roadLine, false);
-    _zoomToLine(roadLine);
+    const fromRoadM = data.waypoints?.[1]?.distance ?? null;   // how far the destination is from the nearest road
+    roadOptions = data.routes.map(r => ({ km: r.distance / 1000, fromRoadM: fromRoadM, coords: r.geometry.coordinates }));
+    selectRoadOption(0, false);
+    _zoomToLine(roadOptions.flatMap(r => r.coords));   // fit every option on screen
   } catch (error) {
     if (requestId !== routeRequestId || error.name === 'AbortError') return;
-
     console.error('[MapLogic] Road routing error:', error);
-    showNotification('Road route unavailable. Showing a direct route instead.', 'warning');
+    showNotification('Road route unavailable. Showing a direct line and estimating the distance.', 'warning');
   } finally {
-    if (requestId === routeRequestId) routeController = null;
+    if (requestId === routeRequestId) {
+      routeController = null;
+      showRouteLoading(false);
+      refreshFareCalculation();
+    }
   }
+}
+
+// Use road route number i: it becomes the green line, the others turn grey.
+// recalc = false while _drawRoute is still running (it recalculates the fare itself when done).
+function selectRoadOption(i, recalc = true) {
+  if (!roadOptions[i]) return;
+  currentRoad = roadOptions[i];
+  const others = roadOptions.map((r, index) => ({ index: index, coords: r.coords })).filter(a => a.index !== i);
+  _showRouteLine(currentRoad.coords, false, others);
+  renderRouteOptions();
+  if (recalc) refreshFareCalculation();
+}
+
+// "Route 1 · 2.8 km" buttons in the panel, only when OSRM found more than one way
+function renderRouteOptions() {
+  const $box = $('#route-options');
+  if (!$box.length) return;
+  const $list = $box.find('.chips').empty();
+  roadOptions.forEach((r, i) => {
+    $('<button type="button" class="chip">')
+      .toggleClass('is-selected', r === currentRoad)
+      .attr('aria-pressed', String(r === currentRoad))
+      .text(`Route ${i + 1} · ${r.km.toFixed(1)} km`)
+      .on('click', () => selectRoadOption(i))
+      .appendTo($list);
+  });
+  $box.prop('hidden', roadOptions.length < 2);
+}
+
+// The fare card shows its loading shimmer while the route is being found
+function showRouteLoading(on) {
+  if (on && $('#transport-select').val() && $('#passenger-select').val()) {
+    $('#result-card').addClass('is-loading');
+    setResultVisible(true);
+  }
+}
+
+// THE CHOSEN VEHICLE drives the route once, then waits at the start
+function showVehicle(transportCode) {
+  if (!map || !currentRoad || !originMarker) return;
+  const coords = currentRoad.coords;
+  if (!vehicleMarker) {
+    const el = document.createElement('div');
+    el.className = 'map-vehicle';
+    vehicleMarker = new maplibregl.Marker({ element: el }).setLngLat(coords[0]).addTo(map);
+  }
+  const el = vehicleMarker.getElement();
+  el.innerHTML = '';
+  const icon = document.createElement('i');
+  icon.setAttribute('data-lucide', VEHICLE_ICONS[transportCode] || 'bus');
+  el.appendChild(icon);
+  el.hidden = false;
+
+  if (prefersReducedMotion || coords.length < 2) { vehicleMarker.setLngLat(coords[0]); return; }
+
+  // Distance along the line for each point, so the vehicle moves at a steady speed
+  const along = [0];
+  for (let i = 1; i < coords.length; i++) {
+    along.push(along[i - 1] + Math.hypot(coords[i][0] - coords[i - 1][0], coords[i][1] - coords[i - 1][1]));
+  }
+  const total = along[along.length - 1];
+  const duration = 3200;
+  const myRun = (showVehicle.run = (showVehicle.run || 0) + 1);
+  const start = performance.now();
+
+  (function step(now) {
+    if (myRun !== showVehicle.run || !vehicleMarker) return;
+    const k = Math.min(1, (now - start) / duration);
+    const eased = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    const target = eased * total;
+    let i = 1;
+    while (i < along.length - 1 && along[i] < target) i++;
+    const seg = (target - along[i - 1]) / ((along[i] - along[i - 1]) || 1);
+    vehicleMarker.setLngLat([
+      coords[i - 1][0] + (coords[i][0] - coords[i - 1][0]) * seg,
+      coords[i - 1][1] + (coords[i][1] - coords[i - 1][1]) * seg
+    ]);
+    if (k < 1) requestAnimationFrame(step);
+    else setTimeout(() => { if (myRun === showVehicle.run && vehicleMarker) vehicleMarker.setLngLat(coords[0]); }, 900);
+  })(start);
+}
+
+function hideVehicle() {
+  showVehicle.run = (showVehicle.run || 0) + 1;   // stops a running animation
+  if (vehicleMarker) vehicleMarker.getElement().hidden = true;
 }
 
 // LANDMARK MARKERS
@@ -338,8 +450,9 @@ function addLandmarkMarker(lm) {
   const pin = document.createElement('button');
   pin.type = 'button';
   pin.className = 'map-landmark' + (lm.isPublic ? ' is-public' : '');
-  pin.textContent = '★';
+  pin.innerHTML = '<i data-lucide="star" aria-hidden="true"></i>';
   pin.setAttribute('aria-label', lm.name);
+  pin.title = lm.name;
   pin.addEventListener('click', () => openViewLandmarkModal(lm.id));
 
   landmarkMarkers[lm.id] = new maplibregl.Marker({ element: pin })
@@ -357,69 +470,60 @@ function panToLandmark(lm) {
   if (map) map.flyTo({ center: [lm.lng, lm.lat], zoom: 16 });
 }
 
-// NOMINATIM LOCATION SEARCH
+// PLACE SEARCH (OpenStreetMap Nominatim, limited to the SJDM area)
+// One request at a time: a new search cancels the one still running (Nominatim allows ~1 request/second).
+let searchController = null;
+
 async function searchLocations(query) {
-    if (!query || query.trim().length < 2) return [];
+  if (!query || query.trim().length < 2) return [];
+  const box = coverageBox();
+  if (!box) return [];
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+  if (searchController) searchController.abort();
+  const controller = new AbortController();
+  searchController = controller;
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-    try {
-        // Search within the rectangle around Para's coverage area.
-        const box = coverageBox();
-        if (!box) {
-            console.warn('[MapLogic] Coverage boundaries are not loaded.');
-            return [];
-        }
-        const [[west, south], [east, north]] = box;
+  try {
+    const [[west, south], [east, north]] = box;
+    const params = new URLSearchParams({
+      q: query.trim(),
+      format: 'jsonv2',
+      addressdetails: '1',
+      limit: '15',
+      countrycodes: 'ph',
+      'accept-language': 'en',
+      viewbox: [west, north, east, south].join(','),
+      bounded: '1'
+    });
+    const response = await fetch('https://nominatim.openstreetmap.org/search?' + params, {
+      signal: controller.signal,
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!response.ok) throw new Error(`Nominatim search HTTP error: ${response.status}`);
 
-        const params = new URLSearchParams({
-            q: query.trim(),
-            format: 'jsonv2',
-            addressdetails: '1',
-            limit: '20',
-            countrycodes: 'ph',
-            viewbox: [west, north, east, south].join(','),
-            bounded: '1'
-        });
+    const data = await response.json();
+    if (!Array.isArray(data)) throw new Error('Invalid Nominatim search response');
 
-        const url = 'https://nominatim.openstreetmap.org/search?' + params;
-
-        const response = await fetch(url, {
-            signal: controller.signal,
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`Nominatim search HTTP error: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (!Array.isArray(data)) {
-            throw new Error('Invalid Nominatim search response');
-        }
-
-        return data.map(place => ({
-            name: place.display_name,
-            lat: Number(place.lat),
-            lng: Number(place.lon)
-        }))
-        .filter(place =>
-            Number.isFinite(place.lat) &&
-            Number.isFinite(place.lng) &&
-            isLocationInsideCoverage(place.lat, place.lng)
-        );
-
-    } catch (error) {
-        if (error.name !== 'AbortError') {
-            console.error('[MapLogic] Nominatim error:', error);
-        }
-
-        return [];
-    } finally {
-        clearTimeout(timeoutId);
-    }
+    return data.map(place => {
+      const a = place.address || {};
+      const area = a.village || a.suburb || a.neighbourhood || a.quarter || a.hamlet || '';
+      const city = a.city || a.town || a.municipality || '';
+      return {
+        name: place.name || String(place.display_name || '').split(',')[0],
+        detail: [area, city].filter(Boolean).join(', '),
+        lat: Number(place.lat),
+        lng: Number(place.lon)
+      };
+    }).filter(place =>
+      place.name && Number.isFinite(place.lat) && Number.isFinite(place.lng) &&
+      isLocationInsideCoverage(place.lat, place.lng)
+    );
+  } catch (error) {
+    if (error.name !== 'AbortError') console.error('[MapLogic] Nominatim error:', error);
+    return [];
+  } finally {
+    clearTimeout(timeoutId);
+    if (searchController === controller) searchController = null;
+  }
 }

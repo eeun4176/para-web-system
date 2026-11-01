@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';   // DB-backed session (shared 
 require_once __DIR__ . '/../config/db.php';
 
 if (empty($_SESSION['user_id'])) {
-    header('Location: auth.html');
+    header('Location: admin-login.html');
     exit;
 }
 
@@ -17,7 +17,7 @@ try {
         session_unset();
         session_destroy();
 
-        header('Location: auth.html');
+        header('Location: admin-login.html');
         exit;
     }
 
@@ -39,72 +39,24 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Public Landmarks - Para</title>
 
-    <link rel="icon" type="image/png" href="../assets/logo-1.png">
+    <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <link rel="stylesheet" href="../style/global.css">
     <link rel="stylesheet" href="../style/admin.css">
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
 
-    <link rel="stylesheet"
-        href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css">
-
     <script src="../scripts/early-theme.js"></script>
 </head>
 
-<body>
+<body class="admin-body">
 
-    <nav class="navbar" role="navigation" aria-label="Main navigation">
-        <div class="navbar-inner">
-            <div class="nav-logo-container">
-                <a href="admin.php">
-                    <img src="../assets/logo-2.png" id="navbar-logo" alt="Para logo">
-                </a>
-            </div>
-
-            <div class="nav-right">
-                <button id="dark-toggle" class="dark-toggle"
-                    aria-label="Toggle dark mode" aria-pressed="false">
-                    <div class="toggle-knob">
-                        <img src="../assets/light-icon.png" alt="Mode icon">
-                    </div>
-                </button>
-
-                <div id="nav-auth-area">
-                    <a href="auth.html" class="nav-auth-btn">Log In</a>
-                </div>
-
-                <button class="hamburger-btn" id="hamburger-btn" aria-label="Open menu">
-                    <img src="../assets/menu.png" alt="Menu">
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    <nav class="admin-subnav" aria-label="Admin navigation">
-        <a href="admin.php">Dashboard</a>
-        <a href="admin-fares.php">Fare Management</a>
-        <a href="admin-landmarks.php" class="active" aria-current="page">Public Landmarks</a>
-        <a href="admin-users.php">Users</a>
-        <a href="admin-audit.php">Audit Log</a>
-    </nav>
-
-    <div class="sidebar-overlay" id="sidebar-overlay">
-        <aside class="sidebar" role="dialog" aria-label="Mobile navigation">
-            <button class="sidebar-close" id="sidebar-close" aria-label="Close menu">&times;</button>
-
-            <div id="sidebar-auth-area">
-                <a href="auth.html" class="sidebar-auth-btn">Log In</a>
-            </div>
-        </aside>
-    </div>
+    <?php $activePage = 'landmarks'; require __DIR__ . '/partials/admin-nav.php'; ?>
 
     <div id="notification-container" role="status" aria-live="polite"></div>
 
-    <main>
+    <main class="admin-main">
         <div class="admin-wrap">
-            <h1 class="admin-title">Public Landmarks</h1>
-
             <div class="admin-card" id="admin-denied" style="display: none;">
-                <h2>Admins only</h2>
+                <h2>Admins Only</h2>
                 <p class="admin-hint">You need an admin account to see this page.</p>
                 <a href="index.html">Back to home</a>
             </div>
@@ -117,6 +69,10 @@ try {
                     <p class="admin-hint">
                         These landmarks are visible to everyone, including guests.
                     </p>
+
+                    <div class="table-toolbar">
+                        <label class="table-search"><i data-lucide="search"></i><input type="search" id="public-search" placeholder="Search landmarks" aria-label="Search landmarks" /></label>
+                    </div>
 
                     <div class="table-scroll">
                         <table class="admin-table" id="public-table">
@@ -164,7 +120,7 @@ try {
 
                         <label>
                             Location
-                            <input type="text" id="new-lm-location" placeholder="Click the map" readonly>
+                            <input type="text" class="wide" id="new-lm-location" placeholder="Click the map" readonly>
                         </label>
 
                         <button type="button" class="row-btn" id="add-landmark-btn">Add landmark</button>
@@ -176,12 +132,14 @@ try {
     </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/lucide@1.66.0/dist/umd/lucide.min.js"></script>
     <script src="../scripts/api.js"></script>
     <script src="../scripts/auth.js"></script>
     <script src="../scripts/data-manager.js"></script>
     <script src="../scripts/app.js"></script>
     <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
     <script src="../scripts/admin.js"></script>
+    <script src="../scripts/ui.js"></script>
 
 </body>
 </html>

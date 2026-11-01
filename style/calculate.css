@@ -1,32 +1,211 @@
-/* Page wrapper */
+/* CALCULATE PAGE (calculate.html) */
+
+/* ---------- Layout: the map fills the whole screen, the panel floats on top of it ---------- */
+.calc-body {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+}
+
 .calculate-page-wrap {
-    max-width: 1300px;
-    margin: 0 auto;
-    padding: 24px;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
 }
 
 .calc-layout {
-    display: grid;
-    grid-template-columns: 380px 1fr;
-    gap: 20px;
-    align-items: start;
+    position: relative;
+    height: 100%;
 }
 
-/* INPUT CARD */
-.input-card {
+/* The trip panel: one card over the map on the left. Collapses to a small pill (see .is-collapsed). */
+.calc-panel {
+    position: absolute;
+    z-index: 600;
+    top: 84px;
+    left: 20px;
+    width: 384px;
+    max-height: calc(100% - 104px);
+    display: flex;
+    flex-direction: column;
     background: var(--bg-card);
-    border-radius: var(--radius);
-    padding: 22px;
-    box-shadow: var(--shadow);
+    border-radius: 22px;
+    box-shadow: 0 0 0 1px var(--border), var(--shadow-lg);
+    overflow: hidden;
+}
+
+.panel-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 12px 0;
+}
+
+/* Trip / Saved segmented control */
+.calc-tabs,
+.saved-switch {
+    flex: 1;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    padding: 3px;
+    border-radius: 12px;
+    background: var(--bg-input);
+}
+
+.calc-tab,
+.saved-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 34px;
+    border: 0;
+    border-radius: 9px;
+    background: none;
+    color: var(--text-muted);
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.calc-tab .lucide {
+    width: 15px;
+    height: 15px;
+}
+
+.calc-tab.is-active,
+.saved-tab.is-active {
+    background: var(--bg-card);
+    color: var(--text-main);
+    box-shadow: 0 1px 2px rgba(16, 24, 20, 0.12), 0 0 0 0.5px rgba(16, 24, 20, 0.06);
+}
+
+.panel-collapse {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 12px;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.panel-collapse:hover {
+    background: var(--bg-input);
+    color: var(--text-main);
+}
+
+.panel-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 18px 20px 20px;
+    scrollbar-width: thin;
+}
+
+/* Collapsed: only a pill with the route and fare stays on the map */
+.panel-summary,
+.sheet-handle {
+    display: none;
+}
+
+.calc-panel.is-collapsed {
+    width: auto;
+    max-width: calc(100% - 40px);
+    border-radius: 999px;
+}
+
+.calc-panel.is-collapsed .panel-head,
+.calc-panel.is-collapsed .panel-body {
+    display: none;
+}
+
+.calc-panel.is-collapsed .panel-summary {
+    display: flex;
+}
+
+.panel-summary {
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border: 0;
+    background: none;
+    color: var(--text-main);
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.summary-route {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+}
+
+.summary-fare:not(:empty) {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: var(--on-primary);
+    font-size: 0.85rem;
+}
+
+.panel-summary .lucide:last-child {
+    color: var(--text-muted);
+}
+
+.calc-title {
+    font-size: 1.4rem;
+    letter-spacing: -0.03em;
+}
+
+.calc-sub {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin: 2px 0 16px;
+}
+
+/* Saved tab */
+.saved-switch {
+    margin-bottom: 14px;
+}
+
+.saved-tab {
+    height: 32px;
+    font-size: 0.82rem;
+}
+
+.saved-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.saved-pane-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
 }
 
 .input-row {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 14px;
+    margin-bottom: 6px;
 }
 
+/* dot - line - dot between the two search boxes */
 .route-icons {
     display: flex;
     flex-direction: column;
@@ -40,19 +219,19 @@
     width: 11px;
     height: 11px;
     border-radius: 50%;
-    border: 2px solid var(--green);
+    border: 2px solid var(--accent);
     background: var(--bg-card);
 }
 
 .dot-bot {
-    background: var(--green);
+    background: var(--orange);
+    border-color: var(--orange);
 }
 
 .route-line {
     width: 2px;
-    height: 28px;
-    background: var(--green);
-    opacity: 0.4;
+    height: 30px;
+    background: repeating-linear-gradient(var(--accent) 0 4px, transparent 4px 7px);
 }
 
 .route-inputs {
@@ -69,20 +248,20 @@
 
 .search-input-wrapper input {
     width: 100%;
-    padding: 11px 14px;
+    padding: 12px 14px;
     background: var(--bg-input);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
+    border: 1.5px solid transparent;
+    border-radius: 12px;
     color: var(--text);
-    font-size: 0.88rem;
-    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.92rem;
     outline: none;
-    transition: border-color var(--transition), box-shadow var(--transition);
+    transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
 }
 
 .search-input-wrapper input:focus {
-    border-color: var(--green);
-    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.12);
+    background: var(--bg-card);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.14);
 }
 
 .search-input-wrapper input::placeholder {
@@ -92,38 +271,50 @@
 /* Autocomplete dropdown */
 .search-dropdown {
     position: absolute;
-    top: calc(100% + 4px);
+    top: calc(100% + 6px);
     left: 0;
     right: 0;
     background: var(--bg-card);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    border-radius: 12px;
     box-shadow: var(--shadow-lg);
     z-index: 200;
-    max-height: 210px;
+    max-height: 260px;
     overflow-y: auto;
     display: none;
 }
 
 .search-dropdown.open {
     display: block;
+    transform-origin: top center;
+    animation: drop-in 0.22s cubic-bezier(.22, 1, .36, 1);
 }
 
 .search-dropdown-item {
-    padding: 9px 13px;
+    padding: 10px 13px;
     cursor: pointer;
-    font-size: 0.83rem;
+    font-size: 0.85rem;
     color: var(--text);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     transition: background var(--transition);
     border-bottom: 1px solid var(--border);
 }
 
+.search-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.search-dropdown-item:hover,
 .search-dropdown-item.active {
     background: var(--green-light);
-    color: var(--green-dark);
+    color: var(--text-main);
+}
+
+.search-dropdown-item.loading {
+    color: var(--text-muted);
+    pointer-events: none;
 }
 
 .search-result-details {
@@ -143,38 +334,31 @@
     text-transform: capitalize;
 }
 
-
-.search-dropdown-item:last-child {
-    border-bottom: none;
-}
-
-.search-dropdown-item:hover {
-    background: var(--green-light);
-    color: var(--green-dark);
-}
-
-.search-dropdown-item.loading {
-    color: var(--text-muted);
-    pointer-events: none;
-    font-style: italic;
-}
-
 .item-icon {
-    font-size: 0.9rem;
-    color: var(--green);
+    color: var(--primary);
     flex-shrink: 0;
 }
 
-/* Swap button (the green circle between inputs and map) */
+/* Loading placeholder rows in the dropdown (ui.js: skeletonRows) */
+.skeleton-row {
+    padding: 10px 13px;
+    border-bottom: 1px solid var(--border);
+}
+
+.skeleton-row:last-child {
+    border-bottom: none;
+}
+
+/* Swap button */
 .swap-btn {
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: var(--green);
-    color: white;
-    border: none;
+    background: var(--bg-input);
+    color: var(--green-ink);
+    border: 1px solid var(--border);
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 1.05rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -183,118 +367,243 @@
 }
 
 .swap-btn:hover {
-    background: var(--green-dark);
+    background: var(--primary);
+    border-color: var(--primary);
+    color:var(--on-primary);
     transform: rotate(180deg);
 }
 
-/* Transportation and Passenger dropdowns */
-.select-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 0;
+/* ---------- Vehicle / passenger chips ---------- */
+.chip-group {
+    margin-top: 16px;
+    padding-top: 14px;
     border-top: 1px solid var(--border);
 }
 
-.select-icon {
-    font-size: 1.15rem;
-    width: 26px;
-    text-align: center;
-    color: var(--green);
-    flex-shrink: 0;
+.chip-group-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
 }
 
-.select-row select {
-    flex: 1;
-    background: var(--bg-input);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 10px 32px 10px 12px;
-    color: var(--text);
-    font-size: 0.86rem;
-    font-family: 'Source Sans 3', sans-serif;
-    outline: none;
-    cursor: pointer;
-    transition: border-color var(--transition);
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237f8c8d' fill='none' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
+.chips {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
 }
 
-.select-row select:focus {
-    border-color: var(--green);
-}
-
-/* PARA HINT CARD */
-.para-hint {
-    background: var(--green-light);
-    border-radius: var(--radius);
-    padding: 20px 20px 20px 100px;
-    margin-top: 14px;
-    border: 1px solid rgba(46, 204, 113, 0.2);
+.chip {
     position: relative;
-    overflow: visible;
-    min-height: 100px;
     display: flex;
     align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--bg-input);
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 0.86rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.chip:hover {
+    border-color: var(--primary);
+}
+
+.chip .lucide {
+    color: var(--text-muted);
+}
+
+.chip.is-selected {
+    background: var(--green-light);
+    border-color: var(--primary);
+    color: var(--text-main);
+}
+
+.chip.is-selected .lucide {
+    color: var(--green-ink);
+}
+
+/* "-20%" tag on discounted passenger types */
+.chip-tag {
+    margin-left: auto;
+    font-style: normal;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--green-ink);
+    background: var(--bg-card);
+    border-radius: 999px;
+    padding: 2px 7px;
+}
+
+/* The real <select> stays in the page for app.js, but the chips are what people see */
+.chip-source {
+    display: none;
+}
+
+/* ---------- Para hint ---------- */
+.para-hint {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 92px;
+    margin-top: 18px;
+    padding: 14px 16px 14px 96px;
+    background: var(--bg-soft);
+    border-radius: 16px;
 }
 
 .para-hint .para-mascot {
     position: absolute;
     bottom: 0;
-    left: -10px;
-    width: 110px;
+    left: 8px;
+    width: 78px;
     height: auto;
     pointer-events: none;
 }
 
 .para-hint p {
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     color: var(--text);
-    font-weight: 600;
     line-height: 1.5;
 }
 
-/* FARE RESULT CARD */
+/* ---------- Fare result (inside the panel, under the choices) ---------- */
 .result-card {
-    background: var(--green-light);
-    border-radius: var(--radius);
-    padding: 20px;
-    margin-top: 14px;
     display: none;
-    border: 1px solid rgba(46, 204, 113, 0.2);
-    position: relative;
-    overflow: visible;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
 }
 
 .result-card.active {
     display: block;
+    animation: block-in 0.35s cubic-bezier(.22, 1, .36, 1);
 }
 
-.result-card .para-mascot {
-    position: absolute;
-    bottom: -10px;
-    right: -5px;
-    width: 110px;
-    height: auto;
-    pointer-events: none;
+.result-head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-.result-card h3 {
+.result-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.result-total {
+    align-self: flex-start;
+    font-size: 2.6rem;
     font-weight: 800;
-    font-size: 0.97rem;
-    color: var(--text);
-    margin-bottom: 14px;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+    color: var(--text-main);
+}
+
+.result-route {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.result-route .lucide {
+    color: var(--text-muted);
+}
+
+.result-meta {
+    font-size: 0.86rem;
+    color: var(--text-muted);
+}
+
+.result-note {
+    margin-top: 10px;
+    font-size: 0.76rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.result-actions {
+    margin-top: 12px;
+}
+
+/* While the server is calculating: the values become shimmering bars */
+.result-card.is-loading .result-total,
+.result-card.is-loading .result-route span,
+.result-card.is-loading .result-meta span {
+    position: relative;
+    overflow: hidden;
+    color: transparent;
+    background: var(--bg-input);
+    border-radius: 8px;
+}
+
+.result-card.is-loading .result-total::after,
+.result-card.is-loading .result-route span::after,
+.result-card.is-loading .result-meta span::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+    animation: shimmer 1.4s infinite;
+}
+
+/* "See fare breakdown" */
+.result-breakdown {
+    margin-top: 14px;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+}
+
+.result-breakdown summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    list-style: none;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-main);
+    padding: 4px 0;
+}
+
+.result-breakdown summary::-webkit-details-marker {
+    display: none;
+}
+
+.result-breakdown summary .lucide {
+    transition: transform var(--transition);
+}
+
+.result-breakdown[open] summary .lucide {
+    transform: rotate(180deg);
+}
+
+.result-breakdown[open] summary {
+    margin-bottom: 8px;
 }
 
 .result-line {
     display: flex;
     justify-content: space-between;
-    font-size: 0.83rem;
-    color: var(--text);
-    margin-bottom: 7px;
     gap: 8px;
+    font-size: 0.86rem;
+    color: var(--text);
+    margin-bottom: 6px;
 }
 
 .result-line .label {
@@ -307,35 +616,10 @@
     text-align: right;
 }
 
-.result-divider {
-    border-top: 1px dashed rgba(46, 204, 113, 0.4);
-    margin: 10px 0;
-}
-
-.result-total {
-    background: var(--green);
-    color: white;
-    border-radius: 8px;
-    padding: 10px 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: 700;
-    font-size: 1rem;
-    margin-top: 10px;
-    width: 100%;
-    box-sizing: border-box;
-    /* leave space so Para doesn't cover the total bar */
-    /* margin-right: 80px; */
-}
-
-/* MAP */
+/* ---------- Map ---------- */
 .map-container {
-    position: relative;
-    border-radius: var(--radius);
-    overflow: hidden;
-    box-shadow: var(--shadow);
-    height: 620px;
+    position: absolute;
+    inset: 0;
 }
 
 #map {
@@ -343,108 +627,190 @@
     width: 100%;
 }
 
-/* Origin / destination name tag on the map (background color is set in map-logic.js) */
-.map-label {
-    padding: 4px 10px;
-    border-radius: 12px;
-    color: #000;
-    font-size: 11px;
+/* Origin: a pulsing dot with the place name in a chip */
+.map-origin {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.pulse-dot {
+    position: relative;
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.35), 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.pulse-dot::before {
+    content: '';
+    position: absolute;
+    inset: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.pulse-dot::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    animation: pulse-ring 1.8s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+    from { transform: scale(0.9); opacity: 0.9; }
+    to   { transform: scale(2.2); opacity: 0; }
+}
+
+/* Destination: ETA bubble, a pin and the place name chip, stacked */
+.map-dest {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    pointer-events: none;
+}
+
+.dest-pin {
+    order: 1;
+    width: 30px;
+    height: 37px;
+    filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.3));
+}
+
+.dest-pin path   { fill: var(--accent); stroke: #fff; stroke-width: 1.5; }
+.dest-pin circle { fill: #fff; }
+
+.map-dest .map-chip {
+    order: 2;
+    margin-top: 2px;
+}
+
+.eta-bubble {
+    order: 0;
+    position: relative;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: var(--on-primary);
+    font-size: 0.8rem;
+    font-weight: 800;
+    white-space: nowrap;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+    animation: block-in 0.35s cubic-bezier(.22, 1, .36, 1);
+}
+
+.eta-bubble::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -5px;
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+    background: inherit;
+    transform: rotate(45deg);
+    border-radius: 2px;
+}
+
+/* Name chip with a pin icon */
+.map-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 200px;
+    padding: 5px 10px 5px 8px;
+    border-radius: 999px;
+    background: var(--bg-card);
+    color: var(--text-main);
+    font-size: 0.78rem;
     font-weight: 700;
     white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 0 0 1px var(--border), 0 4px 12px rgba(0, 0, 0, 0.14);
+}
+
+.map-chip > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.map-chip .lucide {
+    width: 13px;
+    height: 13px;
+    color: var(--accent);
+}
+
+/* The chosen vehicle that drives the route */
+.map-vehicle {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--on-primary);
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.55), 0 4px 10px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+}
+
+.map-vehicle .lucide {
+    width: 18px;
+    height: 18px;
 }
 
 /* Landmark star pin: yellow = your own, blue = public */
 .map-landmark {
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0;
     border-radius: 50%;
-    border: 2px solid #d4ac0d;
+    border: 2px solid #fff;
     background: #F1C40F;
-    color: #000;
-    font-size: 12px;
+    color: #1D1F1E;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.map-landmark .lucide {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
 }
 
 .map-landmark.is-public {
-    border-color: #2471a3;
     background: #3498db;
     color: #fff;
 }
 
-.map-overlay-top-right {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 500;
-}
-
-.my-landmarks-btn {
-    background: var(--bg-card);
-    border: 1.5px solid var(--border);
-    border-radius: 20px;
-    padding: 7px 14px;
-    font-size: 0.83rem;
-    font-weight: 700;
-    color: #b7950b;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    box-shadow: var(--shadow);
-    transition: all var(--transition);
-    font-family: 'Source Sans 3', sans-serif;
-    white-space: nowrap;
-}
-
-body.dark .my-landmarks-btn {
-    color: var(--yellow);
-}
-
-.my-landmarks-btn:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-1px);
-}
-
-.landmarks-panel {
-    position: absolute;
-    top: 44px;
-    right: 0;
-    background: var(--bg-card);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px;
-    width: 280px;
-    max-height: 360px;
-    overflow-y: auto;
-    box-shadow: var(--shadow-lg);
-    z-index: 499;
-    display: none;
-}
-
-.landmarks-panel.open {
-    display: block;
+/* MapLibre controls in the same quiet style */
+.maplibregl-ctrl-group {
+    border-radius: 12px !important;
+    box-shadow: 0 0 0 1px var(--border), var(--shadow) !important;
+    overflow: hidden;
 }
 
 .landmarks-search {
     width: 100%;
-    padding: 8px 11px;
+    padding: 10px 12px;
     background: var(--bg-input);
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
-    font-size: 0.83rem;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    font-size: 0.86rem;
     color: var(--text);
-    font-family: 'Source Sans 3', sans-serif;
     outline: none;
     margin-bottom: 10px;
 }
 
 .landmarks-search:focus {
-    border-color: var(--green);
+    border-color: var(--primary);
 }
 
 .landmark-list-item {
@@ -452,7 +818,7 @@ body.dark .my-landmarks-btn {
     align-items: center;
     gap: 10px;
     padding: 9px 10px;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     transition: background var(--transition);
 }
@@ -462,26 +828,29 @@ body.dark .my-landmarks-btn {
 }
 
 .lm-icon {
-    font-size: 1rem;
-    color: var(--green);
+    color: var(--primary);
     flex-shrink: 0;
 }
 
 .lm-info h5 {
-    font-size: 0.83rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: var(--text);
     margin-bottom: 1px;
 }
 
 .lm-info span {
-    font-size: 0.73rem;
+    font-size: 0.74rem;
     color: var(--text-muted);
+}
+
+/* Landmark categories ("school" -> "School") */
+#landmarks-list .lm-info span {
     text-transform: capitalize;
 }
 
 .lm-empty {
-    font-size: 0.83rem;
+    font-size: 0.85rem;
     color: var(--text-muted);
     text-align: center;
     padding: 12px 0;
@@ -489,10 +858,10 @@ body.dark .my-landmarks-btn {
 }
 
 .lm-empty a {
-    color: var(--green);
+    color: var(--green-ink);
 }
 
-/* MODALS */
+/* ---------- Modals ---------- */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -512,24 +881,24 @@ body.dark .my-landmarks-btn {
 .modal {
     background: var(--bg-card);
     border-radius: var(--radius);
-    padding: 28px;
+    padding: 26px;
     width: 100%;
     max-width: 420px;
     box-shadow: var(--shadow-lg);
 }
 
 .modal h2 {
-    font-weight: 800;
-    font-size: 1.1rem;
-    color: var(--text);
-    margin-bottom: 20px;
     display: flex;
     align-items: center;
     gap: 8px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 18px;
 }
 
-.modal h2 i {
-    color: var(--green);
+.modal h2 .lucide {
+    color: var(--primary);
 }
 
 .form-group {
@@ -538,7 +907,7 @@ body.dark .my-landmarks-btn {
 
 .form-group label {
     display: block;
-    font-size: 0.83rem;
+    font-size: 0.84rem;
     font-weight: 600;
     color: var(--text-muted);
     margin-bottom: 6px;
@@ -548,13 +917,12 @@ body.dark .my-landmarks-btn {
 .form-group select,
 .form-group textarea {
     width: 100%;
-    padding: 10px 13px;
+    padding: 11px 13px;
     background: var(--bg-input);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
+    border: 1.5px solid transparent;
+    border-radius: 10px;
     color: var(--text);
-    font-size: 0.875rem;
-    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.9rem;
     outline: none;
     transition: border-color var(--transition);
 }
@@ -562,7 +930,7 @@ body.dark .my-landmarks-btn {
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
-    border-color: var(--green);
+    border-color: var(--primary);
 }
 
 .form-group textarea {
@@ -578,23 +946,22 @@ body.dark .my-landmarks-btn {
 }
 
 .btn {
-    padding: 9px 20px;
-    border-radius: 24px;
-    font-size: 0.875rem;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 0.88rem;
     font-weight: 600;
     cursor: pointer;
     border: none;
-    font-family: 'Source Sans 3', sans-serif;
     transition: all var(--transition);
 }
 
 .btn-primary {
-    background: var(--green);
-    color: white;
+    background: var(--primary);
+    color:var(--on-primary);
 }
 
 .btn-primary:hover {
-    background: var(--green-dark);
+    background: var(--primary-hover);
 }
 
 .btn-outline {
@@ -604,49 +971,85 @@ body.dark .my-landmarks-btn {
 }
 
 .btn-outline:hover {
-    border-color: var(--green);
-    color: var(--green);
+    border-color: var(--primary);
+    color: var(--green-ink);
 }
 
 .btn-danger {
     background: var(--red);
-    color: white;
+    color: #fff;
 }
 
 .btn-danger:hover {
     background: #c0392b;
 }
 
-/* RESPONSIVE */
+/* ---------- Responsive ---------- */
+/* Phones and tablets: the panel becomes a sheet at the bottom; the handle (or the pill) shrinks/grows it */
 @media (max-width: 900px) {
-    .calc-layout {
-        grid-template-columns: 1fr;
+    .calc-panel {
+        top: auto;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: auto;
+        max-height: 62%;
+        border-radius: 22px 22px 0 0;
     }
 
-    .map-container {
-        height: 420px;
+    .sheet-handle {
+        display: block;
+        flex: none;
+        width: 100%;
+        height: 22px;
+        border: 0;
+        background: none;
+        cursor: pointer;
     }
 
-    .para-hint .para-mascot,
-    .result-card .para-mascot {
-        width: 80px;
+    .sheet-handle::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 5px;
+        margin: 0 auto;
+        border-radius: 999px;
+        background: var(--border);
+    }
+
+    .panel-head {
+        padding-top: 0;
+    }
+
+    .panel-collapse {
+        display: none;
+    }
+
+    .calc-panel.is-collapsed {
+        left: 12px;
+        right: 12px;
+        bottom: 16px;
+        max-width: none;
+        border-radius: 999px;
+    }
+
+    .calc-panel.is-collapsed .sheet-handle {
+        display: none;
+    }
+
+    .calc-panel.is-collapsed .panel-summary {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .summary-route {
+        flex: 1;
+        max-width: none;
+        text-align: left;
     }
 
     .para-hint {
-        padding-left: 80px;
-    }
-
-    .result-total {
-        width: 100%;
+        display: none !important;
     }
 }
 
-@media (max-width: 600px) {
-    .calculate-page-wrap {
-        padding: 16px;
-    }
-
-    .map-container {
-        height: 360px;
-    }
-}

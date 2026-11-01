@@ -72,6 +72,9 @@ if (!$user) {                                         // brand-new user: create 
     $user = $s->fetch();
 }
 
+// Admins have their own sign-in page; Google is for passengers only
+if ($user['role'] === 'admin') fail(403, 'Administrators sign in on the admin sign-in page.');
+
 // ---------- Step 4: log in (same as login.php) ----------
 session_regenerate_id(true);
 $_SESSION['user_id'] = (int)$user['id'];

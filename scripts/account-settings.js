@@ -2,10 +2,9 @@
     let activeTab = 'trips';
     const $ = window.jQuery;
 
+    // Same bottom-right toasts as the rest of Para (showToast is in ui.js)
     function notify(message, type) {
-        const node = $('<div class="settings-notice">').toggleClass('error', type === 'error').text(message);
-        $('#notification-container').append(node);
-        setTimeout(() => node.fadeOut(250, () => node.remove()), 3000);
+        showToast(type || 'success', message);
     }
 
     function setupThemeAndNav() {
@@ -19,9 +18,6 @@
             localStorage.setItem('para_dark', String(next));
             $(this).attr('aria-pressed', String(next));
         });
-        $('#hamburger-btn').on('click', () => $('#sidebar-overlay').addClass('active'));
-        $('#sidebar-close').on('click', () => $('#sidebar-overlay').removeClass('active'));
-        $('#sidebar-overlay').on('click', e => { if (e.target === e.currentTarget) $(e.currentTarget).removeClass('active'); });
         $(document).on('click', e => {
             if (!$(e.target).closest('.settings-profile-wrap').length) {
                 $('.settings-profile-menu').removeClass('open');
@@ -43,11 +39,7 @@
                 : $('<span>').text((user.name || '?').trim().charAt(0).toUpperCase() || '?'));
         const $menu = $('<div class="settings-profile-menu" role="menu">');
         $profileWrap.append($profile, $menu);
-        const $nav = $('#nav-auth-area').empty();
-        if (user && user.role === 'admin') {
-            $nav.append($('<span class="nav-admin-badge">').text('ADMIN'));
-        }
-        $nav.append($profileWrap);
+        $('#nav-auth-area').empty().append($profileWrap);
         $('#sidebar-auth-area').empty().append(user ? $('<button class="sidebar-auth-btn" type="button">').text('Log Out').on('click', logout) : $('<a class="sidebar-auth-btn" href="auth.html">').text('Log In'));
 
         $profile.on('click', function (event) {
@@ -70,17 +62,17 @@
         );
         if (user.role === 'admin') {
             $('<a class="settings-profile-action primary" href="admin.php">')
-                .append('<i class="fi fi-rr-dashboard"></i>', $('<span>').text('Admin Panel'))
+                .append('<i data-lucide="layout-dashboard"></i>', $('<span>').text('Admin Panel'))
                 .appendTo($menu);
             return;
         }
         [
-            ['Landmarks', 'landmarks', 'fi-rr-marker'],
-            ['Recent Trips', 'trips', 'fi-rr-time-past'],
-            ['Favourites', 'favourites', 'fi-rr-heart']
+            ['Landmarks', 'landmarks', 'map-pin'],
+            ['Recent Trips', 'trips', 'history'],
+            ['Favourites', 'favourites', 'heart']
         ].forEach(([label, tab, icon]) => {
             $('<button type="button" class="settings-profile-action">')
-                .append($('<i>').addClass('fi ' + icon), $('<span>').text(label))
+                .append($('<i>').attr('data-lucide', icon), $('<span>').text(label))
                 .on('click', function () {
                     $('.settings-profile-menu').removeClass('open');
                     $('.settings-profile-btn').attr('aria-expanded', 'false');
@@ -102,9 +94,10 @@
             $('<h2>').text(labels[tab]),
             $list
         );
-        const close = () => $overlay.remove();
+        const close = () => popOut($modal[0], () => $overlay.remove());
         $modal.find('.saved-modal-close').on('click', close);
         $overlay.append($modal).on('click', e => { if (e.target === $overlay[0]) close(); }).appendTo('body');
+        popIn($modal[0]);
 
         API.get(endpoints[tab]).then(res => {
             const items = res.items || res.trips || res.favorites || res.landmarks || [];
@@ -144,31 +137,27 @@
         }).catch(err => $list.empty().append($('<p class="muted">').text(API.describe(err))));
     }
 
+    // (admins never get here: they are sent to admin-settings.php on load)
     function fillProfile(res) {
         const user = res.user;
-        const isAdmin = user.role === 'admin';
-        $('.user-only').toggle(!isAdmin);
-        $('.admin-only').toggle(isAdmin);
-        $('#settings-eyebrow').text(isAdmin ? 'Administrator account' : 'Account');
-        $('#settings-title').text(isAdmin ? 'Administrator Settings' : 'Account Settings');
-        $('#settings-description').text(isAdmin
-            ? 'Manage your administrator identity, security, and operational visibility.'
-            : 'Manage your profile, security, preferences, and saved information.');
-        $('#settings-back-link').attr('href', isAdmin ? 'admin.php' : 'index.html')
-            .text(isAdmin ? 'Back To Dashboard' : 'Back To Home');
-        $('#personal-card-title').text(isAdmin ? 'Administrator profile' : 'Personal information');
-        $('#personal-card-description').text(isAdmin
-            ? 'Keep the administrator identity used across Para operations up to date.'
-            : 'Update the details associated with your account.');
-        $('#security-card-description').text(isAdmin
-            ? 'Protect administrator access with your current password and recovery code.'
-            : 'Both your current password and recovery code are required.');
         renderAvatar($('#settings-avatar'), user);
-        $('#profile-name').text(user.name); $('#profile-email').text(user.email);
+        $('#hero-name, #profile-name').text(user.name);
+        $('#hero-email, #profile-email').text(user.email);
         $('#profile-member-since').text(user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Not available');
         $('#stat-trips').text(res.stats.trips); $('#stat-fare').text('₱' + Number(res.stats.totalFare).toFixed(2));
         $('#stat-favorites').text(res.stats.favorites); $('#stat-landmarks').text(res.stats.landmarks);
-        if (!isAdmin) loadPreferences(user);
+        loadPreferences(user);
+    }
+
+    // Profile / Security / Preferences / Activity: show one section at a time
+    function showSettingsTab(tab) {
+        $('.settings-tabs .seg-btn').each(function () {
+            const on = $(this).data('tab') === tab;
+            $(this).toggleClass('is-active', on).attr('aria-selected', String(on));
+        });
+        $('.settings-panel').each(function () {
+            $(this).prop('hidden', $(this).data('panel') !== tab);
+        });
     }
 
     function renderAvatar($target, user) {
@@ -177,62 +166,6 @@
             $('<img>').attr({ src: '../' + user.profilePicture, alt: 'Profile picture' }).appendTo($target);
         } else {
             $target.text((user.name || '?').trim().charAt(0).toUpperCase() || '?');
-        }
-    }
-
-    const adminCharts = {};
-
-    function renderAdminChart(id, emptyId, config, hasData) {
-        if (adminCharts[id]) adminCharts[id].destroy();
-        $('#' + id).toggle(hasData);
-        $('#' + emptyId).toggle(!hasData);
-        if (hasData) adminCharts[id] = new Chart(document.getElementById(id), config);
-    }
-
-    async function loadAdminOverview() {
-        if (!$('#settings-admin-stats').length) return;
-        try {
-            const statsRes = await API.get('admin/stats.php');
-            const stats = statsRes.stats;
-            const card = (value, label) => $('<div class="admin-stat">').append(
-                $('<strong>').text(value), $('<span>').text(label)
-            );
-            $('#settings-admin-stats').empty().append(
-                card(stats.users, 'Users'),
-                card(stats.trips, 'Saved trips'),
-                card('₱' + Number(stats.totalFare).toFixed(2), 'Total fare'),
-                card(stats.publicLandmarks, 'Public landmarks')
-            );
-            if (typeof Chart === 'undefined') return;
-            const chartsRes = await API.get('admin/charts.php');
-            const charts = chartsRes.charts;
-            const css = getComputedStyle(document.body);
-            Chart.defaults.color = css.getPropertyValue('--text-muted').trim() || '#7f8c8d';
-            Chart.defaults.borderColor = css.getPropertyValue('--border').trim() || '#e0e0e0';
-            const base = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } };
-            renderAdminChart('settings-chart-trips', 'settings-empty-trips', {
-                type: 'line',
-                data: { labels: charts.tripsPerDay.map(item => item.date.slice(5)),
-                    datasets: [{ data: charts.tripsPerDay.map(item => item.count), borderColor: '#2ecc71',
-                        backgroundColor: 'rgba(46,204,113,.2)', fill: true, tension: .3 }] },
-                options: base
-            }, charts.tripsPerDay.some(item => item.count > 0));
-            renderAdminChart('settings-chart-vehicle', 'settings-empty-vehicle', {
-                type: 'bar',
-                data: { labels: charts.byVehicle.map(item => item.label),
-                    datasets: [{ data: charts.byVehicle.map(item => item.count), backgroundColor: '#2ecc71' }] },
-                options: base
-            }, charts.byVehicle.length > 0);
-            renderAdminChart('settings-chart-dest', 'settings-empty-dest', {
-                type: 'bar',
-                data: { labels: charts.topDestinations.map(item => item.label.length > 22 ? item.label.slice(0, 21) + '…' : item.label),
-                    datasets: [{ data: charts.topDestinations.map(item => item.count), backgroundColor: '#e67e22' }] },
-                options: Object.assign({}, base, { indexAxis: 'y',
-                    scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } })
-            }, charts.topDestinations.length > 0);
-        } catch (err) {
-            notify(API.describe(err), 'error');
         }
     }
 
@@ -288,14 +221,14 @@
             modal.append($('<div class="pc-field">').append($('<label>').text(field.label), inputs[field.key]));
         });
         const save = $('<button class="pc-btn pc-primary" type="button">').text(submitText), cancel = $('<button class="pc-btn pc-outline" type="button">').text('Cancel');
-        const close = () => overlay.remove();
+        const close = () => popOut(modal[0], () => overlay.remove());
         cancel.on('click', close); save.on('click', async () => { save.prop('disabled', true); try { await handler(Object.fromEntries(Object.entries(inputs).map(([key, input]) => [key, input.val().trim()]))); close(); } catch (err) { notify(API.describe(err), 'error'); save.prop('disabled', false); } });
-        modal.append($('<div class="pc-actions">').append(cancel, save)); overlay.append(modal).on('click', e => { if (e.target === overlay[0]) close(); }).appendTo('body'); inputs[fields[0].key].trigger('focus');
+        modal.append($('<div class="pc-actions">').append(cancel, save)); overlay.append(modal).on('click', e => { if (e.target === overlay[0]) close(); }).appendTo('body'); popIn(modal[0]); inputs[fields[0].key].trigger('focus');
     }
 
-    function openName() { promptDialog('Edit name', [{ key: 'name', label: 'Display name', autocomplete: 'name', maxlength: 100 }], 'Save changes', async data => { if (!data.name) throw { message: 'Name is required.' }; const res = await API.post('auth/update_profile.php', data); Auth.user = res.user; updateNav(res.user); fillProfile(await API.get('auth/profile.php')); notify('Your name was updated.', 'success'); }); }
-    function openEmail() { promptDialog('Change email', [{ key: 'email', label: 'Email address', type: 'email', autocomplete: 'email' }, { key: 'recoveryCode', label: 'Recovery code', maxlength: 12 }], 'Change email', async data => { data.recoveryCode = data.recoveryCode.toUpperCase(); const res = await API.post('auth/change_email.php', data); Auth.user = res.user; updateNav(res.user); fillProfile(await API.get('auth/profile.php')); notify('Your email was updated.', 'success'); }); }
-    function openPassword() { promptDialog('Change password', [{ key: 'currentPassword', label: 'Current password', type: 'password', autocomplete: 'current-password' }, { key: 'recoveryCode', label: 'Recovery code', maxlength: 12 }, { key: 'newPassword', label: 'New password', type: 'password', autocomplete: 'new-password' }, { key: 'confirmPassword', label: 'Confirm new password', type: 'password', autocomplete: 'new-password' }], 'Change password', async data => { if (data.newPassword.length < 8) throw { message: 'New password must be at least 8 characters.' }; if (data.newPassword !== data.confirmPassword) throw { message: 'Passwords do not match.' }; data.recoveryCode = data.recoveryCode.toUpperCase(); delete data.confirmPassword; await API.post('auth/change_password.php', data); notify('Your password was changed.', 'success'); }); }
+    function openName() { promptDialog('Edit Name', [{ key: 'name', label: 'Display name', autocomplete: 'name', maxlength: 100 }], 'Save changes', async data => { if (!data.name) throw { message: 'Name is required.' }; const res = await API.post('auth/update_profile.php', data); Auth.user = res.user; updateNav(res.user); fillProfile(await API.get('auth/profile.php')); notify('Your name was updated.', 'success'); }); }
+    function openEmail() { promptDialog('Change Email', [{ key: 'email', label: 'Email address', type: 'email', autocomplete: 'email' }, { key: 'recoveryCode', label: 'Recovery code', maxlength: 12 }], 'Change email', async data => { data.recoveryCode = data.recoveryCode.toUpperCase(); const res = await API.post('auth/change_email.php', data); Auth.user = res.user; updateNav(res.user); fillProfile(await API.get('auth/profile.php')); notify('Your email was updated.', 'success'); }); }
+    function openPassword() { promptDialog('Change Password', [{ key: 'currentPassword', label: 'Current password', type: 'password', autocomplete: 'current-password' }, { key: 'recoveryCode', label: 'Recovery code', maxlength: 12 }, { key: 'newPassword', label: 'New password', type: 'password', autocomplete: 'new-password' }, { key: 'confirmPassword', label: 'Confirm new password', type: 'password', autocomplete: 'new-password' }], 'Change password', async data => { if (data.newPassword.length < 8) throw { message: 'New password must be at least 8 characters.' }; if (data.newPassword !== data.confirmPassword) throw { message: 'Passwords do not match.' }; data.recoveryCode = data.recoveryCode.toUpperCase(); delete data.confirmPassword; await API.post('auth/change_password.php', data); notify('Your password was changed.', 'success'); }); }
 
     async function loadSaved() {
         const endpoint = { trips: 'trips/list.php', favorites: 'favorites/list.php', landmarks: 'landmarks/list.php' }[activeTab];
@@ -388,12 +321,12 @@
         const overlay = $('<div class="pc-overlay">');
         const modal = $('<div class="pc-modal">').append(
             $('<span class="modal-kicker">Account security</span>'),
-            $('<h2>').text('Log out of Para?'),
+            $('<h2>').text('Log Out of Para?'),
             $('<p>').text('You will need to sign in again to manage your saved trips, favorites, and landmarks.')
         );
         const cancel = $('<button class="pc-btn pc-outline" type="button">').text('Stay signed in');
         const confirm = $('<button class="pc-btn pc-danger" type="button">').text('Log out');
-        const close = () => overlay.remove();
+        const close = () => popOut(modal[0], () => overlay.remove());
         cancel.on('click', close);
         confirm.on('click', async () => {
             confirm.prop('disabled', true);
@@ -409,6 +342,7 @@
         overlay.append(modal).on('click', e => {
             if (e.target === overlay[0]) close();
         }).appendTo('body');
+        popIn(modal[0]);
         cancel.trigger('focus');
     }
 
@@ -416,9 +350,11 @@
         setupThemeAndNav();
         const user = await Auth.ready();
         if (!user) { window.location.href = 'auth.html#login'; return; }
+        // Admins have their own settings page inside the admin panel (no passenger navigation there)
+        if (user.role === 'admin') { window.location.replace('admin-settings.php'); return; }
         updateNav(user);
         try { fillProfile(await API.get('auth/profile.php')); } catch (err) { notify(API.describe(err), 'error'); }
         $('#edit-name').on('click', openName); $('#change-email').on('click', openEmail); $('#change-password').on('click', openPassword); $('#save-preferences').on('click', savePreferences); $('#logout').on('click', confirmLogout); $('#change-picture').on('click', changePicture);
-        if (user.role === 'admin') loadAdminOverview();
+        $('.settings-tabs').on('click', '.seg-btn', function () { showSettingsTab($(this).data('tab')); });
     });
 })();

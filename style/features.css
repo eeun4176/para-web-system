@@ -1,23 +1,7 @@
 /* Styles for the features added with the PHP backend:
    trips, favorites, ETA line, field errors. Load AFTER global.css / calculate.css / auth.css. */
 
-/* ---- Calculate page: overlay buttons + panels ---- */
-.map-overlay-top-right {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 8px;
-    max-width: calc(100% - 24px);
-}
-
-.overlay-item {
-    position: relative;
-}
-
-.landmarks-panel.wide {
-    width: 320px;
-}
-
+/* ---- Calculate page: Saved tab lists ---- */
 .panel-head {
     display: flex;
     justify-content: space-between;
@@ -35,7 +19,7 @@
     cursor: pointer;
     font-size: 0.78rem;
     font-weight: 600;
-    font-family: 'Source Sans 3', sans-serif;
+    font-family: inherit;
 }
 
 .link-btn:hover {
@@ -113,8 +97,12 @@
     border-color: var(--red);
 }
 
-@media (max-width: 600px) {
-    .landmarks-panel.wide {
-        width: 260px;
-    }
+/* Export / Clear buttons in the Recent Trips panel */
+.panel-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.link-btn.export {
+    color: var(--green-ink);
 }
