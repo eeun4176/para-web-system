@@ -804,8 +804,7 @@ function onLandmarkListClick(id) {
 
 // ADD LANDMARK
 function openAddLandmarkModal(lat, lng) {
-    if (!sjdmBoundary || !sjdmBoundary.getBounds().contains([lat, lng]) ||
-        !isLocationInsideSJDM(lat, lng)) {
+    if (!isLocationInsideSJDM(lat, lng)) {
         showNotification('You can only add landmarks within San Jose del Monte.', 'warning');
         return;
     }
@@ -873,10 +872,7 @@ async function deleteLandmarkConfirm() {
         showNotification(API.describe(err), 'error');
         return;
     }
-    if (landmarkMarkers[id]) {
-        map.removeLayer(landmarkMarkers[id]);
-        delete landmarkMarkers[id];
-    }
+    removeLandmarkMarker(id);
     renderLandmarksList();
     closeModal('view-landmark-modal');
     showNotification('"' + name + '" deleted.', 'info');
@@ -911,10 +907,7 @@ async function submitEditLandmark() {
         showNotification(API.describe(err), 'error');
         return;
     }
-    if (landmarkMarkers[id]) {
-        map.removeLayer(landmarkMarkers[id]);
-        delete landmarkMarkers[id];
-    }
+    removeLandmarkMarker(id);
     const updated = DataManager.getLandmark(id);
     if (updated) addLandmarkMarker(updated);
     renderLandmarksList();
