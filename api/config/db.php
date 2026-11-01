@@ -8,12 +8,13 @@ function db_config(): array {
     if ($cfg === null) {
         $local = is_file(__DIR__ . '/db.local.php') ? require __DIR__ . '/db.local.php' : [];
         $cfg = [];
-        foreach (['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASS'] as $key) {
+        foreach (['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASS', 'DB_SSLMODE'] as $key) {
             $env = getenv($key);
             $cfg[$key] = ($env !== false && $env !== '') ? $env : ($local[$key] ?? null);
         }
         $cfg['DB_PORT'] = $cfg['DB_PORT'] ?: '5432';
         $cfg['DB_NAME'] = $cfg['DB_NAME'] ?: 'postgres';
+        $cfg['DB_SSLMODE'] = $cfg['DB_SSLMODE'] ?: 'require';   // Supabase needs SSL; 'disable' only for a local Postgres
         if (!$cfg['DB_HOST'] || !$cfg['DB_USER'] || $cfg['DB_PASS'] === null) {
             throw new RuntimeException('Database is not configured (set DB_* env vars or api/config/db.local.php).');
         }
@@ -26,7 +27,7 @@ function db(): PDO {
     if ($pdo === null) {
         $c = db_config();
         $pdo = new PDO(
-            'pgsql:host=' . $c['DB_HOST'] . ';port=' . $c['DB_PORT'] . ';dbname=' . $c['DB_NAME'] . ';sslmode=require',
+            'pgsql:host=' . $c['DB_HOST'] . ';port=' . $c['DB_PORT'] . ';dbname=' . $c['DB_NAME'] . ';sslmode=' . $c['DB_SSLMODE'],
             $c['DB_USER'],
             $c['DB_PASS'],
             [

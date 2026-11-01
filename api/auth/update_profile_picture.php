@@ -11,14 +11,9 @@ if ($image !== null && !is_string($image)) {
     fail(422, 'Invalid profile picture.');
 }
 
-$old = db()->prepare('SELECT profile_picture FROM users WHERE id = ?');
-$old->execute([$uid]);
-$oldPath = $old->fetchColumn();
-
 if ($image === null || $image === '') {
-    $save = db()->prepare('UPDATE users SET profile_picture = NULL WHERE id = ?');
+    $save = db()->prepare('UPDATE users SET profile_picture = NULL, avatar = NULL, avatar_mime = NULL WHERE id = ?');
     $save->execute([$uid]);
-    remove_profile_picture($oldPath);
     ok(['profilePicture' => null]);
 }
 
@@ -45,32 +40,14 @@ if (!$dimensions || $dimensions[0] < 1 || $dimensions[1] < 1 || $dimensions[0] >
     fail(422, 'Profile pictures must be valid images no larger than 4000 by 4000 pixels.');
 }
 
-$directory = dirname(__DIR__, 2) . '/uploads/profile';
-if (!is_dir($directory) && !mkdir($directory, 0755, true)) {
-    fail(500, 'Could not prepare profile picture storage.');
-}
+// Stored in the database (Vercel has no persistent disk). The ?v= value changes on every upload
+// so browsers fetch the new picture instead of a cached one.
+$url = 'api/auth/avatar.php?v=' . bin2hex(random_bytes(8));
+$save = db()->prepare('UPDATE users SET avatar = ?, avatar_mime = ?, profile_picture = ? WHERE id = ?');
+$save->bindValue(1, $binary, PDO::PARAM_LOB);
+$save->bindValue(2, $mime);
+$save->bindValue(3, $url);
+$save->bindValue(4, $uid, PDO::PARAM_INT);
+$save->execute();
 
-$filename = bin2hex(random_bytes(16)) . '.' . $extensions[$mime];
-$absolutePath = $directory . '/' . $filename;
-if (file_put_contents($absolutePath, $binary, LOCK_EX) === false) {
-    fail(500, 'Could not save the profile picture.');
-}
-
-$relativePath = 'uploads/profile/' . $filename;
-$save = db()->prepare('UPDATE users SET profile_picture = ? WHERE id = ?');
-$save->execute([$relativePath, $uid]);
-remove_profile_picture($oldPath);
-
-ok(['profilePicture' => $relativePath]);
-
-function remove_profile_picture($path): void
-{
-    if (!$path || !is_string($path) || !str_starts_with($path, 'uploads/profile/')) {
-        return;
-    }
-
-    $file = dirname(__DIR__, 2) . '/' . $path;
-    if (is_file($file)) {
-        unlink($file);
-    }
-}
+ok(['profilePicture' => $url]);

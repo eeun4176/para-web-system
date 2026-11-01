@@ -1,4 +1,4 @@
 <?php
-header('Location: client/auth.html');
+header('Location: client/index.html');
 exit;
 ?>

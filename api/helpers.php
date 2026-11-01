@@ -5,22 +5,15 @@
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
 
-// Never show PHP errors to users; log them instead (api/logs/error.log)
+// Never show PHP errors to users; log them instead (api/logs/error.log locally,
+// stderr on Vercel where the disk is read-only -> shows in Vercel's Logs tab)
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
-ini_set('error_log', __DIR__ . '/logs/error.log');
+ini_set('error_log', is_writable(__DIR__ . '/logs') ? __DIR__ . '/logs/error.log' : 'php://stderr');
 error_reporting(E_ALL);
 
 require_once __DIR__ . '/config/db.php';
-
-session_set_cookie_params([
-    'lifetime' => 0,
-    'path'     => '/',
-    'httponly' => true,       // JS cannot read the session cookie
-    'samesite' => 'Lax',
-    'secure'   => !empty($_SERVER['HTTPS']),
-]);
-session_start();
+require_once __DIR__ . '/config/session.php';   // DB-backed session + secure cookie settings
 
 // ---------- JSON responses ----------
 function respond(array $data, int $status = 200) {
