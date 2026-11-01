@@ -37,7 +37,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Public Landmarks - Para</title>
+    <title>Public Landmarks | Para Admin</title>
 
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <link rel="stylesheet" href="../style/global.css">
@@ -58,7 +58,7 @@ try {
             <div class="admin-card" id="admin-denied" style="display: none;">
                 <h2>Admins Only</h2>
                 <p class="admin-hint">You need an admin account to see this page.</p>
-                <a href="index.html">Back to home</a>
+                <a href="index.html">Back to Home</a>
             </div>
 
             <div id="admin-content" style="display: none;">
@@ -123,7 +123,7 @@ try {
                             <input type="text" class="wide" id="new-lm-location" placeholder="Click the map" readonly>
                         </label>
 
-                        <button type="button" class="row-btn" id="add-landmark-btn">Add landmark</button>
+                        <button type="button" class="row-btn" id="add-landmark-btn">Add Landmark</button>
                     </div>
                 </section>
 

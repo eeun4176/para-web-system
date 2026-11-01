@@ -117,8 +117,8 @@ function updateNavAuth() {
             // Guests get two clear buttons; logged-in users get their profile picture with a menu
             if (user) el.appendChild(buildProfileMenu(user));
             else $(el).append(
-                '<a href="auth.html#login" class="nav-login-link">Log in</a>',
-                '<a href="auth.html#signup" class="nav-auth-btn">Sign up</a>'
+                '<a href="auth.html#login" class="nav-login-link">Log In</a>',
+                '<a href="auth.html#signup" class="nav-auth-btn">Sign Up</a>'
             );
             continue;
         }
@@ -130,8 +130,8 @@ function updateNavAuth() {
                 .appendTo(el);
         } else {
             $(el).append(
-                '<a href="auth.html#signup" class="sidebar-auth-btn">Sign up</a>',
-                '<a href="auth.html#login" class="sidebar-auth-btn outline">Log in</a>'
+                '<a href="auth.html#signup" class="sidebar-auth-btn">Sign Up</a>',
+                '<a href="auth.html#login" class="sidebar-auth-btn outline">Log In</a>'
             );
         }
     }
@@ -202,6 +202,36 @@ function setupEscKey() {
 
 // LOCATION SEARCH
 
+// The last places picked in either search box (shown when a box is focused while empty)
+const RECENT_PLACES_KEY = 'para_recent_places';
+
+function recentPlaces() {
+    try { return JSON.parse(localStorage.getItem(RECENT_PLACES_KEY)) || []; } catch (e) { return []; }
+}
+
+function rememberPlace(loc) {
+    if (loc.isCurrent) return;
+    const list = recentPlaces().filter(p => !sameLocation(p, loc));
+    list.unshift({ name: loc.name, detail: loc.detail || '', lat: loc.lat, lng: loc.lng });
+    try { localStorage.setItem(RECENT_PLACES_KEY, JSON.stringify(list.slice(0, 5))); } catch (e) { /* storage full or blocked */ }
+}
+
+// "Use my current location": the browser asks the user first; only places inside SJDM are accepted
+function currentLocation() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) return reject(new Error('Your browser cannot share your location.'));
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                const loc = { name: 'My Location', lat: pos.coords.latitude, lng: pos.coords.longitude, isCurrent: true };
+                if (!isLocationInsideCoverage(loc.lat, loc.lng)) return reject(new Error('You seem to be outside SJDM. Search for a place instead.'));
+                resolve(loc);
+            },
+            () => reject(new Error('Location is turned off. Allow it in your browser, or search for a place.')),
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        );
+    });
+}
+
 function setupSearchInput(inputId, dropdownId, onSelect) {
     const input = document.getElementById(inputId);
     const dropdown = document.getElementById(dropdownId);
@@ -228,69 +258,125 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
         }
     }
 
-    function selectItem(item) {
+    function pick(loc) {
+        input.value = loc.name;
+        closeDropdown();
+        rememberPlace(loc);
+        onSelect(loc);
+    }
+
+    async function selectItem(item) {
         if (!item) return;
+
+        if (item.dataset.current) {
+            item.querySelector('.search-result-category').textContent = 'Finding you...';
+            try {
+                pick(await currentLocation());
+            } catch (err) {
+                closeDropdown();
+                showNotification(err.message, 'warning');
+            }
+            return;
+        }
 
         const loc = {
             name: item.dataset.name,
+            detail: item.dataset.detail,
             lat: Number(item.dataset.lat),
             lng: Number(item.dataset.lng)
         };
 
         if (!Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) return;
-
-        input.value = loc.name;
-        closeDropdown();
-        onSelect(loc);
+        pick(loc);
     }
 
-    function addSection(title, results, source) {
-        if (!results.length) return;
+    // The place name with the typed words in bold (built with text nodes: names can't inject HTML)
+    function highlighted(text, query) {
+        const span = document.createElement('span');
+        span.className = 'search-result-name';
+        const words = (query || '').toLowerCase().split(/\s+/).filter(w => w.length > 1);
+        const lower = text.toLowerCase();
+        let i = 0;
+        while (i < text.length) {
+            let hit = null;
+            words.forEach(w => { if (!hit && lower.startsWith(w, i)) hit = w; });
+            if (hit) {
+                const mark = document.createElement('mark');
+                mark.textContent = text.slice(i, i + hit.length);
+                span.appendChild(mark);
+                i += hit.length;
+            } else {
+                span.appendChild(document.createTextNode(text[i]));
+                i++;
+            }
+        }
+        span.normalize();
+        return span;
+    }
 
+    function addItem(loc, iconName, detailText, query) {
+        const item = document.createElement('div');
+        item.className = 'search-dropdown-item';
+        item.dataset.name = loc.name;
+        item.dataset.detail = loc.detail || '';
+        item.dataset.lat = loc.lat;
+        item.dataset.lng = loc.lng;
+        if (loc.isCurrent) item.dataset.current = '1';
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', 'false');
+
+        const icon = document.createElement('i');
+        icon.className = 'item-icon';
+        icon.dataset.lucide = iconName;
+        icon.setAttribute('aria-hidden', 'true');
+
+        const details = document.createElement('div');
+        details.className = 'search-result-details';
+
+        const category = document.createElement('small');
+        category.className = 'search-result-category';
+        category.textContent = detailText;
+
+        details.append(highlighted(loc.name, query), category);
+        item.append(icon, details);
+
+        item.addEventListener('click', () => selectItem(item));
+        dropdown.appendChild(item);
+    }
+
+    function addHeading(title) {
         const heading = document.createElement('div');
         heading.className = 'search-dropdown-item search-section-heading';
         heading.textContent = title;
         dropdown.appendChild(heading);
+    }
 
+    function addSection(title, results, source, query) {
+        if (!results.length) return;
+        addHeading(title);
         results.forEach(loc => {
-            const item = document.createElement('div');
-            item.className = 'search-dropdown-item';
-            item.dataset.name = loc.name;
-            item.dataset.lat = loc.lat;
-            item.dataset.lng = loc.lng;
-            item.setAttribute('role', 'option');
-            item.setAttribute('aria-selected', 'false');
-
-            const icon = document.createElement('i');
-            icon.className = 'item-icon';
-            icon.dataset.lucide = source === 'saved' ? 'map-pin' : 'search';
-            icon.setAttribute('aria-hidden', 'true');
-
-            const details = document.createElement('div');
-            details.className = 'search-result-details';
-
-            const name = document.createElement('span');
-            name.className = 'search-result-name';
-            name.textContent = loc.name;
-
-            const category = document.createElement('small');
-            category.className = 'search-result-category';
-
-            if (source === 'saved') {
-                category.textContent = loc.isPublic
-                    ? `Public Landmark · ${loc.category || 'other'}`
-                    : `Personal Landmark · ${loc.category || 'other'}`;
-            } else {
-                category.textContent = loc.detail || 'Place in SJDM';
-            }
-
-            details.append(name, category);
-            item.append(icon, details);
-
-            item.addEventListener('click', () => selectItem(item));
-            dropdown.appendChild(item);
+            const detail = source === 'saved'
+                ? (loc.isPublic ? 'Public landmark' : 'Your landmark') + ' · ' + (loc.category || 'other').replace(/^./, c => c.toUpperCase())
+                : loc.detail || 'Place in SJDM';
+            addItem(loc, source === 'saved' ? 'star' : 'map-pin', detail, query);
         });
     }
+
+    // Empty box: "Use my current location" and the places picked lately
+    function showSuggestions() {
+        dropdown.innerHTML = '';
+        activeIndex = -1;
+        addItem({ name: 'Use My Current Location', isCurrent: true }, 'locate-fixed', 'Uses your phone or browser location');
+        const other = inputId === 'origin-input' ? destData : originData;
+        const recent = recentPlaces().filter(p => !sameLocation(p, other));
+        if (recent.length) {
+            addHeading('Recent');
+            recent.forEach(p => addItem(p, 'history', p.detail || 'Place in SJDM'));
+        }
+        dropdown.classList.add('open');
+    }
+
+    input.addEventListener('focus', () => { if (!input.value.trim()) showSuggestions(); });
 
     input.setAttribute('autocomplete', 'off');
     dropdown.setAttribute('role', 'listbox');
@@ -303,7 +389,7 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
         activeIndex = -1;
 
         if (query.length < 1) {
-            closeDropdown();
+            showSuggestions();
             return;
         }
 
@@ -378,8 +464,8 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
 
                 dropdown.innerHTML = '';
 
-                addSection('Saved Landmarks', availableSaved, 'saved');
-                addSection('Other Places', uniqueExternal, 'external');
+                addSection('Saved Landmarks', availableSaved, 'saved', query);
+                addSection('Places in SJDM', uniqueExternal, 'external', query);
 
                 if (!availableSaved.length && !uniqueExternal.length) {
                     const empty = document.createElement('div');
@@ -391,7 +477,9 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
                     ) {
                         empty.textContent = 'Could not load search results. Please try again.';
                     } else {
-                        empty.textContent = 'No matching places found.';
+                        empty.textContent = query.length < 2
+                            ? 'Keep typing to search places in SJDM.'
+                            : 'No matching places found. Try another name or a nearby landmark.';
                     }
 
                     dropdown.appendChild(empty);
@@ -407,7 +495,7 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
                 error.textContent = 'Could not load search results. Please try again.';
                 dropdown.appendChild(error);
             }
-        }, 350);
+        }, 300);
     });
 
     input.addEventListener('keydown', function (e) {
@@ -428,9 +516,9 @@ function setupSearchInput(inputId, dropdownId, onSelect) {
             e.preventDefault();
             activeIndex = activeIndex <= 0 ? items.length - 1 : activeIndex - 1;
             updateActiveItem(items);
-        } else if (e.key === 'Enter' && activeIndex >= 0) {
+        } else if (e.key === 'Enter') {
             e.preventDefault();
-            selectItem(items[activeIndex]);
+            selectItem(items[Math.max(activeIndex, 0)]);
         } else if (e.key === 'Escape') {
             closeDropdown();
         }
@@ -770,7 +858,7 @@ function renderLandmarksList(filter = '') {
 
     $list.empty();
     if (!loggedIn) {
-        $list.append('<div class="lm-empty">Showing public landmarks. <a href="auth.html">Log in</a> to save your own.</div>');
+        $list.append('<div class="lm-empty">Showing public landmarks. <a href="auth.html">Log In</a> to save your own.</div>');
     }
     if (!filtered.length) {
         $list.append('<div class="lm-empty">' + (loggedIn
@@ -783,7 +871,7 @@ function renderLandmarksList(filter = '') {
             '<i data-lucide="map-pin" class="lm-icon" aria-hidden="true"></i>',
             $('<div class="lm-info">').append(
                 $('<h5>').text(lm.name),
-                $('<span>').text((lm.isPublic ? 'Public · ' : '') + lm.category)
+                $('<span>').text((lm.isPublic ? 'Public · ' : '') + String(lm.category || 'other').replace(/^./, c => c.toUpperCase()))
             )
         ).appendTo($list);
     });
@@ -961,7 +1049,7 @@ function setupTrips() {
         const sure = await confirmDialog({
             title: 'Clear trip history?',
             message: 'All of your saved trips will be removed.',
-            confirmText: 'Clear all',
+            confirmText: 'Clear All',
             danger: true
         });
         if (!sure) return;
@@ -1263,14 +1351,14 @@ function openSavedModal(tab) {
             const detail = tab === 'trips'
                 ? [item.transportLabel, item.passengerLabel, item.distanceKm ? Number(item.distanceKm).toFixed(1) + ' km' : ''].filter(Boolean).join(' · ')
                 : tab === 'landmarks'
-                    ? (item.isPublic ? 'Public landmark · ' : 'Personal landmark · ') + (item.category || 'other')
+                    ? (item.isPublic ? 'Public landmark · ' : 'Personal landmark · ') + (item.category || 'other').replace(/^./, c => c.toUpperCase())
                     : [item.transportLabel, item.passengerLabel].filter(Boolean).join(' · ');
             const $row = $('<div class="saved-modal-item">').append(
                 $('<div>').append($('<strong>').text(title), $('<span>').text(detail || 'No additional details'))
             );
             const $actions = $('<div class="saved-modal-actions">');
             if (tab === 'trips') {
-                $('<button type="button" class="small-button outline-small">').text('Use route').on('click', () => {
+                $('<button type="button" class="small-button outline-small">').text('Use Route').on('click', () => {
                     sessionStorage.setItem('para_pending_route', JSON.stringify(item));
                     window.location.href = 'calculate.html';
                 }).appendTo($actions);

@@ -84,11 +84,14 @@ function rememberRole(user) {
     } catch (e) { /* storage blocked: the check below still redirects */ }
 }
 
-// Hide the Home / About links for signed-in passengers; the logo goes to the calculator
+// Signed-in passengers only use the calculator, so the page links are hidden and the Para logo
+// is the way home (it opens the calculator, e.g. from Account Settings)
+// (html.is-member hides the links, see global.css; early-theme.js sets it before the page draws)
 function applyMemberNav(user) {
-    if (!user || user.role === 'admin') return;
-    $('.nav-links, .sidebar-nav').find('a[href="index.html"], a[href="aboutus.html"]').closest('li').hide();
-    $('#navbar-logo').closest('a').attr('href', 'calculate.html');
+    const member = !!user && user.role !== 'admin';
+    document.documentElement.classList.toggle('is-member', member);
+    if (!member) return;
+    $('#navbar-logo').attr('alt', 'Para: back to the calculator').closest('a').attr({ href: 'calculate.html', title: 'Back to the calculator' });
 }
 
 function isPassengerPage() {

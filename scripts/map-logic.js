@@ -474,6 +474,9 @@ function panToLandmark(lm) {
 // One request at a time: a new search cancels the one still running (Nominatim allows ~1 request/second).
 let searchController = null;
 
+// Place search: Photon first (it understands half-typed words like "tungk" or "sm cit"),
+// Nominatim when Photon is down or finds nothing. Both are free OpenStreetMap services.
+// shortcut: public Photon/Nominatim servers have fair-use limits; fine for a class demo, self-host if Para goes public.
 async function searchLocations(query) {
   if (!query || query.trim().length < 2) return [];
   const box = coverageBox();
@@ -485,45 +488,83 @@ async function searchLocations(query) {
   const timeoutId = setTimeout(() => controller.abort(), 8000);
 
   try {
-    const [[west, south], [east, north]] = box;
-    const params = new URLSearchParams({
-      q: query.trim(),
-      format: 'jsonv2',
-      addressdetails: '1',
-      limit: '15',
-      countrycodes: 'ph',
-      'accept-language': 'en',
-      viewbox: [west, north, east, south].join(','),
-      bounded: '1'
+    const fromPhoton = await searchPhoton(query.trim(), box, controller.signal).catch(error => {
+      if (error.name === 'AbortError') throw error;
+      console.warn('[MapLogic] Photon search failed, trying Nominatim:', error.message);
+      return [];
     });
-    const response = await fetch('https://nominatim.openstreetmap.org/search?' + params, {
-      signal: controller.signal,
-      headers: { 'Accept': 'application/json' }
-    });
-    if (!response.ok) throw new Error(`Nominatim search HTTP error: ${response.status}`);
-
-    const data = await response.json();
-    if (!Array.isArray(data)) throw new Error('Invalid Nominatim search response');
-
-    return data.map(place => {
-      const a = place.address || {};
-      const area = a.village || a.suburb || a.neighbourhood || a.quarter || a.hamlet || '';
-      const city = a.city || a.town || a.municipality || '';
-      return {
-        name: place.name || String(place.display_name || '').split(',')[0],
-        detail: [area, city].filter(Boolean).join(', '),
-        lat: Number(place.lat),
-        lng: Number(place.lon)
-      };
-    }).filter(place =>
-      place.name && Number.isFinite(place.lat) && Number.isFinite(place.lng) &&
-      isLocationInsideCoverage(place.lat, place.lng)
-    );
+    if (fromPhoton.length) return fromPhoton;
+    return await searchNominatim(query.trim(), box, controller.signal);
   } catch (error) {
-    if (error.name !== 'AbortError') console.error('[MapLogic] Nominatim error:', error);
+    if (error.name !== 'AbortError') console.error('[MapLogic] Search error:', error);
     return [];
   } finally {
     clearTimeout(timeoutId);
     if (searchController === controller) searchController = null;
   }
+}
+
+// Only places inside the covered area, each place once (Photon often returns the same mall twice)
+function cleanPlaces(places) {
+  const seen = new Set();
+  return places.filter(place => {
+    if (!place.name || !Number.isFinite(place.lat) || !Number.isFinite(place.lng)) return false;
+    if (!isLocationInsideCoverage(place.lat, place.lng)) return false;
+    const key = place.name.toLowerCase() + '|' + place.lat.toFixed(3) + '|' + place.lng.toFixed(3);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+async function searchPhoton(query, box, signal) {
+  const [[west, south], [east, north]] = box;
+  const params = new URLSearchParams({ q: query, limit: '12', lang: 'en', bbox: [west, south, east, north].join(',') });
+  const response = await fetch('https://photon.komoot.io/api/?' + params, { signal: signal });
+  if (!response.ok) throw new Error('Photon HTTP error: ' + response.status);
+  const data = await response.json();
+  return cleanPlaces((data.features || []).map(f => {
+    const p = f.properties || {};
+    const area = p.district || p.locality || p.suburb || '';
+    return {
+      name: p.name || p.street || '',
+      detail: [area, p.city || p.county || ''].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(', '),
+      lat: Number(f.geometry && f.geometry.coordinates[1]),
+      lng: Number(f.geometry && f.geometry.coordinates[0])
+    };
+  }));
+}
+
+async function searchNominatim(query, box, signal) {
+  const [[west, south], [east, north]] = box;
+  const params = new URLSearchParams({
+    q: query,
+    format: 'jsonv2',
+    addressdetails: '1',
+    limit: '15',
+    countrycodes: 'ph',
+    'accept-language': 'en',
+    viewbox: [west, north, east, south].join(','),
+    bounded: '1'
+  });
+  const response = await fetch('https://nominatim.openstreetmap.org/search?' + params, {
+    signal: signal,
+    headers: { 'Accept': 'application/json' }
+  });
+  if (!response.ok) throw new Error(`Nominatim search HTTP error: ${response.status}`);
+
+  const data = await response.json();
+  if (!Array.isArray(data)) throw new Error('Invalid Nominatim search response');
+
+  return cleanPlaces(data.map(place => {
+    const a = place.address || {};
+    const area = a.village || a.suburb || a.neighbourhood || a.quarter || a.hamlet || '';
+    const city = a.city || a.town || a.municipality || '';
+    return {
+      name: place.name || String(place.display_name || '').split(',')[0],
+      detail: [area, city].filter(Boolean).join(', '),
+      lat: Number(place.lat),
+      lng: Number(place.lon)
+    };
+  }));
 }

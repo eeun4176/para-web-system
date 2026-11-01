@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Calculate - Para</title>
+    <title>Calculate | Para SJDM Fare Calculator</title>
 
     <link rel="icon" type="image/png" href="../assets/img/favicon.png" />
 
@@ -16,6 +16,7 @@
 
     <!-- Apply dark mode before the page renders so there's no flash -->
     <script src="../scripts/early-theme.js"></script>
+    <script src="../scripts/i18n.js"></script>
 </head>
 
 <body class="calc-body">
@@ -108,12 +109,12 @@
                                 </div>
                                 <div class="route-inputs">
                                     <div class="search-input-wrapper">
-                                        <input type="text" id="origin-input" placeholder="From: search a place" autocomplete="off"
+                                        <input type="text" id="origin-input" placeholder="From: Search a place" autocomplete="off"
                                             aria-label="Origin location" />
                                         <div class="search-dropdown" id="origin-dropdown" role="listbox"></div>
                                     </div>
                                     <div class="search-input-wrapper">
-                                        <input type="text" id="dest-input" placeholder="To: search a place" autocomplete="off"
+                                        <input type="text" id="dest-input" placeholder="To: Search a place" autocomplete="off"
                                             aria-label="Destination location" />
                                         <div class="search-dropdown" id="dest-dropdown" role="listbox"></div>
                                     </div>
@@ -221,14 +222,14 @@
                             <div class="saved-pane" data-pane="trips" hidden>
                                 <div class="saved-pane-head">
                                     <p class="saved-hint">Tap a trip to run it again.</p>
-                                    <span class="panel-actions"><button type="button" class="link-btn export" id="trips-export-btn">Export JSON</button><button type="button" class="link-btn" id="trips-clear-btn">Clear all</button></span>
+                                    <span class="panel-actions"><button type="button" class="link-btn export" id="trips-export-btn">Export JSON</button><button type="button" class="link-btn" id="trips-clear-btn">Clear All</button></span>
                                 </div>
                                 <div id="trips-list"></div>
                             </div>
 
                             <div class="saved-pane" data-pane="landmarks" hidden>
                                 <input type="text" class="landmarks-search" id="landmarks-search"
-                                    placeholder="Search landmarks..." aria-label="Search landmarks" />
+                                    placeholder="Search landmarks" aria-label="Search landmarks" />
                                 <div id="landmarks-list"></div>
                                 <p class="saved-hint"><i data-lucide="mouse-pointer-click"></i> Right-click the map to save a new landmark.</p>
                             </div>
@@ -271,7 +272,7 @@
 
             <div class="form-group">
                 <label for="lm-desc">Short Description:</label>
-                <textarea id="lm-desc" placeholder="Brief description of this place..." maxlength="500"></textarea>
+                <textarea id="lm-desc" placeholder="Brief description of this place" maxlength="500"></textarea>
             </div>
 
             <!-- Shown to admins only (the server also enforces this) -->

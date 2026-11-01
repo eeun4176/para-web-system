@@ -1,4 +1,3 @@
-
 <?php
 // POST api/auth/preferences.php {defaultPassenger, defaultTransport}
 require_once __DIR__ . '/../helpers.php';

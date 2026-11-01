@@ -1,4 +1,3 @@
-
 <?php
 // POST api/auth/update_profile.php {name}
 require_once __DIR__ . '/../helpers.php';

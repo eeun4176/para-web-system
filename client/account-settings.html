@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Settings - Para</title>
+    <title>Account Settings | Para SJDM Fare Calculator</title>
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <link rel="stylesheet" href="../style/global.css">
     <link rel="stylesheet" href="../style/account-settings.css">
     <script src="../scripts/early-theme.js"></script>
+    <script src="../scripts/i18n.js"></script>
 </head>
 <body>
     <nav class="navbar" id="navbar" aria-label="Main navigation">
@@ -51,7 +52,7 @@
                     <h1 id="hero-name">Loading...</h1>
                     <p class="muted" id="hero-email"></p>
                 </div>
-                <button class="settings-button outline hero-logout" id="logout" type="button"><i data-lucide="log-out"></i> Log out</button>
+                <button class="settings-button outline hero-logout" id="logout" type="button"><i data-lucide="log-out"></i> Log Out</button>
             </header>
 
             <!-- One section at a time (the highlight slides between the buttons, see ui.js) -->
@@ -84,7 +85,7 @@
                     <label>Passenger type<select id="default-passenger"><option value="">Loading...</option></select></label>
                     <label>Transportation<select id="default-transport"><option value="">Loading...</option></select></label>
                 </div>
-                <button class="settings-button primary" id="save-preferences" type="button">Save preferences</button>
+                <button class="settings-button primary" id="save-preferences" type="button">Save Preferences</button>
             </section>
 
             <section class="settings-card settings-panel" data-panel="activity" role="tabpanel" hidden>

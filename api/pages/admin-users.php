@@ -37,7 +37,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Users - Para</title>
+    <title>Users | Para Admin</title>
 
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <link rel="stylesheet" href="../style/global.css">
@@ -57,7 +57,7 @@ try {
             <div class="admin-card" id="admin-denied" style="display: none;">
                 <h2>Admins Only</h2>
                 <p class="admin-hint">You need an admin account to see this page.</p>
-                <a href="index.html">Back to home</a>
+                <a href="index.html">Back to Home</a>
             </div>
 
             <div id="admin-content" style="display: none;">

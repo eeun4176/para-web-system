@@ -1,4 +1,3 @@
-
 <?php
 // GET api/auth/profile.php -> the logged-in user's details + their totals
 require_once __DIR__ . '/../helpers.php';

@@ -7,6 +7,7 @@
 
         // Signed-in passengers skip Home and About (auth.js keeps this hint in sync with the session)
         var page = location.pathname.split('/').pop();
+        if (localStorage.getItem('para_role') === 'user') document.documentElement.classList.add('is-member');   // hides the page links
         if (localStorage.getItem('para_role') === 'user' && (page === '' || page === 'index.html' || page === 'aboutus.html')) {
             location.replace('calculate.html');
         }

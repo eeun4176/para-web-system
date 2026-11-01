@@ -37,7 +37,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - Para</title>
+    <title>Settings | Para Admin</title>
 
     <link rel="icon" type="image/png" href="../assets/img/favicon.png">
     <link rel="stylesheet" href="../style/global.css">
@@ -83,7 +83,7 @@ try {
                         <label class="admin-field">Display name
                             <input type="text" id="admin-name-input" maxlength="100" autocomplete="name" required />
                         </label>
-                        <button type="submit" class="row-btn">Save name</button>
+                        <button type="submit" class="row-btn">Save Name</button>
                     </form>
                 </section>
 
@@ -101,7 +101,7 @@ try {
                         <label class="admin-field">Confirm new password
                             <input type="password" id="admin-confirm-pw" autocomplete="new-password" required />
                         </label>
-                        <button type="submit" class="row-btn">Change password</button>
+                        <button type="submit" class="row-btn">Change Password</button>
                     </form>
                 </section>
 

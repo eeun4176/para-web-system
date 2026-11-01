@@ -388,6 +388,40 @@ h3, h4 {
     display: flex;
 }
 
+/* EN / FIL language button (scripts/i18n.js adds it before the dark mode button) */
+.lang-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    height: 38px;
+    padding: 0 11px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.lang-toggle:hover {
+    background: var(--bg-input);
+}
+
+.lang-toggle .lucide {
+    width: 16px;
+    height: 16px;
+}
+
+.lang-code {
+    min-width: 2.2em;
+    text-align: center;
+}
+
 .toggle-knob .lucide {
     width: 17px;
     height: 17px;
@@ -584,6 +618,17 @@ html.dark .toggle-knob .icon-dark {
 .sidebar-auth-btn.outline:hover {
     background: var(--bg-input);
     color: var(--text-main);
+}
+
+/* Signed-in passengers: no page links (the calculator is their home; the Para logo leads back to it) */
+html.is-member .nav-links,
+html.is-member .sidebar:not(.admin-sidebar) .sidebar-nav {
+    display: none;
+}
+
+/* ...and on phones no menu button either: the profile picture menu has Account Settings and Log Out */
+html.is-member .hamburger-btn.lines {
+    display: none !important;
 }
 
 /* ---------- PHONE MENU (passenger pages): 44px hamburger that morphs into an X, full-screen glass menu ---------- */

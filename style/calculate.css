@@ -328,10 +328,16 @@
     overflow-wrap: anywhere;
 }
 
+/* The typed words, in bold inside each result */
+.search-result-name mark {
+    background: none;
+    color: var(--text-main);
+    font-weight: 800;
+}
+
 .search-result-category {
     font-size: 0.72rem;
     color: var(--text-muted);
-    text-transform: capitalize;
 }
 
 .item-icon {
@@ -844,10 +850,6 @@
     color: var(--text-muted);
 }
 
-/* Landmark categories ("school" -> "School") */
-#landmarks-list .lm-info span {
-    text-transform: capitalize;
-}
 
 .lm-empty {
     font-size: 0.85rem;

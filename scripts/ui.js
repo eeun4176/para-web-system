@@ -164,9 +164,9 @@ function buildChips($select, $chips) {
     $chips.empty();
     $select.find('option').each(function () {
         if (!this.value) return;                            // skip the "Transportation" placeholder
-        // "Student (20% off)" -> label "Student" + tag "-20%".  "Bus (Aircon)" stays as it is.
-        const text = $(this).text();
-        const discount = text.match(/^(.*) \((\d+)% off\)$/);
+        // "Student (20% off)" (Filipino: "20% bawas") -> label "Student" + tag "-20%".  "Bus (Aircon)" stays as it is.
+        const text = typeof englishOf === 'function' ? englishOf(this) : $(this).text();   // English even if Filipino is shown
+        const discount = text.match(/^(.*) \((\d+)% (?:off|bawas)\)$/);
         $('<button type="button" class="chip">')
             .attr({ 'data-value': this.value, 'aria-pressed': 'false' })
             .append(
@@ -337,7 +337,9 @@ function setupSegmentGlider(group) {
         glider.style.transform = 'translate(' + active.offsetLeft + 'px, ' + active.offsetTop + 'px)';
     };
     new MutationObserver(move).observe(group, { subtree: true, attributes: true, attributeFilter: ['class'] });
-    new ResizeObserver(move).observe(group);   // also runs when a hidden group becomes visible
+    const sizes = new ResizeObserver(move);   // runs when the group appears or a label changes length (e.g. Filipino)
+    sizes.observe(group);
+    group.querySelectorAll('button').forEach(b => sizes.observe(b));
     move();
     requestAnimationFrame(() => glider.classList.add('ready'));   // no slide on the first placement
 }

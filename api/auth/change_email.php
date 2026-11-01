@@ -1,4 +1,3 @@
-
 <?php
 // POST api/auth/change_email.php {email, recoveryCode}
 require_once __DIR__ . '/../helpers.php';

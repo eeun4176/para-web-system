@@ -289,22 +289,59 @@ function setupCalendarPopover() {
     $(document).on('keydown', e => { if (e.key === 'Escape') close(); });
 }
 
+// ---- Admin maps: the same look as the passenger map (scripts/map-logic.js) ----
+// Light "positron" / "dark" style that follows the dark mode toggle, the dashed SJDM outline,
+// and no panning away from SJDM. addLayers() runs again after every style change (a new style drops our layers).
+const ADMIN_MAP_STYLES = {
+    light: 'https://tiles.openfreemap.org/styles/positron',
+    dark: 'https://tiles.openfreemap.org/styles/dark'
+};
+let sjdmOutline = null;   // the boundary GeoJSON, fetched once for every map on the page
+
+function createAdminMap(container, addLayers) {
+    const themeNow = () => document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    let theme = themeNow();
+    const map = new maplibregl.Map({
+        container: container,
+        style: ADMIN_MAP_STYLES[theme],
+        center: [121.0520, 14.8183],    // SJDM, as [longitude, latitude]
+        zoom: 11.6,
+        minZoom: 11,
+        maxBounds: [[120.99, 14.745], [121.19, 14.89]],   // SJDM boundary box plus a small margin
+        attributionControl: { compact: true }
+    });
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+    if (!sjdmOutline) sjdmOutline = fetch('../assets/sjdm-boundary.geojson').then(r => r.json()).catch(() => null);
+
+    map.on('style.load', async () => {
+        const outline = await sjdmOutline;
+        if (outline && !map.getSource('sjdm')) {
+            map.addSource('sjdm', { type: 'geojson', data: outline });
+            map.addLayer({
+                id: 'sjdm-outline', type: 'line', source: 'sjdm',
+                paint: { 'line-color': theme === 'dark' ? '#ffffff' : '#1D1F1E', 'line-width': 1.5, 'line-opacity': 0.25, 'line-dasharray': [3, 2] }
+            });
+        }
+        if (addLayers) addLayers(map);
+    });
+
+    // Dark mode toggle: switch the map style too (only when the theme really changed)
+    new MutationObserver(() => {
+        if (themeNow() === theme) return;
+        theme = themeNow();
+        map.setStyle(ADMIN_MAP_STYLES[theme], { diff: false });
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return map;
+}
+
 // ---- Destination heat map (api/admin/heatmap.php returns GeoJSON) ----
 async function loadHeatmap() {
     if (typeof maplibregl === 'undefined') return;
     const res = await API.get('admin/heatmap.php');
-    const dark = document.documentElement.classList.contains('dark');
-    const map = new maplibregl.Map({
-        container: 'heat-map',
-        style: 'https://tiles.openfreemap.org/styles/' + (dark ? 'dark' : 'positron'),
-        center: [121.0520, 14.8183],    // SJDM, as [longitude, latitude]
-        zoom: 11.6,
-        minZoom: 11,
-        maxBounds: [[120.99, 14.745], [121.19, 14.89]],   // SJDM boundary box plus a small margin: no panning away
-        attributionControl: { compact: true }
-    });
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
-    map.on('load', () => {
+    const map = createAdminMap('heat-map', map => {
+        if (map.getSource('trips')) return;
         map.addSource('trips', { type: 'geojson', data: res.geojson });
         map.addLayer({
             id: 'trips-heat', type: 'heatmap', source: 'trips',
@@ -321,15 +358,15 @@ async function loadHeatmap() {
         // Up close, each place shows as a dot you can hover for its name
         map.addLayer({
             id: 'trips-dots', type: 'circle', source: 'trips', minzoom: 14,
-            paint: { 'circle-radius': 6, 'circle-color': '#1D1F1E', 'circle-stroke-color': '#fff', 'circle-stroke-width': 2 }
+            paint: { 'circle-radius': 6, 'circle-color': '#2ECC71', 'circle-stroke-color': '#fff', 'circle-stroke-width': 2 }
         });
-        const popup = new maplibregl.Popup({ closeButton: false, offset: 10 });
-        map.on('mousemove', 'trips-dots', e => {
-            const p = e.features[0].properties;
-            popup.setLngLat(e.lngLat).setText(p.name + ': ' + p.trips + (p.trips == 1 ? ' trip' : ' trips')).addTo(map);
-        });
-        map.on('mouseleave', 'trips-dots', () => popup.remove());
     });
+    const popup = new maplibregl.Popup({ closeButton: false, offset: 10 });
+    map.on('mousemove', 'trips-dots', e => {
+        const p = e.features[0].properties;
+        popup.setLngLat(e.lngLat).setText(p.name + ': ' + p.trips + (p.trips == 1 ? ' trip' : ' trips')).addTo(map);
+    });
+    map.on('mouseleave', 'trips-dots', () => popup.remove());
 }
 
 // ---- Settings page (api/auth/update_profile.php, api/admin/change_password.php) ----
@@ -571,7 +608,7 @@ async function loadPublicLandmarks() {
     res.landmarks.forEach(lm => {
         $('<tr>').attr({ 'data-id': lm.id, 'data-name': lm.name }).append(
             $('<td>').text(lm.name),
-            $('<td>').text(lm.category),
+            $('<td>').text(String(lm.category || 'other').replace(/^./, c => c.toUpperCase())),
             $('<td>').text(lm.lat.toFixed(5) + ', ' + lm.lng.toFixed(5)),
             $('<td>').append($('<button type="button" class="row-btn icon danger del-public" title="Delete landmark" aria-label="Delete landmark">').append('<i data-lucide="trash-2"></i>'))
         ).appendTo($tb);
@@ -585,14 +622,7 @@ let newLandmarkSpot = null;     // { lat, lng } chosen on the map
 let newLandmarkMarker = null;   // green pin showing that spot
 
 function setupAddLandmarkMap() {
-    const isDark = document.documentElement.classList.contains('dark');
-    const map = new maplibregl.Map({
-        container: 'admin-landmark-map',
-        style: 'https://tiles.openfreemap.org/styles/' + (isDark ? 'dark' : 'liberty'),
-        center: [121.0520, 14.8183],    // SJDM, as [longitude, latitude]
-        zoom: 12
-    });
-    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+    const map = createAdminMap('admin-landmark-map');
 
     map.on('click', e => {
         newLandmarkSpot = { lat: e.lngLat.lat, lng: e.lngLat.lng };
@@ -690,7 +720,7 @@ function setupUsers() {
         const sure = await confirmDialog({
             title: 'Delete this user?',
             message: $tr.data('name') + ' and all of their trips, favorites and landmarks will be permanently deleted.',
-            confirmText: 'Delete user', danger: true
+            confirmText: 'Delete User', danger: true
         });
         if (!sure) return;
         try {

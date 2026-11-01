@@ -22,29 +22,6 @@
     /* background: the sky in global.css (.sky) */
 }
 
-/* Para flies a slow loop around the panel, flapping a little */
-.auth-para {
-    position: absolute;
-    z-index: 0;
-    left: 8%;
-    top: 58%;
-    width: 96px;
-    pointer-events: none;
-    filter: drop-shadow(0 12px 14px rgba(16, 40, 64, 0.25));
-    animation: para-fly 22s ease-in-out infinite, para-flap 0.9s ease-in-out infinite alternate;
-}
-
-@keyframes para-fly {
-    0%, 100% { left: 8%;  top: 58%; rotate: -6deg; }
-    25%      { left: 68%; top: 16%; rotate: 8deg; }
-    50%      { left: 74%; top: 62%; rotate: -4deg; }
-    75%      { left: 30%; top: 22%; rotate: 6deg; }
-}
-
-@keyframes para-flap {
-    to { transform: translateY(-8px) scaleY(0.94); }
-}
-
 .auth-logo {
     position: relative;
     align-self: flex-start;
@@ -491,9 +468,9 @@ html.dark .float-field input:focus + label {
     border: 0;
     border-radius: 12px;
     overflow: hidden;
-    color: #fff;
-    background: var(--green-ink);
-    box-shadow: 0 1px 2px rgba(23, 138, 74, 0.3), 0 10px 22px rgba(23, 138, 74, 0.2);
+    color: var(--on-primary);
+    background: var(--primary);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 10px 22px rgba(0, 0, 0, 0.14);
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
@@ -554,6 +531,7 @@ html.dark .float-field input:focus + label {
 
 .btn-auth.ok {
     background: #1DB954;
+    color: #fff;
 }
 
 @keyframes auth-sheen {

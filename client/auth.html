@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Para - Sign In</title>
+    <title>Log In | Para SJDM Fare Calculator</title>
 
     <link rel="icon" type="image/png" href="../assets/img/favicon.png" />
     <link rel="stylesheet" href="../style/global.css" />
@@ -13,6 +13,7 @@
 
     <!-- Apply dark mode before the page renders so there's no flash -->
     <script src="../scripts/early-theme.js"></script>
+    <script src="../scripts/i18n.js"></script>
 </head>
 
 <body>
@@ -26,7 +27,6 @@
             <span class="sky-cloud far" aria-hidden="true"></span>
             <span class="sky-cloud mid" aria-hidden="true"></span>
             <span class="sky-cloud near" aria-hidden="true"></span>
-            <img src="../assets/img/para-fly.webp" width="575" height="640" alt="" class="auth-para" />
             <a href="index.html" class="auth-logo"><img src="../assets/logo-wordmark.png" alt="Para home" /></a>
 
             <div class="auth-stack" aria-hidden="true">
@@ -56,7 +56,7 @@
         <main class="auth-main">
             <div class="auth-topbar">
                 <a href="index.html" class="auth-mlogo"><img src="../assets/logo-wordmark.png" alt="Para home" /></a>
-                <a href="index.html" class="auth-back">Continue as guest <i data-lucide="arrow-right"></i></a>
+                <a href="index.html" class="auth-back">Continue as Guest <i data-lucide="arrow-right"></i></a>
                 <button id="dark-toggle" class="dark-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false">
                     <span class="toggle-knob"><i data-lucide="sun" class="icon-light"></i><i data-lucide="moon" class="icon-dark"></i></span>
                 </button>
@@ -69,7 +69,7 @@
                     <p class="auth-sub">Log in to save your trips, favorite routes and landmarks.</p>
 
                     <div class="google-btn" id="google-login-btn"></div>
-                    <div class="auth-divider"><span>or continue with email</span></div>
+                    <div class="auth-divider"><span>Or continue with email</span></div>
 
                     <div class="auth-field">
                         <div class="auth-input-group">
@@ -86,12 +86,12 @@
                                 <i data-lucide="eye-off" class="pw-off"></i><i data-lucide="eye" class="pw-on"></i>
                             </button>
                         </div>
-                        <div class="auth-field-link"><a href="#" id="go-forgot">Forgot password?</a></div>
+                        <div class="auth-field-link"><a href="#" id="go-forgot">Forgot Password?</a></div>
                     </div>
 
-                    <button class="btn-auth" id="login-submit" type="button"><span class="lbl">Log in</span><span class="busy">Logging in</span><span class="done"><i data-lucide="check"></i> Logged in</span></button>
+                    <button class="btn-auth" id="login-submit" type="button"><span class="lbl">Log In</span><span class="busy">Logging In</span><span class="done"><i data-lucide="check"></i> Logged In</span></button>
 
-                    <p class="auth-link-row">New to Para? <a href="#" id="go-signup">Create an account</a></p>
+                    <p class="auth-link-row">New to Para? <a href="#" id="go-signup">Create an Account</a></p>
                 </div>
             </section>
 
@@ -102,7 +102,7 @@
                     <p class="auth-sub">It's free. Save routes and get your discount every time.</p>
 
                     <div class="google-btn" id="google-signup-btn"></div>
-                    <div class="auth-divider"><span>or continue with email</span></div>
+                    <div class="auth-divider"><span>Or continue with email</span></div>
 
                     <div class="auth-field">
                         <div class="auth-input-group">
@@ -133,17 +133,17 @@
                         <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</span>
                     </label>
 
-                    <button class="btn-auth" id="signup-submit" type="button"><span class="lbl">Create account</span><span class="busy">Creating your account</span><span class="done"><i data-lucide="check"></i> Account created</span></button>
+                    <button class="btn-auth" id="signup-submit" type="button"><span class="lbl">Create Account</span><span class="busy">Creating Your Account</span><span class="done"><i data-lucide="check"></i> Account Created</span></button>
 
                     <div id="signup-recovery" class="recovery-panel hidden">
                         <strong><i data-lucide="key-round"></i> Save your recovery code</strong>
                         <p>This code is shown only once. You need it to reset your password, so keep it somewhere safe.</p>
                         <code id="signup-recovery-code"></code>
-                        <button class="btn-auth" id="signup-recovery-continue" type="button">I saved it, continue</button>
+                        <button class="btn-auth" id="signup-recovery-continue" type="button">I Saved It, Continue</button>
                     </div>
 
 
-                    <p class="auth-link-row">Already have an account? <a href="#" id="go-login-from-signup">Log in</a></p>
+                    <p class="auth-link-row">Already have an account? <a href="#" id="go-login-from-signup">Log In</a></p>
                 </div>
             </section>
 
@@ -181,10 +181,10 @@
                         </div>
                     </div>
 
-                    <button class="btn-auth" id="forgot-submit" type="button"><span class="lbl">Reset password</span><span class="busy">Resetting</span><span class="done"><i data-lucide="check"></i> Password reset</span></button>
+                    <button class="btn-auth" id="forgot-submit" type="button"><span class="lbl">Reset Password</span><span class="busy">Resetting</span><span class="done"><i data-lucide="check"></i> Password Reset</span></button>
 
-                    <p class="auth-link-row">Remembered it? <a href="#" id="go-login-from-forgot">Log in</a></p>
-                    <p class="auth-link-row">No account yet? <a href="#" id="go-signup-from-forgot">Create one</a></p>
+                    <p class="auth-link-row">Remembered it? <a href="#" id="go-login-from-forgot">Log In</a></p>
+                    <p class="auth-link-row">No account yet? <a href="#" id="go-signup-from-forgot">Create One</a></p>
                 </div>
             </section>
         </main>

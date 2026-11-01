@@ -106,7 +106,7 @@
             items.forEach(item => {
                 const title = item.label || item.name || (item.originName && item.originName + ' → ' + item.destName) || 'Saved item';
                 const detail = tab === 'landmarks'
-                    ? (item.isPublic ? 'Public landmark' : 'Personal landmark') + ' · ' + (item.category || 'other')
+                    ? (item.isPublic ? 'Public landmark' : 'Personal landmark') + ' · ' + (item.category || 'other').replace(/^./, c => c.toUpperCase())
                     : [item.transportLabel, item.passengerLabel].filter(Boolean).join(' · ');
                 const $row = $('<div class="saved-modal-item">').append(
                     $('<div>').append($('<strong>').text(title), $('<span>').text(detail || 'No additional details'))
@@ -127,7 +127,7 @@
                     $actions.append($remove);
                 }
                 if (tab === 'trips') {
-                    $('<button type="button" class="small-button outline-small">').text('Use route').on('click', () => {
+                    $('<button type="button" class="small-button outline-small">').text('Use Route').on('click', () => {
                         sessionStorage.setItem('para_pending_route', JSON.stringify(item));
                         window.location.href = 'calculate.html';
                     }).prependTo($actions);
@@ -226,9 +226,9 @@
         modal.append($('<div class="pc-actions">').append(cancel, save)); overlay.append(modal).on('click', e => { if (e.target === overlay[0]) close(); }).appendTo('body'); popIn(modal[0]); inputs[fields[0].key].trigger('focus');
     }
 
-    function openName() { promptDialog('Edit Name', [{ key: 'name', label: 'Display name', autocomplete: 'name', maxlength: 100 }], 'Save changes', async data => { if (!data.name) throw { message: 'Name is required.' }; const res = await API.post('auth/update_profile.php', data); Auth.user = res.user; updateNav(res.user); fillProfile(await API.get('auth/profile.php')); notify('Your name was updated.', 'success'); }); }
-    function openEmail() { promptDialog('Change Email', [{ key: 'email', label: 'Email address', type: 'email', autocomplete: 'email' }, { key: 'recoveryCode', label: 'Recovery code', maxlength: 12 }], 'Change email', async data => { data.recoveryCode = data.recoveryCode.toUpperCase(); const res = await API.post('auth/change_email.php', data); Auth.user = res.user; updateNav(res.user); fillProfile(await API.get('auth/profile.php')); notify('Your email was updated.', 'success'); }); }
-    function openPassword() { promptDialog('Change Password', [{ key: 'currentPassword', label: 'Current password', type: 'password', autocomplete: 'current-password' }, { key: 'recoveryCode', label: 'Recovery code', maxlength: 12 }, { key: 'newPassword', label: 'New password', type: 'password', autocomplete: 'new-password' }, { key: 'confirmPassword', label: 'Confirm new password', type: 'password', autocomplete: 'new-password' }], 'Change password', async data => { if (data.newPassword.length < 8) throw { message: 'New password must be at least 8 characters.' }; if (data.newPassword !== data.confirmPassword) throw { message: 'Passwords do not match.' }; data.recoveryCode = data.recoveryCode.toUpperCase(); delete data.confirmPassword; await API.post('auth/change_password.php', data); notify('Your password was changed.', 'success'); }); }
+    function openName() { promptDialog('Edit Name', [{ key: 'name', label: 'Display name', autocomplete: 'name', maxlength: 100 }], 'Save Changes', async data => { if (!data.name) throw { message: 'Name is required.' }; const res = await API.post('auth/update_profile.php', data); Auth.user = res.user; updateNav(res.user); fillProfile(await API.get('auth/profile.php')); notify('Your name was updated.', 'success'); }); }
+    function openEmail() { promptDialog('Change Email', [{ key: 'email', label: 'Email address', type: 'email', autocomplete: 'email' }, { key: 'recoveryCode', label: 'Recovery code', maxlength: 12 }], 'Change Email', async data => { data.recoveryCode = data.recoveryCode.toUpperCase(); const res = await API.post('auth/change_email.php', data); Auth.user = res.user; updateNav(res.user); fillProfile(await API.get('auth/profile.php')); notify('Your email was updated.', 'success'); }); }
+    function openPassword() { promptDialog('Change Password', [{ key: 'currentPassword', label: 'Current password', type: 'password', autocomplete: 'current-password' }, { key: 'recoveryCode', label: 'Recovery code', maxlength: 12 }, { key: 'newPassword', label: 'New password', type: 'password', autocomplete: 'new-password' }, { key: 'confirmPassword', label: 'Confirm new password', type: 'password', autocomplete: 'new-password' }], 'Change Password', async data => { if (data.newPassword.length < 8) throw { message: 'New password must be at least 8 characters.' }; if (data.newPassword !== data.confirmPassword) throw { message: 'Passwords do not match.' }; data.recoveryCode = data.recoveryCode.toUpperCase(); delete data.confirmPassword; await API.post('auth/change_password.php', data); notify('Your password was changed.', 'success'); }); }
 
     async function loadSaved() {
         const endpoint = { trips: 'trips/list.php', favorites: 'favorites/list.php', landmarks: 'landmarks/list.php' }[activeTab];
@@ -245,7 +245,7 @@
                 const detail = activeTab === 'trips'
                     ? [item.transportLabel, item.passengerLabel, item.distanceKm ? Number(item.distanceKm).toFixed(1) + ' km' : ''].filter(Boolean).join(' · ')
                     : activeTab === 'landmarks'
-                        ? (item.isPublic ? 'Public landmark · ' : 'Personal landmark · ') + (item.category || 'other')
+                        ? (item.isPublic ? 'Public landmark · ' : 'Personal landmark · ') + (item.category || 'other').replace(/^./, c => c.toUpperCase())
                         : [item.transportLabel, item.passengerLabel].filter(Boolean).join(' · ');
                 const row = $('<div class="saved-item">').append(
                     $('<div class="saved-item-content">').append(
@@ -255,7 +255,7 @@
                 );
                 const actions = $('<div class="saved-item-actions">');
                 if (activeTab === 'trips') {
-                    $('<button class="small-button outline-small" type="button">').text('Use route')
+                    $('<button class="small-button outline-small" type="button">').text('Use Route')
                         .on('click', () => {
                             sessionStorage.setItem('para_pending_route', JSON.stringify(item));
                             window.location.href = 'calculate.html';
@@ -303,7 +303,7 @@
             { key: 'name', label: 'Landmark name', maxlength: 120, value: item.name },
             { key: 'category', label: 'Category', maxlength: 30, value: item.category },
             { key: 'description', label: 'Description', maxlength: 500, value: item.description }
-        ], 'Save landmark', async data => {
+        ], 'Save Landmark', async data => {
             if (!data.name) throw { message: 'Landmark name is required.' };
             await API.post('landmarks/update.php', {
                 id: item.id,
@@ -324,8 +324,8 @@
             $('<h2>').text('Log Out of Para?'),
             $('<p>').text('You will need to sign in again to manage your saved trips, favorites, and landmarks.')
         );
-        const cancel = $('<button class="pc-btn pc-outline" type="button">').text('Stay signed in');
-        const confirm = $('<button class="pc-btn pc-danger" type="button">').text('Log out');
+        const cancel = $('<button class="pc-btn pc-outline" type="button">').text('Stay Signed In');
+        const confirm = $('<button class="pc-btn pc-danger" type="button">').text('Log Out');
         const close = () => popOut(modal[0], () => overlay.remove());
         cancel.on('click', close);
         confirm.on('click', async () => {
