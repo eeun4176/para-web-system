@@ -9,6 +9,7 @@
     <link rel="icon" type="image/png" href="../assets/logo-1.png" />
 
     <!-- CSS: global first, then auth-specific -->
+    <link rel="stylesheet" href="../style/features.css" />
     <link rel="stylesheet" href="../style/global.css" />
     <link rel="stylesheet" href="../style/auth.css" />
 
@@ -62,8 +63,7 @@
                 <div class="auth-input-group">
                     <input type="password" id="login-password" placeholder="Password" autocomplete="current-password"
                         aria-label="Password" />
-                    <span class="auth-input-icon clickable" id="toggle-pw-login">
-                    </span>
+                    <span class="auth-input-icon clickable" id="toggle-pw-login"><i class="fi fi-rr-eye-crossed" id="eye-login" aria-hidden="true"></i></span>
                 </div>
 
                 <button class="btn-auth" id="login-submit">Sign In</button>
@@ -99,8 +99,7 @@
                 <div class="auth-input-group">
                     <input type="password" id="signup-password" placeholder="Password" autocomplete="new-password"
                         aria-label="Password" />
-                    <span class="auth-input-icon clickable" id="toggle-pw-signup">
-                    </span>
+                    <span class="auth-input-icon clickable" id="toggle-pw-signup"><i class="fi fi-rr-eye-crossed" id="eye-signup" aria-hidden="true"></i></span>
                 </div>
 
                 <label class="auth-checkbox">
@@ -109,6 +108,13 @@
                 </label>
 
                 <button class="btn-auth" id="signup-submit">Create Account</button>
+
+                <div id="signup-recovery" class="recovery-panel hidden">
+                    <strong>Save your recovery code</strong>
+                    <p>This code is shown only once. Keep it somewhere safe.</p>
+                    <code id="signup-recovery-code"></code>
+                    <button class="btn-auth" id="signup-recovery-continue" type="button">Continue</button>
+                </div>
 
                 <div class="auth-link-row">
                     Have an Account? <a href="#" id="go-login-from-signup">Log In</a>
@@ -138,6 +144,11 @@
                 </div>
 
                 <div class="auth-input-group">
+                    <input type="text" id="forgot-recovery-code" placeholder="Recovery Code"
+                        autocomplete="off" aria-label="Recovery code" maxlength="12" />
+                </div>
+
+                <div class="auth-input-group">
                     <input type="password" id="forgot-newpw" placeholder="New Password" aria-label="New password" />
                 </div>
 
@@ -146,7 +157,7 @@
                         aria-label="Confirm new password" />
                 </div>
 
-                <button class="btn-auth" id="forgot-submit">Create Account</button>
+                <button class="btn-auth" id="forgot-submit">Reset Password</button>
 
                 <div class="auth-link-row">
                     Back to <a href="#" id="go-login-from-forgot">Log In</a>
@@ -165,6 +176,8 @@
     </main>
 
     <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="../scripts/api.js"></script>
     <script src="../scripts/auth.js"></script>
     <script src="../scripts/app.js"></script>
 

@@ -553,7 +553,7 @@ html.dark body .meet-para-img img {
   }
 
   .navbar-inner {
-    max-width: 100%;
+    max-width: 1,050px;
     border-radius: 0;
     margin: 0;
   }

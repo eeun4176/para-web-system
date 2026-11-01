@@ -1,0 +1,321 @@
+/* Admin dashboard (loads after global.css; uses the same color variables, so dark mode works) */
+.admin-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.admin-title {
+    font-size: 1.7rem;
+    font-weight: 900;
+    color: var(--text-main);
+    margin-bottom: 18px;
+}
+
+.admin-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 22px;
+    margin-bottom: 20px;
+}
+
+.admin-card h2 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+
+.admin-card h3 {
+    font-size: .92rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 16px 0 8px;
+}
+
+.admin-hint {
+    font-size: .84rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.stat-card {
+    background: var(--green-light);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.stat-card strong {
+    font-size: 1.35rem;
+    color: var(--text-main);
+}
+
+.stat-card span {
+    font-size: .78rem;
+    color: var(--text-muted);
+}
+
+.table-scroll {
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .86rem;
+    min-width: 560px;
+}
+
+.admin-table th,
+.admin-table td {
+    text-align: left;
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+}
+
+.admin-table th {
+    font-size: .76rem;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: var(--text-muted);
+}
+
+.admin-table input {
+    width: 90px;
+    padding: 7px 9px;
+    background: var(--bg-input);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: .86rem;
+}
+
+.admin-table input:focus {
+    outline: none;
+    border-color: var(--green);
+}
+
+.admin-table .empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 16px;
+}
+
+.row-btn {
+    padding: 6px 14px;
+    border-radius: 18px;
+    border: none;
+    background: var(--green);
+    color: #fff;
+    font-weight: 700;
+    font-size: .8rem;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.row-btn:hover {
+    background: var(--green-dark);
+}
+
+.row-btn.danger {
+    background: var(--red);
+}
+
+.row-btn.danger:hover {
+    background: #c0392b;
+}
+
+.role-pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: .72rem;
+    font-weight: 700;
+    background: var(--border);
+    color: var(--text);
+}
+
+.role-pill.admin {
+    background: var(--green);
+    color: #fff;
+}
+
+#admin-denied {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+#admin-denied a {
+    font-weight: 700;
+}
+
+/* ---- charts ---- */
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.chart-card h3 {
+    margin: 0 0 8px;
+}
+
+.chart-box {
+    position: relative;
+    height: 240px;
+}
+
+.chart-empty {
+    display: none;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: .85rem;
+    padding: 90px 0;
+}
+
+/* ---- add-type forms and row actions ---- */
+.add-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-end;
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--green-light);
+    border-radius: 12px;
+}
+
+.add-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.add-form input {
+    width: 110px;
+    padding: 7px 9px;
+    background: var(--bg-input);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: .86rem;
+}
+
+.add-form input.wide {
+    width: 150px;
+}
+
+.add-form input:focus {
+    outline: none;
+    border-color: var(--green);
+}
+
+.actions {
+    white-space: nowrap;
+}
+
+.actions .row-btn {
+    margin-right: 4px;
+}
+
+.row-btn.neutral {
+    background: transparent;
+    color: var(--text);
+    border: 1.5px solid var(--border);
+}
+
+.row-btn.neutral:hover {
+    border-color: var(--green);
+    color: var(--green);
+    background: transparent;
+}
+
+.role-pill.inactive {
+    background: var(--border);
+    color: var(--text-muted);
+}
+
+.audit-details {
+    color: var(--text-muted);
+    max-width: 340px;
+}
+
+
+.admin-subnav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.admin-subnav a {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 14px;
+    border-radius: 8px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.admin-subnav a:hover {
+    background: var(--surface);
+    color: var(--text);
+}
+
+.admin-subnav a.active {
+    background: var(--green);
+    color: #fff;
+}
+
+.admin-subnav a:focus-visible {
+    outline: 2px solid var(--green);
+    outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+    .admin-subnav {
+        justify-content: flex-start;
+        gap: 6px;
+        padding: 10px 12px;
+    }
+
+    .admin-subnav a {
+        padding: 9px 12px;
+        font-size: 0.84rem;
+    }
+}
+

@@ -223,26 +223,29 @@ Navbar Container */
     transform: translateX(28px);
 }
 
+
 .nav-auth-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 0 12px;
+    margin: 0;
     background: #2ecc71;
     color: white;
-    padding: 8px 20px;
-    margin: 0;
-    border-radius: 25px;
     border: none;
+    border-radius: 25px;
     font-family: inherit;
     line-height: 1;
     appearance: none;
     text-decoration: none;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
     cursor: pointer;
     box-sizing: border-box;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    flex-shrink: 0;
 }
-
 
 .nav-auth-btn:hover {
     background: var(--green-dark);
@@ -253,7 +256,16 @@ Navbar Container */
 #nav-auth-area {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-shrink: 0;
+    min-width: 0;
 }
+
+#nav-auth-area > * {
+    flex-shrink: 0;
+}
+
 
 /* Hamburger button — hidden on desktop, shown on mobile/tablet */
 .hamburger-btn {
@@ -366,6 +378,7 @@ Navbar Container */
     color: white;
 }
 
+
 /* NOTIFICATIONS (toast popups) */
 #notification-container {
     position: fixed;
@@ -375,21 +388,30 @@ Navbar Container */
     display: flex;
     flex-direction: column;
     gap: 10px;
-    max-width: 300px;
+    width: min(360px, calc(100% - 40px));
     pointer-events: none;
 }
 
 .notification {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
     background: var(--bg-card);
     border-left: 4px solid var(--green);
     border-radius: var(--radius-sm);
-    padding: 12px 16px;
+    padding: 12px 14px;
     box-shadow: var(--shadow-lg);
-    font-size: 0.86rem;
+    font-size: 0.9rem;
     color: var(--text);
     animation: slideInRight 0.3s ease;
     transition: opacity 0.3s ease, transform 0.3s ease;
     pointer-events: all;
+}
+
+.notification-message {
+    flex: 1;
+    overflow-wrap: anywhere;
 }
 
 .notification.error {
@@ -402,6 +424,27 @@ Navbar Container */
 
 .notification.info {
     border-color: #3498db;
+}
+
+.notification-close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+}
+
+.notification-close:hover {
+    color: var(--text);
+}
+
+.notification-close:focus-visible {
+    outline: 2px solid var(--green);
+    outline-offset: 3px;
+    border-radius: 3px;
 }
 
 .notification.hiding {
@@ -418,6 +461,14 @@ Navbar Container */
     to {
         opacity: 1;
         transform: translateX(0);
+    }
+}
+
+@media (max-width: 480px) {
+    #notification-container {
+        top: 75px;
+        right: 12px;
+        width: calc(100% - 24px);
     }
 }
 

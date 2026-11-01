@@ -121,6 +121,29 @@
     border-bottom: 1px solid var(--border);
 }
 
+.search-dropdown-item.active {
+    background: var(--green-light);
+    color: var(--green-dark);
+}
+
+.search-result-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.search-result-name {
+    overflow-wrap: anywhere;
+}
+
+.search-result-category {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: capitalize;
+}
+
+
 .search-dropdown-item:last-child {
     border-bottom: none;
 }

@@ -143,6 +143,31 @@
     transform: translateY(-1px);
 }
 
+.recovery-panel {
+    margin-top: 16px;
+    padding: 16px;
+    border: 1px solid var(--green);
+    border-radius: var(--radius-sm);
+    color: var(--text-main);
+    text-align: center;
+}
+
+.recovery-panel p {
+    margin: 8px 0;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+}
+
+.recovery-panel code {
+    display: block;
+    margin: 12px 0;
+    padding: 10px;
+    background: var(--bg-input);
+    color: var(--green-dark);
+    font-size: 1.15rem;
+    letter-spacing: 2px;
+}
+
 .auth-link-row {
     text-align: center;
     font-size: 0.88rem;

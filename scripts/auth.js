@@ -1,211 +1,242 @@
-// AUTH ENGINE
+// AUTH (talks to api/auth/*.php; the session lives on the server)
 const Auth = {
+    user: null,
+    _ready: null,
 
-    getUsers() {
-        return JSON.parse(localStorage.getItem('para_users') || '[]');
-    },
-
-    saveUsers(users) {
-        localStorage.setItem('para_users', JSON.stringify(users));
-    },
-
-    getCurrentUser() {
-        const id = localStorage.getItem('para_current_user');
-        if (!id) return null;
-        return this.getUsers().find(u => u.id === id) || null;
-    },
-
-    isLoggedIn() {
-        return this.getCurrentUser() !== null;
-    },
-
-    login(email, password) {
-        const user = this.getUsers().find(u => u.email === email && u.password === password);
-        if (user) {
-            localStorage.setItem('para_current_user', user.id);
-            return { success: true, user };
+    // Resolves once we know who (if anyone) is logged in
+    ready() {
+        if (!this._ready) {
+            this._ready = API.session()
+                .then(res => { this.user = res.user || null; return this.user; })
+                .catch(err => { console.warn('[Auth] Could not load session:', err.message); this.user = null; return null; });
         }
-        return { success: false, message: 'Invalid email or password.' };
+        return this._ready;
     },
 
-    register(name, email, password) {
-        const users = this.getUsers();
-        if (users.find(u => u.email === email)) {
-            return { success: false, message: 'Email already registered.' };
-        }
-        const user = {
-            id:         'user_' + Date.now(),
-            name,
+    getCurrentUser() { return this.user; },
+    isLoggedIn() { return this.user !== null; },
+
+    async login(email, password) {
+        const res = await API.post('auth/login.php', { email, password });
+        API.csrf = res.csrf;
+        this.user = res.user;
+        return res;
+    },
+
+    async register(name, email, password) {
+        const res = await API.post('auth/register.php', { name, email, password });
+        API.csrf = res.csrf;
+        this.user = res.user;
+        return res;
+    },
+
+    async resetPassword(email, recoveryCode, newPassword) {
+        return API.post('auth/reset_password.php', {
             email,
-            password,
-            createdAt: new Date().toISOString()
-        };
-        users.push(user);
-        this.saveUsers(users);
-        localStorage.setItem('para_current_user', user.id);
-        return { success: true, user };
+            recoveryCode,
+            newPassword
+        });
     },
 
-    logout() {
-        localStorage.removeItem('para_current_user');
-    },
-
-    resetPassword(email, newPassword) {
-        const users = this.getUsers();
-        const idx = users.findIndex(u => u.email === email);
-        if (idx === -1) return { success: false, message: 'Email not found.' };
-        users[idx].password = newPassword;
-        this.saveUsers(users);
-        return { success: true };
+    async logout() {
+        await API.post('auth/logout.php');
+        this.user = null;
+        await API.session(true).catch(() => {});   // fresh token for the new guest session
     }
-
 };
 
-// AUTH PAGE UI FUNCTIONS
-function showAuthPage(page) {
+// AUTH PAGE UI
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const LOGIN_FIELDS  = { email: 'login-email',  password: 'login-password' };
+const SIGNUP_FIELDS = { name: 'signup-name', email: 'signup-email', password: 'signup-password' };
+const FORGOT_FIELDS = {
+    email: 'forgot-email',
+    recoveryCode: 'forgot-recovery-code',
+    newPassword: 'forgot-newpw',
+    confirmPassword: 'forgot-confirmpw'
+};
+let authBusy = false;
+
+
+function showAuthPage(page, updateHistory = true) {
+    if (!['login', 'signup', 'forgot'].includes(page)) {
+        page = 'login';
+    }
+    clearFieldErrors();
     ['login', 'signup', 'forgot'].forEach(p => {
-        const el = document.getElementById('auth-' + p);
-        if (el) el.classList.toggle('hidden', p !== page);
+        $('#auth-' + p).toggleClass('hidden', p !== page);
+    });
+    if (updateHistory) {
+        history.pushState({ authPage: page }, '', '#' + page);
+    }
+}
+
+function clearFieldErrors() {
+    $('.field-error').remove();
+    $('.auth-input-group').removeClass('has-error');
+}
+
+function showFieldErrors(errors, idMap) {
+    Object.entries(errors || {}).forEach(([field, msg]) => {
+        const id = idMap[field];
+        if (!id) return;
+        const $group = $('#' + id).closest('.auth-input-group');
+        $group.addClass('has-error');
+        $('<div class="field-error">').text(msg).insertAfter($group);   // .text() = safe
     });
 }
 
-function doLogin() {
-    const email    = document.getElementById('login-email')?.value.trim();
-    const password = document.getElementById('login-password')?.value;
+function setAuthBusy(btnSelector, busy) {
+    authBusy = busy;
+    $(btnSelector).prop('disabled', busy);
+}
 
-    if (!email || !password) {
-        showNotification('Please fill in all fields.', 'warning');
-        return;
-    }
+async function doLogin() {
+    if (authBusy) return;
+    clearFieldErrors();
+    const email = $('#login-email').val().trim();
+    const password = $('#login-password').val();
 
-    const result = Auth.login(email, password);
+    const errors = {};
+    if (!email) errors.email = 'Email is required.';
+    else if (!EMAIL_RE.test(email)) errors.email = 'Enter a valid email address.';
+    if (!password) errors.password = 'Password is required.';
+    if (Object.keys(errors).length) { showFieldErrors(errors, LOGIN_FIELDS); return; }
 
-    if (result.success) {
-        showNotification('Welcome back, ' + result.user.name + '!', 'success');
-        setTimeout(() => { window.location.href = 'index.html'; }, 1000);
-    } else {
-        showNotification(result.message, 'error');
+    setAuthBusy('#login-submit', true);
+    try {
+        const res = await Auth.login(email, password);
+        queueNotification('Welcome back, ' + res.user.name + '!', 'success');
+        setTimeout(() => { window.location.href = 'index.html'; }, 400);
+    } catch (err) {
+        showFieldErrors(err.errors, LOGIN_FIELDS);
+        showNotification(API.describe(err), 'error');
+        setAuthBusy('#login-submit', false);
     }
 }
 
-function doSignup() {
-    const name     = document.getElementById('signup-name')?.value.trim();
-    const email    = document.getElementById('signup-email')?.value.trim();
-    const password = document.getElementById('signup-password')?.value;
-    const agree    = document.getElementById('signup-agree')?.checked;
+async function doSignup() {
+    if (authBusy) return;
+    clearFieldErrors();
+    const name = $('#signup-name').val().trim();
+    const email = $('#signup-email').val().trim();
+    const password = $('#signup-password').val();
+    const agree = $('#signup-agree').is(':checked');
 
-    if (!name || !email || !password) {
-        showNotification('Please fill in all fields.', 'warning');
-        return;
-    }
-    if (!agree) {
-        showNotification('Please agree to the Terms of Service.', 'warning');
-        return;
-    }
-    if (password.length < 6) {
-        showNotification('Password must be at least 6 characters.', 'warning');
-        return;
-    }
+    const errors = {};
+    if (!name) errors.name = 'Name is required.';
+    if (!email) errors.email = 'Email is required.';
+    else if (!EMAIL_RE.test(email)) errors.email = 'Enter a valid email address.';
+    if (!password) errors.password = 'Password is required.';
+    else if (password.length < 8) errors.password = 'Password must be at least 8 characters.';
+    if (Object.keys(errors).length) { showFieldErrors(errors, SIGNUP_FIELDS); return; }
+    if (!agree) { showNotification('Please agree to the Terms of Service.', 'warning'); return; }
 
-    const result = Auth.register(name, email, password);
-
-    if (result.success) {
-        showNotification('Account created! Welcome, ' + name + '!', 'success');
-        setTimeout(() => { window.location.href = 'index.html'; }, 1200);
-    } else {
-        showNotification(result.message, 'error');
-    }
-}
-
-function doForgot() {
-    const email     = document.getElementById('forgot-email')?.value.trim();
-    const newpw     = document.getElementById('forgot-newpw')?.value;
-    const confirmpw = document.getElementById('forgot-confirmpw')?.value;
-
-    if (!email || !newpw || !confirmpw) {
-        showNotification('Please fill in all fields.', 'warning');
-        return;
-    }
-    if (newpw !== confirmpw) {
-        showNotification('Passwords do not match.', 'error');
-        return;
-    }
-    if (newpw.length < 6) {
-        showNotification('Password must be at least 6 characters.', 'warning');
-        return;
-    }
-
-    const result = Auth.resetPassword(email, newpw);
-
-    if (result.success) {
-        showNotification('Password reset! You can now log in.', 'success');
-        setTimeout(() => showAuthPage('login'), 1400);
-    } else {
-        showNotification(result.message, 'error');
+    setAuthBusy('#signup-submit', true);
+    try {
+        const res = await Auth.register(name, email, password);
+        $('#signup-recovery-code').text(res.recoveryCode);
+        $('#signup-recovery').removeClass('hidden');
+        $('#signup-submit, #signup-name, #signup-email, #signup-password, #signup-agree')
+            .prop('disabled', true);
+        showNotification('Account created. Save your recovery code before continuing.', 'warning');
+    } catch (err) {
+        if (err.status === 409) showFieldErrors({ email: err.message }, SIGNUP_FIELDS);
+        else showFieldErrors(err.errors, SIGNUP_FIELDS);
+        showNotification(API.describe(err), 'error');
+        setAuthBusy('#signup-submit', false);
     }
 }
 
-// AUTH PAGE SETUP
+async function doForgot() {
+    if (authBusy) return;
+    clearFieldErrors();
+
+    const email = $('#forgot-email').val().trim();
+    const recoveryCode = $('#forgot-recovery-code').val().trim();
+    const newPassword = $('#forgot-newpw').val();
+    const confirmPassword = $('#forgot-confirmpw').val();
+    const errors = {};
+
+    if (!email) errors.email = 'Email is required.';
+    else if (!EMAIL_RE.test(email)) errors.email = 'Enter a valid email address.';
+    if (!recoveryCode) errors.recoveryCode = 'Recovery code is required.';
+    if (newPassword.length < 8) {
+        errors.newPassword = 'New password must be at least 8 characters.';
+    }
+    if (newPassword !== confirmPassword) {
+        errors.confirmPassword = 'Passwords do not match.';
+    }
+    if (Object.keys(errors).length) {
+        showFieldErrors(errors, FORGOT_FIELDS);
+        return;
+    }
+
+    setAuthBusy('#forgot-submit', true);
+    try {
+        await Auth.resetPassword(email, recoveryCode, newPassword);
+        $('#forgot-email, #forgot-recovery-code, #forgot-newpw, #forgot-confirmpw').val('');
+        setAuthBusy('#forgot-submit', false);
+        showAuthPage('login');
+        showNotification('Password reset successfully. You can now sign in.', 'success');
+    } catch (err) {
+        showFieldErrors(err.errors, FORGOT_FIELDS);
+        showNotification(API.describe(err), 'error');
+        setAuthBusy('#forgot-submit', false);
+    }
+}
+
+function setupPwToggle(btnId, inputId, iconId) {
+    $('#' + btnId).on('click', function () {
+        const $input = $('#' + inputId);
+        const show = $input.attr('type') === 'password';
+        $input.attr('type', show ? 'text' : 'password');
+        $('#' + iconId).attr('class', show ? 'fi fi-rr-eye' : 'fi fi-rr-eye-crossed');
+    });
+}
+
+// AUTH PAGE SETUP (only runs on auth.html)
 document.addEventListener('DOMContentLoaded', () => {
-
     if (!document.getElementById('auth-login')) return;
 
+   const initialPage = ['login', 'signup', 'forgot'].includes(
+    window.location.hash.slice(1)
+) ? window.location.hash.slice(1) : 'login';
+showAuthPage(initialPage, false);
+Auth.ready().then(() => {
     if (Auth.isLoggedIn()) {
         window.location.href = 'index.html';
-        return;
     }
+});
 
-    document.getElementById('toggle-pw-login')?.addEventListener('click', function () {
-        const input = document.getElementById('login-password');
-        const icon  = document.getElementById('eye-login');
-        input.type  = input.type === 'password' ? 'text' : 'password';
-        icon.className = input.type === 'password' ? 'fi fi-rr-eye-crossed' : 'fi fi-rr-eye';
-    });
+    setupPwToggle('toggle-pw-login', 'login-password', 'eye-login');
+    setupPwToggle('toggle-pw-signup', 'signup-password', 'eye-signup');
 
-    document.getElementById('toggle-pw-signup')?.addEventListener('click', function () {
-        const input = document.getElementById('signup-password');
-        const icon  = document.getElementById('eye-signup');
-        input.type  = input.type === 'password' ? 'text' : 'password';
-        icon.className = input.type === 'password' ? 'fi fi-rr-eye-crossed' : 'fi fi-rr-eye';
-    });
-
-    document.addEventListener('keydown', e => {
+    $(document).on('keydown', e => {
         if (e.key !== 'Enter') return;
-        const loginVisible  = !document.getElementById('auth-login')?.classList.contains('hidden');
-        const signupVisible = !document.getElementById('auth-signup')?.classList.contains('hidden');
-        const forgotVisible = !document.getElementById('auth-forgot')?.classList.contains('hidden');
-        if (loginVisible)  doLogin();
-        if (signupVisible) doSignup();
-        if (forgotVisible) doForgot();
+        if (!$('#auth-login').hasClass('hidden')) doLogin();
+        else if (!$('#auth-signup').hasClass('hidden')) doSignup();
+        else if (!$('#auth-forgot').hasClass('hidden')) doForgot();
     });
 
-    document.getElementById('login-submit')?.addEventListener('click', doLogin);
-    document.getElementById('signup-submit')?.addEventListener('click', doSignup);
-    document.getElementById('forgot-submit')?.addEventListener('click', doForgot);
-
-    document.getElementById('go-forgot')?.addEventListener('click', e => {
-        e.preventDefault();
-        showAuthPage('forgot');
+    $('#login-submit').on('click', doLogin);
+    $('#signup-submit').on('click', doSignup);
+    $('#forgot-submit').on('click', doForgot);
+    $('#signup-recovery-continue').on('click', () => {
+        queueNotification('Welcome to Para, ' + Auth.getCurrentUser().name + '!', 'success');
+        window.location.href = 'index.html';
     });
 
-    document.getElementById('go-signup')?.addEventListener('click', e => {
-        e.preventDefault();
-        showAuthPage('signup');
-    });
+    const nav = (linkId, page) => $('#' + linkId).on('click', e => { e.preventDefault(); showAuthPage(page); });
+    nav('go-forgot', 'forgot');
+    nav('go-signup', 'signup');
+    nav('go-login-from-signup', 'login');
+    nav('go-login-from-forgot', 'login');
+    nav('go-signup-from-forgot', 'signup');
 
-    document.getElementById('go-login-from-signup')?.addEventListener('click', e => {
-        e.preventDefault();
-        showAuthPage('login');
-    });
-
-    document.getElementById('go-login-from-forgot')?.addEventListener('click', e => {
-        e.preventDefault();
-        showAuthPage('login');
-    });
-
-    document.getElementById('go-signup-from-forgot')?.addEventListener('click', e => {
-        e.preventDefault();
-        showAuthPage('signup');
+    window.addEventListener('popstate', event => {
+    const page = event.state?.authPage || 'login';
+    showAuthPage(page, false);
     });
 
 });
