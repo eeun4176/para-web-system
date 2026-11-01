@@ -42,6 +42,7 @@ try {
     <link rel="icon" type="image/png" href="../assets/logo-1.png">
     <link rel="stylesheet" href="../style/global.css">
     <link rel="stylesheet" href="../style/admin.css">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
 
     <link rel="stylesheet"
         href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css">
@@ -54,16 +55,10 @@ try {
     <nav class="navbar" role="navigation" aria-label="Main navigation">
         <div class="navbar-inner">
             <div class="nav-logo-container">
-                <a href="index.html">
+                <a href="admin.php">
                     <img src="../assets/logo-2.png" id="navbar-logo" alt="Para logo">
                 </a>
             </div>
-
-            <ul class="nav-links" aria-label="Site navigation">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="calculate.html">Calculate</a></li>
-                <li><a href="aboutus.html">About Us</a></li>
-            </ul>
 
             <div class="nav-right">
                 <button id="dark-toggle" class="dark-toggle"
@@ -96,12 +91,6 @@ try {
         <aside class="sidebar" role="dialog" aria-label="Mobile navigation">
             <button class="sidebar-close" id="sidebar-close" aria-label="Close menu">&times;</button>
 
-            <ul class="sidebar-nav">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="calculate.html">Calculate</a></li>
-                <li><a href="aboutus.html">About Us</a></li>
-            </ul>
-
             <div id="sidebar-auth-area">
                 <a href="auth.html" class="sidebar-auth-btn">Log In</a>
             </div>
@@ -127,8 +116,6 @@ try {
 
                     <p class="admin-hint">
                         These landmarks are visible to everyone, including guests.
-                        To add a public landmark, open the Calculate page, right-click
-                        the map, and select "Public landmark".
                     </p>
 
                     <div class="table-scroll">
@@ -144,6 +131,44 @@ try {
                             <tbody></tbody>
                         </table>
                     </div>
+
+                    <h3>Add Public Landmark</h3>
+                    <p class="admin-hint">Click the map to choose the spot, then fill in the details.</p>
+
+                    <div class="admin-map" id="admin-landmark-map"></div>
+
+                    <div class="add-form" id="add-landmark-form">
+                        <label>
+                            Name
+                            <input type="text" class="wide" id="new-lm-name" maxlength="150" placeholder="e.g. Tungko Terminal">
+                        </label>
+
+                        <label>
+                            Category
+                            <select id="new-lm-category">
+                                <option value="terminal">Terminal</option>
+                                <option value="school">School</option>
+                                <option value="hospital">Hospital</option>
+                                <option value="market">Market</option>
+                                <option value="church">Church</option>
+                                <option value="park">Park</option>
+                                <option value="food">Food</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            Description (optional)
+                            <input type="text" class="wide" id="new-lm-desc" maxlength="500">
+                        </label>
+
+                        <label>
+                            Location
+                            <input type="text" id="new-lm-location" placeholder="Click the map" readonly>
+                        </label>
+
+                        <button type="button" class="row-btn" id="add-landmark-btn">Add landmark</button>
+                    </div>
                 </section>
 
             </div>
@@ -155,6 +180,7 @@ try {
     <script src="../scripts/auth.js"></script>
     <script src="../scripts/data-manager.js"></script>
     <script src="../scripts/app.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
     <script src="../scripts/admin.js"></script>
 
 </body>

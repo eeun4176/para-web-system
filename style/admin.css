@@ -225,6 +225,24 @@
     width: 150px;
 }
 
+.add-form select {
+    padding: 7px 9px;
+    background: var(--bg-input);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: .86rem;
+}
+
+/* Map for picking a new public landmark's location */
+.admin-map {
+    height: 320px;
+    margin-top: 10px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
 .add-form input:focus {
     outline: none;
     border-color: var(--green);

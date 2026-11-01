@@ -162,6 +162,13 @@ function require_admin(): int {
     if (!is_admin()) fail(403, 'Admin access required.');
     return $uid;
 }
+// Passenger features (trips, favorites, personal landmarks) are for normal users only.
+// Admin accounts use the admin panel; to test the passenger side, log in with a normal account.
+function require_passenger(): int {
+    $uid = require_login();
+    if (is_admin()) fail(403, 'Admin accounts cannot use passenger features. Log in with a passenger account.');
+    return $uid;
+}
 
 // Reads a number from $in and checks its range; records an error message if invalid
 function clean_number(array $in, string $key, float $min, float $max, string $label, array &$errors) {

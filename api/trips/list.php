@@ -2,7 +2,7 @@
 // GET api/trips/list.php -> the user's 50 most recent trips
 require_once __DIR__ . '/../helpers.php';
 require_method('GET');
-$uid = require_login();
+$uid = require_passenger();
 
 $s = db()->prepare('SELECT t.id, t.origin_name, t.origin_lat, t.origin_lng,
                            t.dest_name, t.dest_lat, t.dest_lng,

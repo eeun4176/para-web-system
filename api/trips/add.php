@@ -6,7 +6,7 @@ require_once __DIR__ . '/../helpers.php';
 require_once __DIR__ . '/../fare_logic.php';
 
 require_post();
-$uid = require_login();
+$uid = require_passenger();
 
 $r = clean_route(input());
 

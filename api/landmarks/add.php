@@ -8,6 +8,7 @@ $uid = require_login();
 $in = input();
 $public = filter_var($in['public'] ?? false, FILTER_VALIDATE_BOOLEAN);
 if ($public && !is_admin()) fail(403, 'Only admins can create public landmarks.');
+if (!$public && is_admin()) fail(403, 'Admin accounts can only add public landmarks.');
 
 $l = clean_landmark($in, true);
 

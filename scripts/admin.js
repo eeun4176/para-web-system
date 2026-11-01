@@ -249,6 +249,63 @@ async function loadPublicLandmarks() {
     });
 }
 
+// ---- Add a public landmark: click the map to pick the spot ----
+let newLandmarkSpot = null;     // { lat, lng } chosen on the map
+let newLandmarkMarker = null;   // green pin showing that spot
+
+function setupAddLandmarkMap() {
+    const isDark = document.documentElement.classList.contains('dark');
+    const map = new maplibregl.Map({
+        container: 'admin-landmark-map',
+        style: 'https://tiles.openfreemap.org/styles/' + (isDark ? 'dark' : 'liberty'),
+        center: [121.0520, 14.8183],    // SJDM, as [longitude, latitude]
+        zoom: 12
+    });
+    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+    map.on('click', e => {
+        newLandmarkSpot = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+        if (!newLandmarkMarker) {
+            newLandmarkMarker = new maplibregl.Marker({ color: '#2ECC71' }).setLngLat(e.lngLat).addTo(map);
+        } else {
+            newLandmarkMarker.setLngLat(e.lngLat);
+        }
+        $('#new-lm-location').val(newLandmarkSpot.lat.toFixed(5) + ', ' + newLandmarkSpot.lng.toFixed(5));
+    });
+
+    $('#add-landmark-btn').on('click', addPublicLandmark);
+}
+
+async function addPublicLandmark() {
+    const name = $('#new-lm-name').val().trim();
+    if (!name) { showNotification('Enter the landmark name.', 'warning'); return; }
+    if (!newLandmarkSpot) { showNotification('Click the map to choose the location.', 'warning'); return; }
+
+    const $btn = $('#add-landmark-btn').prop('disabled', true);
+    try {
+        await API.post('landmarks/add.php', {
+            name: name,
+            category: $('#new-lm-category').val(),
+            description: $('#new-lm-desc').val().trim(),
+            lat: newLandmarkSpot.lat,
+            lng: newLandmarkSpot.lng,
+            public: true
+        });
+        showNotification('Public landmark added.', 'success');
+
+        // Reset the form for the next landmark
+        $('#new-lm-name, #new-lm-desc, #new-lm-location').val('');
+        newLandmarkSpot = null;
+        newLandmarkMarker.remove();
+        newLandmarkMarker = null;
+        loadPublicLandmarks();
+    } catch (err) {
+        showNotification(API.describe(err), 'error');
+    } finally {
+        $btn.prop('disabled', false);
+    }
+}
+
 function setupPublicLandmarks() {
     $('#public-table').on('click', '.del-public', async function () {
         const $tr = $(this).closest('tr');
@@ -358,6 +415,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if ($('#public-table').length) {
             setupPublicLandmarks();
+            setupAddLandmarkMap();
             tasks.push(loadPublicLandmarks());
         }
 

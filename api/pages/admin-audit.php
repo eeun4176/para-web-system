@@ -54,16 +54,10 @@ try {
     <nav class="navbar" role="navigation" aria-label="Main navigation">
         <div class="navbar-inner">
             <div class="nav-logo-container">
-                <a href="index.html">
+                <a href="admin.php">
                     <img src="../assets/logo-2.png" id="navbar-logo" alt="Para logo">
                 </a>
             </div>
-
-            <ul class="nav-links" aria-label="Site navigation">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="calculate.html">Calculate</a></li>
-                <li><a href="aboutus.html">About Us</a></li>
-            </ul>
 
             <div class="nav-right">
                 <button id="dark-toggle" class="dark-toggle"
@@ -95,12 +89,6 @@ try {
     <div class="sidebar-overlay" id="sidebar-overlay">
         <aside class="sidebar" role="dialog" aria-label="Mobile navigation">
             <button class="sidebar-close" id="sidebar-close" aria-label="Close menu">&times;</button>
-
-            <ul class="sidebar-nav">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="calculate.html">Calculate</a></li>
-                <li><a href="aboutus.html">About Us</a></li>
-            </ul>
 
             <div id="sidebar-auth-area">
                 <a href="auth.html" class="sidebar-auth-btn">Log In</a>

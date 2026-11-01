@@ -2,7 +2,7 @@
 // GET api/favorites/list.php
 require_once __DIR__ . '/../helpers.php';
 require_method('GET');
-$uid = require_login();
+$uid = require_passenger();
 
 $s = db()->prepare('SELECT f.id, f.label, f.origin_name, f.origin_lat, f.origin_lng,
                            f.dest_name, f.dest_lat, f.dest_lng,

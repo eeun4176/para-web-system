@@ -2,7 +2,7 @@
 // POST api/favorites/rename.php  {id, label}
 require_once __DIR__ . '/../helpers.php';
 require_post();
-$uid = require_login();
+$uid = require_passenger();
 
 $in    = input();
 $id    = valid_id($in['id'] ?? null);

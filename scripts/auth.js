@@ -38,12 +38,41 @@ const Auth = {
         });
     },
 
+    // "Continue with Google": send Google's token to PHP, which checks it and logs us in
+    async loginWithGoogle(credential) {
+        const res = await API.post('auth/google.php', { credential });
+        API.csrf = res.csrf;
+        this.user = res.user;
+        return res;
+    },
+
     async logout() {
         await API.post('auth/logout.php');
         this.user = null;
         await API.session(true).catch(() => {});   // fresh token for the new guest session
     }
 };
+
+// ADMIN / PASSENGER SEPARATION
+// Admins only use the admin panel. Passengers only use the normal pages.
+// (The server enforces this too: admin pages check the role, and passenger APIs reject admins.)
+const PASSENGER_PAGES = ['', 'index.html', 'calculate.html', 'aboutus.html'];
+
+function homePageFor(user) {
+    return user && user.role === 'admin' ? 'admin.php' : 'index.html';
+}
+
+function isPassengerPage() {
+    const page = window.location.pathname.split('/').pop();
+    return PASSENGER_PAGES.includes(page);
+}
+
+// An admin who opens a passenger page is sent to the admin panel
+Auth.ready().then(user => {
+    if (user && user.role === 'admin' && isPassengerPage()) {
+        window.location.replace('admin.php');
+    }
+});
 
 // AUTH PAGE UI
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -107,7 +136,7 @@ async function doLogin() {
     try {
         const res = await Auth.login(email, password);
         queueNotification('Welcome back, ' + res.user.name + '!', 'success');
-        setTimeout(() => { window.location.href = 'index.html'; }, 400);
+        setTimeout(() => { window.location.href = homePageFor(res.user); }, 400);
     } catch (err) {
         showFieldErrors(err.errors, LOGIN_FIELDS);
         showNotification(API.describe(err), 'error');
@@ -186,6 +215,36 @@ async function doForgot() {
     }
 }
 
+// GOOGLE SIGN-IN (Google Identity Services script is loaded at the bottom of auth.html)
+// Public ID of Para's Google OAuth client. Keep it the same as in api/auth/google.php.
+const GOOGLE_CLIENT_ID = '996359971314-0okl6c7g9t504jm39rla9ob94q2rslre.apps.googleusercontent.com';
+
+// Google's script calls this function by name once it has loaded
+window.onGoogleLibraryLoad = function () {
+    google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onGoogleCredential });
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const buttonStyle = { theme: isDark ? 'filled_black' : 'outline', size: 'large', shape: 'pill', text: 'continue_with', width: 300 };
+    ['google-login-btn', 'google-signup-btn'].forEach(id => {
+        const box = document.getElementById(id);
+        if (box) google.accounts.id.renderButton(box, buttonStyle);
+    });
+};
+
+// Runs after the user picks a Google account; response.credential is Google's signed ID token
+async function onGoogleCredential(response) {
+    if (authBusy) return;
+    authBusy = true;
+    try {
+        const res = await Auth.loginWithGoogle(response.credential);
+        queueNotification('Welcome, ' + res.user.name + '!', 'success');
+        window.location.href = homePageFor(res.user);
+    } catch (err) {
+        showNotification(API.describe(err), 'error');
+        authBusy = false;
+    }
+}
+
 function setupPwToggle(btnId, inputId, iconId) {
     $('#' + btnId).on('click', function () {
         const $input = $('#' + inputId);
@@ -205,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
 showAuthPage(initialPage, false);
 Auth.ready().then(() => {
     if (Auth.isLoggedIn()) {
-        window.location.href = 'index.html';
+        window.location.href = homePageFor(Auth.user);
     }
 });
 
@@ -224,7 +283,7 @@ Auth.ready().then(() => {
     $('#forgot-submit').on('click', doForgot);
     $('#signup-recovery-continue').on('click', () => {
         queueNotification('Welcome to Para, ' + Auth.getCurrentUser().name + '!', 'success');
-        window.location.href = 'index.html';
+        window.location.href = homePageFor(Auth.user);
     });
 
     const nav = (linkId, page) => $('#' + linkId).on('click', e => { e.preventDefault(); showAuthPage(page); });
