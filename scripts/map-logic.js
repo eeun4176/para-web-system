@@ -1,5 +1,5 @@
 // MAP (MapLibre GL + OpenFreeMap: free vector map, no API key)
-// Note: MapLibre writes coordinates as [longitude, latitude] (the opposite order of Leaflet).
+// Note: MapLibre writes coordinates as [longitude, latitude] (GeoJSON order), not [latitude, longitude].
 //
 // What the calculate page shows:
 //   - a clean grey map (OpenFreeMap "positron"; "dark" in dark mode) with a thin SJDM outline

@@ -29,7 +29,7 @@ PHP API  (api/*.php)  ──PDO──►  PostgreSQL on Supabase
 | `scripts/` | Front-end JavaScript (see the table below). |
 | `style/` | CSS. `global.css` holds the design tokens and shared parts; one file per page after that. |
 | `assets/` | Logo, favicon, Para images (`img/`), the showcase video (`video/`), and the SJDM boundary GeoJSON. |
-| `database/` | `para_db.pgsql.sql` (the full database) and a migration for older databases. Not uploaded to Vercel. |
+| `database/` | `para_db.pgsql.sql` (the full database) and the migrations for databases made before November 2026 (`2026-11-account-key.sql`, then `2026-11-email-codes-and-type-delete.sql`). Not uploaded to Vercel. |
 | `docs/` | This documentation. |
 
 ## Front-end scripts
@@ -90,8 +90,8 @@ PostgreSQL (`database/para_db.pgsql.sql`). Row Level Security is on with no poli
 | Table | Holds |
 | --- | --- |
 | `users` | Passengers and the admin. Passengers sign in with an emailed code, a password (optional), or Google; the admin with an account key. `email_verified` is 1 once the user proved they own the email. Profile picture bytes, default vehicle and passenger type. |
-| `transport_types` | Vehicles and their fare rules (base fare, base km, rate per km, average speed, active). |
-| `passenger_types` | Regular, Student, Senior Citizen, PWD and their discount rate. |
+| `transport_types` | Vehicles and their fare rules (base fare, base km, rate per km, average speed, active). A deleted type that saved trips use is kept with `is_deleted = 1`: hidden everywhere, but those trips keep their fare. |
+| `passenger_types` | Regular, Student, Senior Citizen, PWD and their discount rate (deleted ones kept the same way). |
 | `trips` | Each computed trip of a signed-in passenger. |
 | `favorite_routes` | Saved start → destination pairs. |
 | `landmarks` | Private landmarks of a passenger, and public ones added by the admin. |

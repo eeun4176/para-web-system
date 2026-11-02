@@ -1,5 +1,6 @@
 <?php
-// Shared helpers: JSON responses, sessions, CSRF, validation, error handling.
+// Shared helpers: JSON responses, sessions, CSRF, validation, error handling, login lockout, the audit log,
+// and email sign-in (one-time codes, rate limits, sending email through Brevo).
 // Every endpoint starts with: require_once __DIR__ . '/helpers.php';  (../helpers.php in subfolders)
 
 header('Content-Type: application/json; charset=utf-8');

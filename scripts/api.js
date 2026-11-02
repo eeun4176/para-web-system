@@ -18,7 +18,7 @@ const API = {
     _toError(xhr) {
         if (xhr.status === 0) {
             return { status: 0, errors: {},
-                message: 'Cannot reach the server. Check your connection and that Apache/MySQL are running.' };
+                message: 'Cannot reach the server. Check your internet connection and try again.' };
         }
         let body = xhr.responseJSON;
         if (!body && xhr.responseText) {

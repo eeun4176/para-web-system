@@ -50,10 +50,10 @@ The full guide is in [SYSTEM-GUIDE.md](SYSTEM-GUIDE.md).
 | --- | --- |
 | **JSON** | Every API answer is JSON (`api/helpers.php`: `ok()` / `fail()`); the heat map uses GeoJSON (`api/admin/heatmap.php`); trips can be exported as JSON (Saved → Recent → Export JSON). |
 | **AJAX** | All data loads without page reloads through `scripts/api.js` (`API.get` / `API.post`, jQuery `$.ajax`). |
-| **PHP** | 40 endpoints in `api/` (auth, trips, favorites, landmarks, admin). The fare is computed on the server in `api/fare_logic.php`. |
+| **PHP** | 41 endpoints in `api/` (auth with email codes, trips, favorites, landmarks, admin). The fare is computed on the server in `api/fare_logic.php`. |
 | **HTML / CSS** | Pages in `client/`, styles in `style/`, one set of design tokens with light and dark mode (`style/global.css`, see [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md)). Responsive down to phone size. |
 | **jQuery** | DOM updates, events, dialogs, filters, tabs, and toasts in `scripts/app.js`, `ui.js`, `admin.js`, `auth.js`. |
-| **Database** | PostgreSQL on Supabase, 10 tables with keys and constraints (`database/para_db.pgsql.sql`). |
+| **Database** | PostgreSQL on Supabase, 11 tables with keys and constraints (`database/para_db.pgsql.sql`). |
 | **Integration** | Front end ↔ PHP ↔ database, plus the map (MapLibre / OpenFreeMap), road routes (OSRM), place search (Photon / Nominatim), and Google sign-in. See [ARCHITECTURE.md](ARCHITECTURE.md). |
 | **User Experience** | Search that accepts half-typed names, road route with options, skeleton loading, toasts, English / Filipino, dark mode, the demo video. |
 | **Security** | Emailed one-time codes (hashed, 10 minutes, 5 tries), bcrypt passwords, sign-in lockout and rate limits, CSRF tokens, prepared SQL statements, role checks on every admin request, escaped output, security headers. See the Security part of [ARCHITECTURE.md](ARCHITECTURE.md). |

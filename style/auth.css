@@ -322,7 +322,9 @@ html.dark .auth-tagline {
     position: relative;
     flex: 1;
     min-width: 0;
-    height: 100%;
+    /* 4px short of the field at top and bottom: the autofill cover (below) never paints over the
+       field's focus / error ring; text and label stay at the same height */
+    height: calc(100% - 8px);
 }
 
 .float-field input {

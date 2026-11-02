@@ -109,7 +109,8 @@ Motion:
 | Language / theme toggles | `.lang-toggle`, `#dark-toggle` | EN / FIL pill and a sun / moon switch, top right on every passenger page |
 | Segmented control | `.seg`, `.seg-btn`, `.seg-glider` | A highlight slides between the options (settings tabs, Trip / Saved) |
 | Chips | `.chip`, `.chip.is-selected` (`calculate.css`) | Vehicle and passenger choices |
-| Floating-label field | `.float-field` (`auth.css`) | The label sits inside the field and moves up (scale 0.74) when focused or filled; turns green on focus. CSS only. |
+| Floating-label field | `.float-field` (`auth.css`) | The label sits inside the field and moves up (scale 0.74) when focused or filled; turns green on focus. CSS only. Browser autofill is covered with the field color so saved emails look like typed ones. |
+| Log-in steps | `.email-status`, `.auth-email-chip`, `.code-boxes`, `.btn-auth-outline` (`auth.css`) | The note under the email box (red: invalid, green: registered to Para, grey: new), the email pill that goes back a step, six boxes for the emailed code (paste fills all six), and the outlined second choice ("Log In with Password") |
 | Toast | `.toast` (`global.css`) | Bottom-right card with a round status icon, bold title, message, close button, and a 4 s timer line that pauses on hover |
 | Modal | `.modal-overlay.open` (`calculate.css`) | Grows from the button that opened it and shrinks back into it |
 | Skeleton | `.skeleton` | Grey shimmering blocks in the exact shape of the content that is loading |

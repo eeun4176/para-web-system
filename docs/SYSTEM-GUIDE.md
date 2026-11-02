@@ -86,7 +86,7 @@ Log in with a code instead: enter your email, choose **Send Code to Email** (or 
 | Page | What you can do |
 | --- | --- |
 | **Dashboard** | Totals (users, trips, fares, landmarks), "+N vs last week", charts (trips per day, by vehicle, top destinations), the **calendar** of trips per day, and the **Where People Go** heat map of trip destinations from the last 90 days. |
-| **Fare Management** | Change a vehicle's base fare, base km, rate per km, and average speed; change passenger discounts; add, turn on/off, or delete vehicle and passenger types. Changes apply to the next fare computed. |
+| **Fare Management** | Change a vehicle's base fare, base km, rate per km, and average speed; change passenger discounts; add, turn on/off, or delete vehicle and passenger types (deleting one that saved trips used hides it, and those trips keep their fare). Changes apply to the next fare computed. |
 | **Public Landmarks** | Add, edit, and delete the landmarks every user sees on the map. |
 | **Users** | Search by name or email, filter Passengers / Admins, and delete an account. |
 | **Audit Log** | Every admin change: who, what, when, and the old → new values. Filter by fares, landmarks, or users. |

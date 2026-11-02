@@ -472,7 +472,7 @@ const FIL = {
     'Invalid transport or passenger type.': 'Maling uri ng sasakyan o pasahero.',
     'The selected passenger type is invalid or inactive.': 'Mali o hindi aktibo ang napiling uri ng pasahero.',
     'The selected transportation type is invalid or inactive.': 'Mali o hindi aktibo ang napiling uri ng sasakyan.',
-    'Cannot reach the server. Check your connection and that Apache/MySQL are running.': 'Hindi maabot ang server. Tingnan ang koneksyon mo.'
+    'Cannot reach the server. Check your internet connection and try again.': 'Hindi maabot ang server. Tingnan ang internet connection mo at subukan ulit.'
 };
 
 // Texts with numbers or names inside: [pattern, Filipino version]

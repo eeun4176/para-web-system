@@ -1,5 +1,6 @@
 <?php
-// GET api/calculate.php?olat=&olng=&dlat=&dlng=&transport=&passenger=
+// GET api/calculate.php?olat=&olng=&dlat=&dlng=&transport=&passenger=[&roadKm=&fromRoadM=&startFromRoadM=]
+// -> the fare, distance, ETA and walk / tricycle notes (api/fare_logic.php). Road values come from the map.
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/fare_logic.php';
 require_method('GET');
