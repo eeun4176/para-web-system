@@ -73,7 +73,7 @@ Accounts made only with Google sign in with Google and have no password to reset
 ### Sign In
 
 - Go to **/client/admin-login.html** (not the passenger log-in page).
-- Sign in with the **account key** and password. The admin account is given to the team privately and is not in this repository.
+- Sign in with the **account key** and password. The sign-in for checking is in [NOTE.md](NOTE.md).
 - 5 wrong tries lock the sign-in for 15 minutes.
 
 ### Pages

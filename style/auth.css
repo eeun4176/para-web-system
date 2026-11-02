@@ -667,3 +667,62 @@ html.dark .float-field input:focus + label {
         animation: none;
     }
 }
+
+/* ---------- Terms of Service / Privacy Policy dialog (showLegalDialog in auth.js) ---------- */
+.pc-modal.legal-modal {
+    max-width: 560px;
+    padding: 26px 26px 20px;
+}
+
+.legal-modal .legal-body {
+    max-height: min(62vh, 560px);
+    overflow-y: auto;
+    padding-right: 6px;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--text);
+}
+
+.legal-modal .legal-body h2 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin-bottom: 2px;
+}
+
+.legal-modal .legal-body h3 {
+    font-size: 0.95rem;
+    margin: 16px 0 4px;
+}
+
+.legal-modal .legal-body p,
+.legal-modal .legal-body li {
+    color: var(--text-muted);
+}
+
+.legal-modal .legal-body p + p {
+    margin-top: 6px;
+}
+
+.legal-modal .legal-body ul {
+    padding-left: 18px;
+    display: grid;
+    gap: 4px;
+}
+
+.legal-modal .legal-body b {
+    color: var(--text);
+}
+
+.legal-modal .legal-body a {
+    color: var(--text);
+    text-decoration: underline;
+}
+
+.legal-modal .legal-body .legal-date {
+    font-size: 0.78rem;
+    margin-bottom: 12px;
+}
+
+.legal-modal .legal-body ul + p {
+    margin-top: 8px;
+}

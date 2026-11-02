@@ -30,7 +30,6 @@ PHP API  (api/*.php)  ──PDO──►  PostgreSQL on Supabase
 | `style/` | CSS. `global.css` holds the design tokens and shared parts; one file per page after that. |
 | `assets/` | Logo, favicon, Para images (`img/`), the showcase video (`video/`), and the SJDM boundary GeoJSON. |
 | `database/` | `para_db.pgsql.sql` (the full database) and a migration for older databases. Not uploaded to Vercel. |
-| `brd/` | Business Requirement Documents, one per feature. |
 | `docs/` | This documentation. |
 
 ## Front-end scripts
@@ -111,7 +110,7 @@ PostgreSQL (`database/para_db.pgsql.sql`). Row Level Security is on with no poli
 - **Output:** text from users is escaped (`escapeHtml()` / jQuery `.text()`) before it is shown.
 - **Input:** every field is checked on the server (types, lengths, ranges, SJDM bounds for map points). The road distance from the browser is only trusted within limits.
 - **Headers:** `X-Frame-Options: DENY`, a `frame-ancestors 'none'` CSP, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, and `Cache-Control: no-store` on pages so Back after logout does not show a signed-in page.
-- **Secrets:** database credentials live in Vercel environment variables or the git-ignored `api/config/db.local.php`. The admin account is not in the repository.
+- **Secrets:** database credentials live in Vercel environment variables or the git-ignored `api/config/db.local.php`. The admin account is not created by the SQL file; its sign-in for grading is in `docs/NOTE.md` and should be changed after grading.
 
 ## Deployment
 

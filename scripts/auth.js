@@ -364,7 +364,7 @@ Auth.ready().then(() => {
     setupPwToggle('toggle-pw-signup', 'signup-password');
 
     $(document).on('keydown', e => {
-        if (e.key !== 'Enter') return;
+        if (e.key !== 'Enter' || $('.pc-overlay').length) return;   // not while a dialog is open
         if (!$('#auth-login').hasClass('hidden')) doLogin();
         else if (!$('#auth-signup').hasClass('hidden')) doSignup();
         else if (!$('#auth-forgot').hasClass('hidden')) doForgot();
@@ -385,9 +385,36 @@ Auth.ready().then(() => {
     nav('go-login-from-forgot', 'login');
     nav('go-signup-from-forgot', 'signup');
 
+    $('[data-legal]').on('click', function (e) {
+        e.preventDefault();
+        showLegalDialog($(this).data('legal'));
+    });
+
     window.addEventListener('popstate', event => {
     const page = event.state?.authPage || 'login';
     showAuthPage(page, false);
     });
 
 });
+
+// Shows the Terms of Service or Privacy Policy (from the <template id="legal-terms|legal-privacy"> in auth.html)
+// in a dialog that grows out of the clicked link. Close with the button, Escape, or a click outside.
+function showLegalDialog(kind) {
+    const content = document.getElementById('legal-' + kind);
+    if (!content) return;
+    const $overlay = $('<div class="pc-overlay" role="dialog" aria-modal="true" aria-labelledby="legal-title">');
+    const close = () => {
+        $(document).off('keydown.paralegal');
+        popOut($overlay.find('.pc-modal')[0], () => $overlay.remove());
+    };
+    const $close = $('<button type="button" class="pc-btn pc-primary">').text('Close').on('click', close);
+    $('<div class="pc-modal legal-modal">').append(
+        $('<div class="legal-body">').append(content.content.cloneNode(true)),
+        $('<div class="pc-actions">').append($close)
+    ).appendTo($overlay);
+    $overlay.on('click', e => { if (e.target === $overlay[0]) close(); });
+    $(document).on('keydown.paralegal', e => { if (e.key === 'Escape') close(); });
+    $overlay.appendTo('body');
+    popIn($overlay.find('.pc-modal')[0]);
+    $close.trigger('focus');
+}

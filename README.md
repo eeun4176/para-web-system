@@ -41,7 +41,7 @@ Para is a web app for commuters in San Jose del Monte, Bulacan. Search where you
 3. Copy `api/config/db.local.example.php` to `api/config/db.local.php` and fill in the connection details. This file is git-ignored; never commit it.
 4. Open `http://localhost/para-web-system/` (or `php -S localhost:8000` from the project folder, then `http://localhost:8000/client/index.html`).
 
-The admin account is not in this repository. Create it once in the database (the team has the script) and sign in at `client/admin-login.html`.
+The admin account is not created by `para_db.pgsql.sql`; create it once in the database (the team has the script) and sign in at `client/admin-login.html`. The sign-in for checking the live site is in [docs/NOTE.md](docs/NOTE.md).
 
 ## Deploy (Vercel)
 
@@ -58,8 +58,7 @@ scripts/    front-end JavaScript (jQuery)
 style/      CSS (global.css holds the design tokens)
 assets/     logo, Para images, showcase video, SJDM boundary
 database/   PostgreSQL schema and seed data
-brd/        Business Requirement Documents
-docs/       architecture, system guide, design system
+docs/       architecture, system guide, design system, note for the professor
 ```
 
 ## Documentation
@@ -67,7 +66,7 @@ docs/       architecture, system guide, design system
 - [Architecture](docs/ARCHITECTURE.md): how the pages, API, and database fit together, plus security and deployment.
 - [System Guide](docs/SYSTEM-GUIDE.md): how to use Para as a passenger and as the admin.
 - [Design System](docs/DESIGN-SYSTEM.md): colors, fonts, spacing, motion, and components.
-- [BRD](brd/): the requirements for each feature.
+- [Note for the Professor](docs/NOTE.md): links, the admin sign-in, and a quick checking guide.
 
 ## Credits
 
