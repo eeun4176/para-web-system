@@ -119,7 +119,10 @@ function updateNavAuth() {
 
         if (kind === 'nav') {
             // Guests get two clear buttons; logged-in users get their profile picture with a menu
-            if (user) $(el).append(buildNavGreeting(user), buildProfileMenu(user));
+            if (user) {
+                if (user.role !== 'admin') $(el).append(buildNavGreeting(user));   // the admin dashboard has its own greeting
+                el.appendChild(buildProfileMenu(user));
+            }
             else $(el).append(
                 '<a href="auth.html#login" class="nav-login-link">Log In</a>',
                 '<a href="auth.html#signup" class="nav-auth-btn">Sign Up</a>'

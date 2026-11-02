@@ -17,6 +17,10 @@ $adminLinks = [
 $settingsLink = ['admin-settings.php', 'settings', 'Settings'];
 $pageTitle = ($adminLinks[$activePage] ?? $settingsLink)[2];
 $isDashboard = $activePage === 'dashboard';
+
+// Dashboard greeting by the time in the Philippines: morning before 12, afternoon before 6 PM, evening after.
+$manilaHour = (int) (new DateTime('now', new DateTimeZone('Asia/Manila')))->format('G');
+$greeting = $manilaHour < 12 ? 'Good Morning' : ($manilaHour < 18 ? 'Good Afternoon' : 'Good Evening');
 ?>
 <!-- Apply the saved collapsed/expanded state before the page is drawn (no jump) -->
 <script>
@@ -64,7 +68,7 @@ $isDashboard = $activePage === 'dashboard';
     <div class="admin-head-title">
         <?php if ($isDashboard): ?>
             <p class="admin-cap"><time id="today-label"></time></p>
-            <h1>Welcome, Administrator</h1>
+            <h1><?= $greeting ?>, Administrator!</h1>
         <?php else: ?>
             <p class="admin-cap">Para admin</p>
             <h1><?= $pageTitle ?></h1>
