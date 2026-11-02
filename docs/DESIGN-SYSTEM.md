@@ -103,6 +103,7 @@ Motion:
 | --- | --- | --- |
 | Primary button | `.btn-primary-lg` (`global.css`) | Black pill with white text (white with black text in dark mode), `14px 26px` padding |
 | Ghost button | `.btn-ghost-lg` | Card-colored pill with a border, for the second action ("Watch Demo") |
+| Small row buttons | `.small-button` + `.outline-small` / `.danger-small`, `.public-label` (`global.css`) | Pill buttons inside list rows ("Use Route", red-outlined "Remove") and the grey "Admin managed" tag; used by the saved-items dialogs and Account Settings |
 | Outline flood button | `.btn-outline-flood` | Fills with color from the left on hover ("Start Your Commute" in the hero) |
 | Navbar | `.navbar` | Frosted glass (`--navbar-bg` + blur); the active page has a small green dot. Signed-in passengers see a `|` divider (`.nav-divider`), then the date and "Good Morning / Afternoon / Evening, Name!" (`.nav-greeting`) before the profile picture; hidden under 600px |
 | Language / theme toggles | `.lang-toggle`, `#dark-toggle` | EN / FIL pill and a sun / moon switch, top right on every passenger page |

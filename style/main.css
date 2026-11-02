@@ -12,12 +12,20 @@
 }
 
 /* ---------- HERO ---------- */
+/* The hero fills the first screen under the 68px navbar, so the page opens on the hero alone at any screen
+   height (svh: the visible height on phones, without the browser bars). The bigger bottom padding sits the
+   content a little above the middle, which reads as centered. */
 .hero {
-    padding: 48px 24px 96px;
+    min-height: calc(100vh - 68px);
+    min-height: calc(100svh - 68px);
+    display: flex;
+    align-items: center;
+    padding: 24px 24px clamp(64px, 14vh, 160px);
     background: radial-gradient(ellipse 60% 55% at 85% 35%, var(--hero-tint), transparent 70%);
 }
 
 .hero-inner {
+    width: 100%;
     max-width: 1140px;
     margin: 0 auto;
     display: grid;
@@ -232,8 +240,9 @@ html.dark .route-frame {
 }
 
 /* ---------- HOW PARA WORKS (cards take turns: lift, tile fills, icon moves; 6 s loop, 2 s apart) ---------- */
+/* Less space on top: the hero above already ends with a tall bottom padding */
 .how-section {
-    padding: 104px 24px;
+    padding: 48px 24px 104px;
 }
 
 .how-cards {
@@ -676,6 +685,10 @@ html.dark .route-frame {
     .meet-section,
     .faq-section {
         padding: 64px 18px;
+    }
+
+    .how-section {
+        padding-top: 32px;
     }
 
     .features-track {

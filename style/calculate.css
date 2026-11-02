@@ -1055,3 +1055,17 @@
     }
 }
 
+
+/* Group heading inside the place search list ("Recent places", "Saved landmarks"...): a label, not a choice */
+.search-dropdown-item.search-section-heading {
+    padding: 10px 13px 4px;
+    border-bottom: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: default;
+    pointer-events: none;
+}

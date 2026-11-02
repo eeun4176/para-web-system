@@ -1317,3 +1317,72 @@ main,
 .navbar.is-glass::before {
     opacity: 1;
 }
+
+/* ---------- Small row buttons and labels (saved-items dialogs on every page, Account Settings lists) ---------- */
+.small-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.small-button:hover {
+    transform: translateY(-1px);
+}
+
+.small-button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.outline-small {
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+}
+
+.outline-small:hover {
+    border-color: var(--primary);
+    background: var(--green-light);
+    color: var(--text-main);
+}
+
+.danger-small {
+    border: 1px solid rgba(229, 72, 77, 0.35);
+    background: transparent;
+    color: var(--red);
+}
+
+.danger-small:hover {
+    border-color: var(--red);
+    background: rgba(229, 72, 77, 0.1);
+}
+
+/* "Admin managed": a quiet tag in place of the Remove button on public landmarks */
+.public-label {
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: var(--green-light);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* Small uppercase label above a dialog title ("Saved information") */
+.modal-kicker {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
