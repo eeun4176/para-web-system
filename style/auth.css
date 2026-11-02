@@ -579,6 +579,13 @@ html.dark .float-field input:focus + label {
 
 /* ---------- Email-first log-in steps (auth.js: showAuthStep) ---------- */
 
+/* Passenger log-in only (the admin page has no #auth-email): the first step's title and the line under it
+   are centered, like the Google button and the terms line below them */
+#auth-email h1,
+#auth-email .auth-sub {
+    text-align: center;
+}
+
 /* Note under the email box: format problem / registered to Para / new email / checking */
 .email-status {
     display: flex;
