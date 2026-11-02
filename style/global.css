@@ -133,11 +133,6 @@ textarea {
     display: none !important;
 }
 
-/* Accent words in headings, e.g. <span class="accent">SJDM</span> */
-.accent {
-    color: var(--green-ink);
-}
-
 /* Heavy, tight headings (like tarsi.cloud); smaller headings a step lighter */
 h1, h2, h3, h4 {
     font-weight: 800;

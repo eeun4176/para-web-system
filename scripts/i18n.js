@@ -232,9 +232,7 @@ const FIL = {
     'Logged out. See you soon!': 'Naka-log out ka na. Hanggang sa muli!',
     'Name is required.': 'Kailangan ang pangalan.',
     'Email is required.': 'Kailangan ang email.',
-    'Enter a valid email address.': 'Maglagay ng tamang email address.',
     'Password is required.': 'Kailangan ang password.',
-    'Password must be at least 8 characters.': 'Dapat hindi bababa sa 8 character ang password.',
     'Passwords do not match.': 'Hindi magkatugma ang mga password.',
 
     // ---- Calculate: panel ----
@@ -439,7 +437,6 @@ const FIL = {
     'Display name': 'Pangalang ipapakita',
     'Save Changes': 'I-save ang mga Pagbabago',
     'Change Email': 'Palitan ang Email',
-    'Email address': 'Email address',
     'Change Password': 'Palitan ang Password',
     'Current password': 'Kasalukuyang password',
     'Confirm new password': 'Kumpirmahin ang bagong password',
@@ -453,8 +450,6 @@ const FIL = {
     // ---- Messages from the server (api/*.php) ----
     'Please log in first.': 'Mag-log in muna.',
     'Invalid email or password.': 'Mali ang email o password.',
-    'Email already registered.': 'Nakarehistro na ang email na ito.',
-    'This email address is already registered.': 'Nakarehistro na ang email address na ito.',
     'Please fix the highlighted fields.': 'Pakiayos ang mga naka-highlight na field.',
     'Please fill in all fields.': 'Pakipunan ang lahat ng field.',
     'Something went wrong on the server. Please try again.': 'May problema sa server. Pakisubukan ulit.',

@@ -37,7 +37,7 @@ PHP API  (api/*.php)  ──PDO──►  PostgreSQL on Supabase
 | File | Job |
 | --- | --- |
 | `early-theme.js` | Runs first in `<head>`: applies dark mode before the page is drawn, sends signed-in passengers away from guest pages, and reloads stale pages after the browser's Back button. |
-| `api.js` | The `API.get` / `API.post` helper. Sends and receives JSON, attaches the CSRF token to every POST, and turns errors into `{ status, message, errors }`. Also `escapeHtml()`. |
+| `api.js` | The `API.get` / `API.post` helper. Sends and receives JSON, attaches the CSRF token to every POST, and turns errors into `{ status, message, errors }`. |
 | `auth.js` | The log-in steps (email check, emailed code, password), Google sign-in, log out, and the navbar's account area. |
 | `i18n.js` | English / Filipino switch for the passenger pages (dictionary keyed by the English text). |
 | `map-logic.js` | The MapLibre map: SJDM outline, place search, road routes (with alternatives), markers. |
@@ -111,7 +111,7 @@ PostgreSQL (`database/para_db.pgsql.sql`). Row Level Security is on with no poli
 - **CSRF:** every POST must carry the token from `auth/me.php` (`require_post()`).
 - **Roles:** passenger endpoints use `require_passenger()`, admin endpoints and pages use `require_admin()`. The admin cannot use the passenger login, and passengers cannot open admin pages.
 - **SQL:** prepared statements everywhere (PDO), no string-built queries.
-- **Output:** text from users is escaped (`escapeHtml()` / jQuery `.text()`) before it is shown.
+- **Output:** text from users is always shown with jQuery `.text()` (or `textContent`), never as HTML.
 - **Input:** every field is checked on the server (types, lengths, ranges, SJDM bounds for map points). The road distance from the browser is only trusted within limits.
 - **Headers:** `X-Frame-Options: DENY`, a `frame-ancestors 'none'` CSP, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, and `Cache-Control: no-store` on pages so Back after logout does not show a signed-in page.
 - **Secrets:** database credentials and the Brevo email key (`BREVO_API_KEY`, `MAIL_FROM`) live in Vercel environment variables or the git-ignored `api/config/db.local.php`. Without the key, a local copy writes emails to `api/logs/mail.log` instead. The admin account is not created by the SQL file; its sign-in for grading is in `docs/NOTE.md` and should be changed after grading.

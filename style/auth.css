@@ -283,21 +283,6 @@ html.dark .auth-tagline {
     margin-bottom: 7px;
 }
 
-.auth-label-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-}
-
-.auth-label-row a {
-    font-size: 0.82rem;
-    font-weight: 600;
-}
-
-.auth-label-row a:hover {
-    text-decoration: underline;
-}
-
 /* The field box: icon, input and (for passwords) the eye button in one rounded row */
 .auth-input-group {
     display: flex;
