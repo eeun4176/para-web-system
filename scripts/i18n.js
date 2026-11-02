@@ -155,8 +155,7 @@ const FIL = {
     'Welcome Back': 'Maligayang Pagbabalik',
     'Or continue with email': 'O magpatuloy gamit ang email',
     'Welcome to Para': 'Maligayang pagdating sa Para',
-    'Log in or create a free account to save your trips, favorite routes and landmarks.':
-        'Mag-log in o gumawa ng libreng account para ma-save ang mga biyahe, paboritong ruta at landmark mo.',
+    'Create a free account to save routes and trips.': 'Gumawa ng libreng account para ma-save ang mga ruta at biyahe mo.',
     'Continue': 'Magpatuloy',
     'Checking': 'Sinusuri',
     "By continuing, you agree to Para's": 'Sa pagpapatuloy, sumasang-ayon ka sa',
@@ -477,6 +476,7 @@ const FIL = {
 
 // Texts with numbers or names inside: [pattern, Filipino version]
 const FIL_PATTERNS = [
+    [/^Digit ([1-6])$/, 'Numero $1'],   // screen-reader labels of the 6 code boxes
     [/^Your stop is only about (\d+) m away, about (\d+) min on foot\. Walking may be easier than riding\.$/,
         'Mga $1 m lang ang layo ng hintuan mo, mga $2 min kung lalakarin. Mas madali sigurong maglakad kaysa sumakay.'],
     [/^We sent a 6-digit code to (.+)\.$/, 'Nagpadala kami ng 6-digit na code sa $1.'],
