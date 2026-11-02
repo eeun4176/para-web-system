@@ -76,7 +76,8 @@ function compute_fare(float $olat, float $olng, float $dlat, float $dlng, string
     $excess   = $excessKm * (float)$tr['excess_per_km'];
     $subtotal = (float)$tr['base_fare'] + $excess;
     $discount = $subtotal * (float)$pa['discount_rate'];
-    $total    = $subtotal - $discount;
+    $exact    = $subtotal - $discount;
+    $total    = round($exact);   // the fare to pay, rounded to the nearest peso (13.60 -> 14.00; .50 rounds up)
 
     // ETA = distance / average speed (an estimate: ignores traffic and waiting time)
     $duration = max(1, (int) round($dist / (float)$tr['avg_speed_kph'] * 60));
@@ -97,6 +98,7 @@ function compute_fare(float $olat, float $olng, float $dlat, float $dlng, string
             'passengerType'  => $pa['label'],
             'discountRate'   => (int) round((float)$pa['discount_rate'] * 100),
             'discountAmount' => $f($discount),
+            'exactTotal'     => $f($exact),   // before rounding, shown in the fare breakdown
             'total'          => $f($total),
             'durationMin'    => $duration,
             'arrivalTime'    => $arrival,

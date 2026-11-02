@@ -106,8 +106,8 @@ const FIL = {
     'Help': 'Tulong',
     'Frequently Asked Questions': 'Mga Madalas Itanong',
     'How does Para compute my fare?': 'Paano kinukuwenta ni Para ang pamasahe ko?',
-    'Para uses the LTFRB fare matrix saved in our database: a base fare for the first kilometers, plus a set amount for every kilometer after that. The distance comes from the road route shown on the map.':
-        'Ginagamit ni Para ang fare matrix ng LTFRB na nasa aming database: May base fare para sa unang mga kilometro, at may dagdag sa bawat susunod na kilometro. Ang layo ay batay sa ruta sa kalsada na makikita sa mapa.',
+    'Para uses the LTFRB fare matrix saved in our database: a base fare for the first kilometers, plus a set amount for every kilometer after that. The distance comes from the road route shown on the map, and the fare is rounded to the nearest peso.':
+        'Ginagamit ni Para ang fare matrix ng LTFRB na nasa aming database: May base fare para sa unang mga kilometro, at may dagdag sa bawat susunod na kilometro. Ang layo ay batay sa ruta sa kalsada na makikita sa mapa, at ibinibilog ang pamasahe sa pinakamalapit na piso.',
     'Why might the real fare be a little different?': 'Bakit puwedeng medyo iba ang totoong pamasahe?',
     "Drivers can take a different road, and traffic changes the travel time. Para's numbers are a close estimate so you know what to prepare before you ride.":
         'Puwedeng ibang daan ang dumaanan ng driver, at nag-iiba ang oras dahil sa trapiko. Malapit na tantiya ang mga numero ni Para para alam mo ang ihahanda bago sumakay.',
@@ -234,6 +234,7 @@ const FIL = {
     'Base fare': 'Base fare',
     'Excess fare': 'Dagdag na pamasahe',
     'Discount': 'Diskwento',
+    'Exact fare (before rounding)': 'Eksaktong pamasahe (bago ibilog)',
     'None': 'Wala',
     'Total fare': 'Kabuuang pamasahe',
     'Distance follows the road route on the map and travel time uses an average speed, so the actual fare and time may vary a little.':

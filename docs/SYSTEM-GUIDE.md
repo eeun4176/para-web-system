@@ -35,7 +35,7 @@ You can also click **Continue as Guest** to use the calculator without an accoun
    - the **distance**, the **travel time**, and the **arrival time**;
    - a **note** when you need to walk or ride a tricycle for the last part, or when a long trip may need a transfer.
 
-The fare follows the LTFRB fare matrix stored in Para's database: a base fare for the first kilometers, then a fixed amount for each kilometer after.
+The fare follows the LTFRB fare matrix stored in Para's database: a base fare for the first kilometers, then a fixed amount for each kilometer after. The fare is rounded to the nearest peso (₱13.60 becomes ₱14.00); the breakdown shows the exact amount before rounding.
 Real fares and times can still change with the driver's road and traffic.
 
 ### 3. Save Your Trips (signed in)

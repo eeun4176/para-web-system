@@ -57,7 +57,7 @@ External libraries (loaded from CDNs): jQuery 3.7.1, MapLibre GL 5, Lucide icons
 3. `api/calculate.php` validates every value, then `compute_fare()` in `api/fare_logic.php`:
    - reads the vehicle's base fare, base km, and per-km rate from `transport_types`, and the discount from `passenger_types`;
    - uses the road distance if it is believable (between 0.95× and 3× the straight line), else the straight line;
-   - `fare = base fare + (km over the base km × rate per km) − discount`;
+   - `fare = base fare + (km over the base km × rate per km) − discount`, rounded to the nearest peso (the exact amount is also sent for the breakdown);
    - ETA = distance ÷ the vehicle's average speed;
    - adds the walk / tricycle / long-trip note from how far the stop is from a road.
 4. PHP returns JSON. If the user is signed in, `app.js` saves the trip with `trips/add.php` (the server computes the fare again before saving).

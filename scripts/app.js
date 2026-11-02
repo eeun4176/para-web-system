@@ -705,6 +705,7 @@ async function runFareCalculation() {
         $('#res-discount').text(fare.discountRate > 0
             ? '-₱' + fare.discountAmount + ' (' + fare.discountRate + '% off)'
             : 'None');
+        $('#res-exact').text('₱' + fare.exactTotal);
         $('#res-total').text('₱' + fare.total);
         $('#summary-fare').text('₱' + fare.total);
         setResultVisible(true);
