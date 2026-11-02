@@ -65,11 +65,7 @@ try {
             <div id="admin-content" style="display: none;">
 
                 <section class="admin-card">
-                    <h2>Recent Administrator Actions</h2>
-
-                    <p class="admin-hint">
-                        Review the 50 most recent administrator actions recorded by the system.
-                    </p>
+                    <h2>Recent Admin Changes <span class="info-tip" tabindex="0" role="img" aria-label="The last 50 changes to fares, landmarks and users." data-tip="The last 50 changes to fares, landmarks and users."><i data-lucide="info"></i></span></h2>
 
                     <div class="table-toolbar">
                         <label class="table-search"><i data-lucide="search"></i><input type="search" id="audit-search" placeholder="Search actions" aria-label="Search actions" /></label>

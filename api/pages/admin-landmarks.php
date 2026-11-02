@@ -66,11 +66,7 @@ try {
             <div id="admin-content" style="display: none;">
 
                 <section class="admin-card">
-                    <h2>Manage Public Landmarks</h2>
-
-                    <p class="admin-hint">
-                        These landmarks are visible to everyone, including guests.
-                    </p>
+                    <h2>Manage Public Landmarks <span class="info-tip" tabindex="0" role="img" aria-label="Shown on everyone&#39;s map, including guests." data-tip="Shown on everyone&#39;s map, including guests."><i data-lucide="info"></i></span></h2>
 
                     <div class="table-toolbar">
                         <label class="table-search"><i data-lucide="search"></i><input type="search" id="public-search" placeholder="Search landmarks" aria-label="Search landmarks" /></label>
@@ -90,8 +86,7 @@ try {
                         </table>
                     </div>
 
-                    <h3>Add Public Landmark</h3>
-                    <p class="admin-hint">Click the map to choose the spot, then fill in the details.</p>
+                    <h3>Add Public Landmark <span class="info-tip" tabindex="0" role="img" aria-label="Click the map to pick the spot, then fill in the details." data-tip="Click the map to pick the spot, then fill in the details."><i data-lucide="info"></i></span></h3>
 
                     <div class="admin-map" id="admin-landmark-map"></div>
 

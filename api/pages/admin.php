@@ -77,7 +77,7 @@ try {
                 </section>
 
                 <section class="admin-card">
-                    <div class="card-head"><h2>Trips by Vehicle</h2><span class="admin-cap">Share of trips</span></div>
+                    <div class="card-head"><h2>Trips by Vehicle</h2><span class="admin-cap">Which vehicles people pick</span></div>
                     <div class="bar-list" id="chart-vehicle"></div>
                 </section>
             </div>
@@ -90,7 +90,7 @@ try {
             </section>
 
             <section class="admin-card">
-                <div class="card-head"><h2>Most Common Destinations</h2><span class="admin-cap">Saved trips</span></div>
+                <div class="card-head"><h2>Most Common Destinations</h2><span class="admin-cap">From saved trips</span></div>
                 <div class="bar-list" id="chart-dest"></div>
             </section>
 

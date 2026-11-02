@@ -63,7 +63,7 @@ try {
                     <span class="admin-avatar" aria-hidden="true"><i data-lucide="shield-check"></i></span>
                     <div>
                         <h2 id="admin-name"><span class="skeleton skeleton-line short"></span></h2>
-                        <p class="admin-hint">Administrator · account key <b id="admin-key">…</b></p>
+                        <p class="admin-hint">Administrator · signs in as <b id="admin-key">…</b></p>
                     </div>
                 </header>
 
@@ -75,8 +75,7 @@ try {
 
                 <!-- Account: the name shown in the audit log, and the account key used to sign in -->
                 <section class="admin-card settings-panel" data-panel="account" role="tabpanel">
-                    <h2>Account</h2>
-                    <p class="admin-hint">The name appears in the audit log next to every change you make.</p>
+                    <h2>Account <span class="info-tip" tabindex="0" role="img" aria-label="This name appears in the Audit Log." data-tip="This name appears in the Audit Log."><i data-lucide="info"></i></span></h2>
                     <dl class="detail-rows" id="admin-account">
                         <div><dt>Account key</dt><dd id="admin-key-row">—</dd></div>
                         <div><dt>Role</dt><dd>Administrator</dd></div>
@@ -91,8 +90,7 @@ try {
 
                 <!-- Security: change the password (the current one is required) -->
                 <section class="admin-card settings-panel" data-panel="security" role="tabpanel" hidden>
-                    <h2>Password</h2>
-                    <p class="admin-hint">Use at least 8 characters. You stay signed in after changing it.</p>
+                    <h2>Password <span class="info-tip" tabindex="0" role="img" aria-label="At least 8 characters. You stay signed in." data-tip="At least 8 characters. You stay signed in."><i data-lucide="info"></i></span></h2>
                     <form class="admin-form" id="admin-password-form" novalidate>
                         <label class="admin-field">Current password
                             <input type="password" id="admin-current-pw" autocomplete="current-password" required />

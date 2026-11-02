@@ -65,13 +65,7 @@ try {
             <div id="admin-content" style="display: none;">
 
                 <section class="admin-card">
-                    <h2>Registered Users</h2>
-
-                    <p class="admin-hint">
-                        Review registered accounts and their activity.
-                        Deleting a user also deletes their trips, favorites, and landmarks.
-                        To make someone an admin, change their role in the Supabase Table Editor (users table).
-                    </p>
+                    <h2>Registered Users <span class="info-tip" tabindex="0" role="img" aria-label="Deleting a user also deletes their trips, favorites and landmarks." data-tip="Deleting a user also deletes their trips, favorites and landmarks."><i data-lucide="info"></i></span></h2>
 
                     <div class="table-toolbar">
                         <label class="table-search"><i data-lucide="search"></i><input type="search" id="users-search" placeholder="Search name or email" aria-label="Search name or email" /></label>

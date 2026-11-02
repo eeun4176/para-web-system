@@ -574,7 +574,7 @@ function setupFareControls() {
         const $btn = $(this).prop('disabled', true);
         try {
             await API.post('admin/type_add.php', {
-                kind: 'transport', code: v('new-t-code'), label: v('new-t-label'), baseFare: v('new-t-fare'),
+                kind: 'transport', label: v('new-t-label'), baseFare: v('new-t-fare'),
                 baseKm: v('new-t-km'), excessPerKm: v('new-t-excess'), avgSpeedKph: v('new-t-speed')
             });
             $('#add-transport-form input').val('');
@@ -597,7 +597,7 @@ function setupFareControls() {
         const $btn = $(this).prop('disabled', true);
         try {
             await API.post('admin/type_add.php', {
-                kind: 'passenger', code: $('#new-p-code').val(), label: $('#new-p-label').val(), discountRate: pct / 100
+                kind: 'passenger', label: $('#new-p-label').val(), discountRate: pct / 100
             });
             $('#add-passenger-form input').val('');
             showNotification('Passenger type added.', 'success');
@@ -738,7 +738,7 @@ async function loadUsers() {
         $('<tr>').attr({ 'data-id': u.id, 'data-name': u.name, 'data-group': u.role }).append(
             $('<td>').text(u.name),
             $('<td>').text(u.email || (u.accountKey ? 'Account key: ' + u.accountKey : '—')),
-            $('<td>').append($('<span class="role-pill">').addClass(u.role === 'admin' ? 'admin' : '').text(u.role)),
+            $('<td>').append($('<span class="role-pill">').addClass(u.role === 'admin' ? 'admin' : '').text(u.role === 'admin' ? 'Admin' : 'Passenger')),
             $('<td>').text(String(u.createdAt).slice(0, 10)),
             $('<td>').text(u.trips),
             $('<td>').text(u.landmarks),

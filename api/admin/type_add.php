@@ -1,7 +1,8 @@
 <?php
 // POST api/admin/type_add.php
-//   {kind:'transport', code, label, baseFare, baseKm, excessPerKm, avgSpeedKph}
-//   {kind:'passenger', code, label, discountRate}
+//   {kind:'transport', label, baseFare, baseKm, excessPerKm, avgSpeedKph}
+//   {kind:'passenger', label, discountRate}
+// The type's code (its ID in the database) is made from the name: "UV Express" -> "uv_express".
 require_once __DIR__ . '/../helpers.php';
 require_post();
 require_admin();
@@ -12,14 +13,17 @@ if (!in_array($kind, ['transport', 'passenger'], true)) fail(422, 'Invalid type 
 
 $maxCode  = $kind === 'transport' ? 30 : 20;
 $maxLabel = $kind === 'transport' ? 60 : 40;
-$code  = strtolower(trim((string)($in['code'] ?? '')));
 $label = trim((string)($in['label'] ?? ''));
+$code  = trim(preg_replace('/[^a-z0-9]+/', '_', strtolower($label)), '_');
+if ($code !== '' && !ctype_alpha($code[0])) $code = $kind[0] . '_' . $code;   // must start with a letter
+$code  = rtrim(substr($code, 0, $maxCode), '_');
 
 $errors = [];
-if (!preg_match('/^[a-z][a-z0-9_]{1,' . ($maxCode - 1) . '}$/', $code)) {
-    $errors['code'] = 'Code: Lowercase letters, numbers and underscores, starting with a letter (2 to ' . $maxCode . ' characters).';
+if ($label === '' || mb_strlen($label) > $maxLabel) {
+    $errors['label'] = 'Name is required (max ' . $maxLabel . ' characters).';
+} elseif (!preg_match('/^[a-z][a-z0-9_]{1,' . ($maxCode - 1) . '}$/', $code)) {
+    $errors['label'] = 'Name must have at least 2 letters or numbers (English letters).';
 }
-if ($label === '' || mb_strlen($label) > $maxLabel) $errors['label'] = 'Label is required (max ' . $maxLabel . ' characters).';
 
 if ($kind === 'transport') {
     $fare   = clean_number($in, 'baseFare',    1, 500, 'Base fare', $errors);
@@ -45,7 +49,7 @@ if ($kind === 'transport') {
         WHERE passenger_types.is_deleted = 1');
     $s->execute([$code, $label, round($rate, 2)]);
 }
-if ($s->rowCount() === 0) fail(409, 'That code already exists.');
-audit('type_add', $label, 'New ' . ($kind === 'transport' ? 'vehicle' : 'passenger') . ' type "' . $code . '"');
+if ($s->rowCount() === 0) fail(409, 'A ' . ($kind === 'transport' ? 'vehicle' : 'passenger') . ' type with this name already exists.');
+audit('type_add', $label, 'New ' . ($kind === 'transport' ? 'vehicle' : 'passenger') . ' type');
 
 ok(['code' => $code], 201);

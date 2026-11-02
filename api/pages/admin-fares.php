@@ -65,12 +65,7 @@ try {
             <div id="admin-content" style="display: none;">
 
                 <section class="admin-card">
-                    <h2>Vehicle Types</h2>
-
-                    <p class="admin-hint">
-                        Changes apply to future fare calculations. Saved trips retain the fare
-                        they had when they were saved.
-                    </p>
+                    <h2>Vehicle Fares <span class="info-tip" tabindex="0" role="img" aria-label="Changes apply to new fares only. Saved trips keep their old fare." data-tip="Changes apply to new fares only. Saved trips keep their old fare."><i data-lucide="info"></i></span></h2>
 
                     <div class="table-scroll">
                         <table class="admin-table type-table" id="transport-table" data-kind="transport">
@@ -88,37 +83,32 @@ try {
                         </table>
                     </div>
 
-                    <h3>Add Vehicle Type</h3>
+                    <h3>Add a Vehicle</h3>
 
                     <div class="add-form" id="add-transport-form">
                         <label>
-                            Code
-                            <input type="text" id="new-t-code" placeholder="e.g. uv_express" maxlength="30">
-                        </label>
-
-                        <label>
-                            Label
+                            Vehicle name
                             <input type="text" class="wide" id="new-t-label" placeholder="e.g. UV Express" maxlength="60">
                         </label>
 
                         <label>
                             Base fare (₱)
-                            <input type="number" id="new-t-fare" step="0.01" min="0">
+                            <input type="number" id="new-t-fare" step="0.01" min="0" placeholder="e.g. 13.00">
                         </label>
 
                         <label>
                             Base km
-                            <input type="number" id="new-t-km" step="0.1" min="0">
+                            <input type="number" id="new-t-km" step="0.1" min="0" placeholder="e.g. 4">
                         </label>
 
                         <label>
-                            Excess/km (₱)
-                            <input type="number" id="new-t-excess" step="0.01" min="0">
+                            Excess per km (₱)
+                            <input type="number" id="new-t-excess" step="0.01" min="0" placeholder="e.g. 1.80">
                         </label>
 
                         <label>
-                            Avg speed
-                            <input type="number" id="new-t-speed" step="1" min="0">
+                            Avg speed (km/h)
+                            <input type="number" id="new-t-speed" step="1" min="0" placeholder="e.g. 20">
                         </label>
 
                         <button type="button" class="row-btn" id="add-transport-btn">Add Vehicle</button>
@@ -126,7 +116,7 @@ try {
                 </section>
 
                 <section class="admin-card">
-                    <h2>Passenger Discounts</h2>
+                    <h2>Passenger Discounts <span class="info-tip" tabindex="0" role="img" aria-label="Deactivate hides a type for now. Delete removes it for good." data-tip="Deactivate hides a type for now. Delete removes it for good."><i data-lucide="info"></i></span></h2>
 
                     <div class="table-scroll">
                         <table class="admin-table type-table" id="passenger-table" data-kind="passenger">
@@ -141,33 +131,23 @@ try {
                         </table>
                     </div>
 
-                    <h3>Add Passenger Type</h3>
+                    <h3>Add a Passenger Type</h3>
 
                     <div class="add-form" id="add-passenger-form">
                         <label>
-                            Code
-                            <input type="text" id="new-p-code" placeholder="e.g. veteran" maxlength="20">
-                        </label>
-
-                        <label>
-                            Label
+                            Passenger type
                             <input type="text" class="wide" id="new-p-label" placeholder="e.g. Veteran" maxlength="40">
                         </label>
 
                         <label>
                             Discount (%)
-                            <input type="number" id="new-p-pct" step="1" min="0" max="100">
+                            <input type="number" id="new-p-pct" step="1" min="0" max="100" placeholder="e.g. 20">
                         </label>
 
                         <button type="button" class="row-btn" id="add-passenger-btn">
                             Add Passenger Type
                         </button>
                     </div>
-
-                    <p class="admin-hint" style="margin-top: 10px;">
-                        Deactivating a type hides it from the calculator while keeping saved trips
-                        working, and you can turn it back on. Deleting removes it for good; saved trips that used it keep their fare.
-                    </p>
                 </section>
 
             </div>
