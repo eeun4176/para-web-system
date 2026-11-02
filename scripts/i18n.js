@@ -517,7 +517,7 @@ const FIL_PATTERNS = [
     [/^Could not calculate the fare\. (.+)$/, 'Hindi makuwenta ang pamasahe. $1']
 ];
 
-// ---- The machinery (no need to edit below to add a translation) ----
+// ---- The machinery ----
 let paraLang = 'en';
 try { if (localStorage.getItem('para_lang') === 'fil') paraLang = 'fil'; } catch (e) { /* storage blocked: English */ }
 

@@ -1,5 +1,4 @@
 -- Migration (November 2026): email-code login replaces the recovery code, and the admin can delete used fare types.
--- Run once in the Supabase SQL Editor before deploying the new version. Safe to run twice.
 --   * users.email_verified: 1 once the user proved they own the email (email code or Google)
 --   * login_codes: one-time 6-digit codes sent by email (only their hash is stored)
 --   * rate_limits: request counters for the email check and code sending

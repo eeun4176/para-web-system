@@ -10,4 +10,4 @@ if (ini_get('session.use_cookies')) {
 }
 session_destroy();
 
-ok();   // front end should call me.php again to get a fresh CSRF token
+ok();

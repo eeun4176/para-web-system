@@ -429,7 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // GOOGLE SIGN-IN (Google Identity Services script is loaded at the bottom of auth.html)
-// Public ID of Para's Google OAuth client. Keep it the same as in api/auth/google.php.
+// Public ID of Para's Google OAuth client (the same ID is in api/auth/google.php).
 const GOOGLE_CLIENT_ID = '996359971314-0okl6c7g9t504jm39rla9ob94q2rslre.apps.googleusercontent.com';
 
 // Google's script calls this function by name once it has loaded

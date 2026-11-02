@@ -1,6 +1,6 @@
 <?php
 // GET api/auth/me.php -> who is logged in + a CSRF token.
-// Call this on every page load; send the token as header X-CSRF-Token on all POSTs.
+// The front end reads it on every page load and sends the token as the X-CSRF-Token header on POSTs.
 require_once __DIR__ . '/../helpers.php';
 require_method('GET');
 

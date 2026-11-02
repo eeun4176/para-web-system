@@ -8,14 +8,13 @@
 require_once __DIR__ . '/../helpers.php';
 require_post();
 
-// Public ID of Para's Google OAuth client. Keep it the same as GOOGLE_CLIENT_ID in scripts/auth.js.
+// Public ID of Para's Google OAuth client (the same ID is in scripts/auth.js).
 const GOOGLE_CLIENT_ID = '996359971314-0okl6c7g9t504jm39rla9ob94q2rslre.apps.googleusercontent.com';
 
 $credential = (string)(input()['credential'] ?? '');
 if ($credential === '') fail(422, 'Missing Google sign-in token.');
 
 // ---------- Step 1: ask Google to check the token ----------
-// Limit: one HTTP call to Google per sign-in; switch to checking the signature locally (JWKS) if logins get heavy.
 function google_token_info(string $token): ?array {
     $ch = curl_init('https://oauth2.googleapis.com/tokeninfo');
     curl_setopt_array($ch, [

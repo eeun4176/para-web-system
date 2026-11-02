@@ -1,7 +1,6 @@
 -- Migration for databases created before November 2026: adds the admin account key.
 -- The admin now signs in with an account key + password instead of an email (admin-login.html).
--- This file only changes the table. The admin account itself is NOT in this repository (the repo is
--- public): create it with the separate one-time script that was shared privately with the team.
+-- The admin account itself is not in this repository.
 
 ALTER TABLE users ALTER COLUMN email DROP NOT NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS account_key VARCHAR(40) UNIQUE;

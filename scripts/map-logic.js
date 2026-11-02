@@ -299,8 +299,6 @@ function _zoomToLine(coordinates) {
 
 // Gets the road route from OSRM and draws it; falls back to a dashed straight line if the routing
 // service is unavailable. Either way, the fare is recalculated afterwards (with the road distance if known).
-// Limit: OSRM's public demo server is rate-limited and has no uptime promise; fine for a class demo,
-// host OSRM or use a paid router if Para goes public.
 async function _drawRoute() {
   const requestId = ++routeRequestId;
   if (routeController) routeController.abort();
@@ -545,7 +543,6 @@ let searchController = null;
 
 // Place search: Photon first (it understands half-typed words like "tungk" or "sm cit"),
 // Nominatim when Photon is down or finds nothing. Both are free OpenStreetMap services.
-// Limit: public Photon/Nominatim servers have fair-use limits; fine for a class demo, self-host if Para goes public.
 async function searchLocations(query) {
   if (!query || query.trim().length < 2) return [];
   const box = coverageBox();

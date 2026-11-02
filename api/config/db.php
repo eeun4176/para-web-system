@@ -1,7 +1,5 @@
 <?php
 // Database connection (PDO, PostgreSQL on Supabase).
-// Vercel: set DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS in Project Settings -> Environment Variables.
-// Local (XAMPP): copy db.local.example.php to db.local.php and fill it in (db.local.php is git-ignored).
 
 // Database settings: db.local.php on your computer, environment variables on Vercel.
 function db_config(): array {

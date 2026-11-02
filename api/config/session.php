@@ -4,8 +4,6 @@
 // Used by api/helpers.php and the client/admin*.php pages.
 require_once __DIR__ . '/db.php';
 
-// Limit: no row locking, so two parallel requests that both change $_SESSION can overwrite each other;
-// fine here (sessions only hold user_id + csrf), add SELECT ... FOR UPDATE if sessions grow.
 class DbSessionHandler implements SessionHandlerInterface, SessionUpdateTimestampHandlerInterface
 {
     // Sessions older than this time are expired.
