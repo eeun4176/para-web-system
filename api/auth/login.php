@@ -1,5 +1,5 @@
 <?php
-// POST api/auth/login.php  {email, password}
+// POST api/auth/login.php  {email, password}  ("Log In with Password"; the other ways are an email code or Google)
 // After 5 failed attempts (same email + same address) login is blocked for 15 minutes.
 require_once __DIR__ . '/../helpers.php';
 require_post();
@@ -16,6 +16,12 @@ if (login_locked($email)) {
 $s = db()->prepare('SELECT id, name, email, role, profile_picture, password_hash FROM users WHERE email = ?');
 $s->execute([$email]);
 $u = $s->fetch();
+
+// Accounts made with Google or an email code may have no password yet (the email check on the log-in
+// page already tells the user the email is registered, so this message gives nothing away)
+if ($u && $u['password_hash'] === null) {
+    fail(422, 'This account has no password yet. Log in with a code sent to your email, or with Google.');
+}
 
 // Same generic message whether the email or the password is wrong.
 // (Dummy hash keeps response time similar when the email doesn't exist.)
@@ -35,7 +41,6 @@ if (password_needs_rehash($u['password_hash'], PASSWORD_DEFAULT)) {
         ->execute([password_hash($password, PASSWORD_DEFAULT), $u['id']]);
 }
 
-session_regenerate_id(true);
-$_SESSION['user_id'] = (int)$u['id'];
+sign_in((int)$u['id']);
 
-ok(['user' => ['id' => (int)$u['id'], 'name' => $u['name'], 'email' => $u['email'], 'role' => $u['role'], 'profilePicture' => $u['profile_picture']], 'csrf' => csrf_token()]);
+ok(['user' => user_reply($u), 'csrf' => csrf_token()]);

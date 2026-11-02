@@ -1,11 +1,11 @@
 <?php
 // GET api/fares.php -> the fare matrix (active types only)
-// GET api/fares.php?all=1 -> includes inactive types (admins only; used by the admin page)
+// GET api/fares.php?all=1 -> includes inactive types, not deleted ones (admins only; used by the admin page)
 require_once __DIR__ . '/helpers.php';
 require_method('GET');
 
 $all   = (($_GET['all'] ?? '') === '1') && is_admin();
-$where = $all ? '' : ' WHERE is_active = 1';
+$where = $all ? ' WHERE is_deleted = 0' : ' WHERE is_active = 1';   // deleted types are inactive too
 
 $types = [];
 foreach (db()->query('SELECT code, label, base_fare, base_km, excess_per_km, avg_speed_kph, is_active FROM transport_types' . $where . ' ORDER BY label') as $r) {

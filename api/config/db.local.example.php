@@ -7,4 +7,9 @@ return [
     'DB_NAME' => 'postgres',
     'DB_USER' => 'postgres.your-project-ref',
     'DB_PASS' => 'your-database-password',
+
+    // Optional: send real log-in codes through Brevo (brevo.com -> SMTP & API -> API keys).
+    // Leave them out and the codes are written to api/logs/mail.log instead.
+    // 'BREVO_API_KEY' => 'xkeysib-...',
+    // 'MAIL_FROM'     => 'para.sjdm@gmail.com',   // a sender address verified in Brevo
 ];

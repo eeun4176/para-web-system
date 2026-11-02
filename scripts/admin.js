@@ -21,7 +21,7 @@ function typeButtons(active) {
     return $('<td class="actions">').append(
         $('<button type="button" class="row-btn save-row" disabled>').append('<i data-lucide="check"></i> Save'),
         $('<button type="button" class="row-btn neutral toggle-type">').attr('data-next', active ? 'false' : 'true').text(active ? 'Deactivate' : 'Activate'),
-        $('<button type="button" class="row-btn icon danger delete-type" title="Delete" aria-label="Delete">').append('<i data-lucide="trash-2"></i>')
+        $('<button type="button" class="row-btn danger delete-type">').append('<i data-lucide="trash-2"></i> Delete')
     );
 }
 
@@ -554,13 +554,13 @@ function setupFareControls() {
         const kind = $(this).closest('table').data('kind');
         const sure = await confirmDialog({
             title: 'Delete "' + $tr.data('label') + '"?',
-            message: 'This only works if no saved trip or favorite uses it. Otherwise, deactivate it instead.',
+            message: 'It will be removed from the calculator and this list. Saved trips and favorites that used it keep their fare.',
             confirmText: 'Delete', danger: true
         });
         if (!sure) return;
         try {
-            await API.post('admin/type_delete.php', { kind: kind, code: $tr.data('code') });
-            showNotification('"' + $tr.data('label') + '" deleted.', 'info');
+            const res = await API.post('admin/type_delete.php', { kind: kind, code: $tr.data('code') });
+            showNotification('"' + $tr.data('label') + '" deleted.' + (res.keptForTrips ? ' Saved trips that used it keep their fare.' : ''), 'success');
             loadFares();
             loadAudit();
         } catch (err) {

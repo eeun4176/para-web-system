@@ -10,7 +10,7 @@ $uid = require_passenger();
 
 $in = input();
 $r = clean_route($in);
-[$roadKm, $fromRoadM] = road_input($in);
+[$roadKm, $fromRoadM, $startFromRoadM] = road_input($in);
 
 $fare = compute_fare(
     $r['origin']['lat'],
@@ -20,7 +20,8 @@ $fare = compute_fare(
     $r['transport'],
     $r['passenger'],
     $roadKm,
-    $fromRoadM
+    $fromRoadM,
+    $startFromRoadM
 );
 
 $db = db();

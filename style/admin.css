@@ -609,12 +609,17 @@ html.rail-collapsed .rail-toggle .when-closed {
     background: var(--primary);
 }
 
+/* Red outline, filled on hover (e.g. "Delete" on fare types), quieter than a row of solid red buttons */
 .row-btn.danger {
-    background: var(--red);
+    background: transparent;
+    color: var(--red);
+    border: 1.5px solid rgba(229, 72, 77, 0.45);
 }
 
 .row-btn.danger:hover {
-    background: #c0392b;
+    background: var(--red);
+    border-color: var(--red);
+    color: #fff;
 }
 
 .row-btn.neutral {

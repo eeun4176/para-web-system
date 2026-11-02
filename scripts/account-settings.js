@@ -144,8 +144,15 @@
     }
 
     // (admins never get here: they are sent to admin-settings.php on load)
+    // What profile.php said about the password: is one set, and did the user just sign in
+    // (then password / email changes skip the current password)
+    let security = { hasPassword: false, recentLogin: false };
+
     function fillProfile(res) {
         const user = res.user;
+        security = { hasPassword: !!user.hasPassword, recentLogin: !!user.recentLogin };
+        $('#password-state').text(security.hasPassword ? '••••••••' : 'Not set');
+        $('#change-password').text(security.hasPassword ? 'Change' : 'Set Password');
         renderAvatar($('#settings-avatar'), user);
         $('#hero-name, #profile-name').text(user.name);
         $('#hero-email, #profile-email').text(user.email);
@@ -238,10 +245,53 @@
 
     // Edit Name dialog.
     function openName() { promptDialog('Edit Name', [{ key: 'name', label: 'Display name', autocomplete: 'name', maxlength: 100 }], 'Save Changes', async data => { if (!data.name) throw { message: 'Name is required.' }; const res = await API.post('auth/update_profile.php', data); Auth.user = res.user; updateNav(res.user); fillProfile(await API.get('auth/profile.php')); notify('Your name was updated.', 'success'); }); }
-    // Change Email dialog (needs the recovery code).
-    function openEmail() { promptDialog('Change Email', [{ key: 'email', label: 'Email address', type: 'email', autocomplete: 'email' }, { key: 'recoveryCode', label: 'Recovery code', maxlength: 12 }], 'Change Email', async data => { data.recoveryCode = data.recoveryCode.toUpperCase(); const res = await API.post('auth/change_email.php', data); Auth.user = res.user; updateNav(res.user); fillProfile(await API.get('auth/profile.php')); notify('Your email was updated.', 'success'); }); }
-    // Change Password dialog (needs the current password and the recovery code).
-    function openPassword() { promptDialog('Change Password', [{ key: 'currentPassword', label: 'Current password', type: 'password', autocomplete: 'current-password' }, { key: 'recoveryCode', label: 'Recovery code', maxlength: 12 }, { key: 'newPassword', label: 'New password', type: 'password', autocomplete: 'new-password' }, { key: 'confirmPassword', label: 'Confirm new password', type: 'password', autocomplete: 'new-password' }], 'Change Password', async data => { if (data.newPassword.length < 8) throw { message: 'New password must be at least 8 characters.' }; if (data.newPassword !== data.confirmPassword) throw { message: 'Passwords do not match.' }; data.recoveryCode = data.recoveryCode.toUpperCase(); delete data.confirmPassword; await API.post('auth/change_password.php', data); notify('Your password was changed.', 'success'); }); }
+    // The current password is asked only when the account has one and the user did not just sign in.
+    const needsCurrentPassword = () => security.hasPassword && !security.recentLogin;
+    const currentPasswordField = { key: 'currentPassword', label: 'Current password', type: 'password', autocomplete: 'current-password' };
+
+    // The 10 minutes after signing in passed while the page was open: reload, so the dialog asks for the password next time
+    async function onSecurityError(err) {
+        if (err.errors && err.errors.currentPassword && !needsCurrentPassword()) {
+            fillProfile(await API.get('auth/profile.php'));
+            throw { message: 'For your safety, please enter your current password.' };
+        }
+        throw err;
+    }
+
+    // Change Email, in two steps: the new email (+ current password if needed), then the code sent to it.
+    function openEmail() {
+        const fields = [{ key: 'email', label: 'New email address', type: 'email', autocomplete: 'email' }];
+        if (needsCurrentPassword()) fields.push(currentPasswordField);
+        promptDialog('Change Email', fields, 'Send Code', async data => {
+            const email = data.email.toLowerCase();
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw { message: 'Enter a valid email address, like juan@gmail.com.' };
+            await API.post('auth/change_email.php', data).catch(onSecurityError);
+            notify('We sent a 6-digit code to ' + email + '.', 'success');
+            setTimeout(() => promptDialog('Confirm Your New Email', [{ key: 'code', label: 'Enter the 6-digit code sent to ' + email, autocomplete: 'one-time-code', maxlength: 6 }], 'Change Email', async step2 => {
+                const res = await API.post('auth/change_email.php', { email, code: step2.code });
+                Auth.user = res.user; updateNav(res.user);
+                fillProfile(await API.get('auth/profile.php'));
+                notify('Your email was updated.', 'success');
+            }), 300);   // after the first dialog has closed
+        });
+    }
+
+    // Set Password (accounts made with Google or an email code) or Change Password.
+    function openPassword() {
+        const fields = [];
+        if (needsCurrentPassword()) fields.push(currentPasswordField);
+        fields.push({ key: 'newPassword', label: 'New password (at least 8 characters)', type: 'password', autocomplete: 'new-password' },
+                    { key: 'confirmPassword', label: 'Confirm new password', type: 'password', autocomplete: 'new-password' });
+        const setting = !security.hasPassword;
+        promptDialog(setting ? 'Set a Password' : 'Change Password', fields, setting ? 'Set Password' : 'Change Password', async data => {
+            if (data.newPassword.length < 8) throw { message: 'New password must be at least 8 characters.' };
+            if (data.newPassword !== data.confirmPassword) throw { message: 'Passwords do not match.' };
+            delete data.confirmPassword;
+            await API.post('auth/change_password.php', data).catch(onSecurityError);
+            fillProfile(await API.get('auth/profile.php'));
+            notify(setting ? 'Your password was set. You can now log in with it or with a code.' : 'Your password was changed.', 'success');
+        });
+    }
 
     // Loads the items of the open saved-items tab.
     async function loadSaved() {

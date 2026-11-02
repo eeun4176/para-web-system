@@ -23,19 +23,22 @@ const Auth = {
         return res;
     },
 
-    async register(name, email, password) {
-        const res = await API.post('auth/register.php', { name, email, password });
+    // Is this email registered to Para, and does it have a password / Google? (api/auth/start.php)
+    checkEmail(email) {
+        return API.post('auth/start.php', { email });
+    },
+
+    // Emails a 6-digit log-in code (api/auth/send_code.php)
+    sendCode(email) {
+        return API.post('auth/send_code.php', { email });
+    },
+
+    // Logs in with the emailed code; a new email gets its account here (api/auth/verify_code.php)
+    async verifyCode(email, code) {
+        const res = await API.post('auth/verify_code.php', { email, code });
         API.csrf = res.csrf;
         this.user = res.user;
         return res;
-    },
-
-    async resetPassword(email, recoveryCode, newPassword) {
-        return API.post('auth/reset_password.php', {
-            email,
-            recoveryCode,
-            newPassword
-        });
     },
 
     // Admin sign-in (admin-login.html): account key + password, checked by api/auth/admin_login.php
@@ -136,38 +139,35 @@ Auth.ready().then(user => {
     $(() => applyMemberNav(user));
 });
 
-// AUTH PAGE UI
+// AUTH PAGE UI (auth.html): email first, then a code sent to the email or the password (like Spotify).
+//   email  -> registered with a password: "choose" (code or password)
+//          -> anything else (new email, Google-only account): the code is sent right away
+//   code   -> logs in; a new email gets its account here (name = part before the @, changed in Account Settings)
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const LOGIN_FIELDS  = { email: 'login-email',  password: 'login-password' };
-const SIGNUP_FIELDS = { name: 'signup-name', email: 'signup-email', password: 'signup-password' };
-const FORGOT_FIELDS = {
-    email: 'forgot-email',
-    recoveryCode: 'forgot-recovery-code',
-    newPassword: 'forgot-newpw',
-    confirmPassword: 'forgot-confirmpw'
-};
+const AUTH_STEPS = ['email', 'choose', 'password', 'code'];
 let authBusy = false;
+let authEmail = '';          // the email the steps after the first one are about
+let authInfo = null;         // what api/auth/start.php said about it
+const emailChecks = {};      // email -> start.php answer (or its promise), so typing and Continue share one request
+let resendTimer = null;
 
-
-// Shows one of the three forms (log in, sign up, forgot password).
-function showAuthPage(page, updateHistory = true) {
-    if (!['login', 'signup', 'forgot'].includes(page)) {
-        page = 'login';
-    }
+// Shows one step of the log-in page.
+function showAuthStep(step, updateHistory = true) {
+    if (!AUTH_STEPS.includes(step) || (step !== 'email' && !authEmail)) step = 'email';
     clearFieldErrors();
-    ['login', 'signup', 'forgot'].forEach(p => {
-        $('#auth-' + p).toggleClass('hidden', p !== page);
-    });
-    $('#auth-' + page).hide().fadeIn(220);   // soft fade when switching forms
-    if (updateHistory) {
-        history.pushState({ authPage: page }, '', '#' + page);
-    }
+    AUTH_STEPS.forEach(s => $('#auth-' + s).toggleClass('hidden', s !== step));
+    $('#auth-' + step).hide().fadeIn(220);   // soft fade when switching steps
+    $('.chip-email').text(authEmail);
+    if (updateHistory) history.pushState({ authStep: step, email: authEmail }, '', '#' + step);
+    const focus = { email: '#auth-email-input', password: '#login-password', code: '#code-boxes input:first' }[step];
+    if (focus) setTimeout(() => $(focus).trigger('focus'), 60);
 }
 
 // Removes the red error state and messages from every form field.
 function clearFieldErrors() {
-    $('.field-error').remove();
-    $('.auth-input-group').removeClass('has-error');
+    $('.field-error').not('#code-error').remove();
+    $('.auth-input-group, .code-boxes').removeClass('has-error');
+    $('#code-error').prop('hidden', true).text('');
 }
 
 // Marks the fields the server or the checks below rejected, with their messages.
@@ -192,103 +192,204 @@ function setAuthDone(btnSelector) {
     $(btnSelector).removeClass('loading').addClass('ok');
 }
 
-// Checks the log-in form, signs in through api/auth/login.php and opens the calculator.
-async function doLogin() {
-    if (authBusy) return;
-    clearFieldErrors();
-    const email = $('#login-email').val().trim();
-    const password = $('#login-password').val();
+// ---------- Step 1: email ----------
+// The note under the email box: format problems, then whether the email is registered to Para.
+function setEmailStatus(kind, text) {
+    const icons = { error: 'circle-alert', ok: 'circle-check', new: 'sparkles', wait: 'loader-circle' };
+    const $s = $('#email-status').prop('hidden', !kind).attr('class', 'email-status' + (kind ? ' is-' + kind : ''));
+    $s.empty();
+    if (kind) $s.append($('<i>').attr('data-lucide', icons[kind]), $('<span>').text(text));
+    $('#auth-email-input').closest('.auth-input-group').toggleClass('has-error', kind === 'error');
+}
 
-    const errors = {};
-    if (!email) errors.email = 'Email is required.';
-    else if (!EMAIL_RE.test(email)) errors.email = 'Enter a valid email address.';
-    if (!password) errors.password = 'Password is required.';
-    if (Object.keys(errors).length) { showFieldErrors(errors, LOGIN_FIELDS); return; }
+// What's wrong with the typed email, or '' when it looks like a real address.
+function emailProblem(email) {
+    if (!email) return 'Email is required.';
+    if (!email.includes('@')) return 'An email needs an @, like juan@gmail.com.';
+    if (!EMAIL_RE.test(email)) return 'Enter a valid email address, like juan@gmail.com.';
+    return '';
+}
 
-    setAuthBusy('#login-submit', true);
-    try {
-        const res = await Auth.login(email, password);
-        setAuthDone('#login-submit');
-        queueNotification('Welcome back, ' + res.user.name + '!', 'success');
-        setTimeout(() => { window.location.replace(homePageFor(res.user)); }, 700);
-    } catch (err) {
-        showFieldErrors(err.errors, LOGIN_FIELDS);
-        showNotification(API.describe(err), 'error');
-        setAuthBusy('#login-submit', false);
+// Asks the server about an email once; later calls reuse the answer.
+function checkEmail(email) {
+    if (!emailChecks[email]) {
+        emailChecks[email] = Auth.checkEmail(email).catch(err => { delete emailChecks[email]; throw err; });
+    }
+    return emailChecks[email];
+}
+
+// Shows the server's answer under the box.
+function showEmailInfo(info) {
+    if (info.registered) {
+        setEmailStatus('ok', info.hasPassword || !info.hasGoogle
+            ? 'This email is registered to Para.'
+            : 'This email is registered to Para with Google.');
+    } else {
+        setEmailStatus('new', "New to Para? We'll create your account with this email.");
     }
 }
 
-// Checks the sign-up form, creates the account and shows the one-time recovery code.
-async function doSignup() {
-    if (authBusy) return;
-    clearFieldErrors();
-    const name = $('#signup-name').val().trim();
-    const email = $('#signup-email').val().trim();
-    const password = $('#signup-password').val();
-    const agree = $('#signup-agree').is(':checked');
-
-    const errors = {};
-    if (!name) errors.name = 'Name is required.';
-    if (!email) errors.email = 'Email is required.';
-    else if (!EMAIL_RE.test(email)) errors.email = 'Enter a valid email address.';
-    if (!password) errors.password = 'Password is required.';
-    else if (password.length < 8) errors.password = 'Password must be at least 8 characters.';
-    if (Object.keys(errors).length) { showFieldErrors(errors, SIGNUP_FIELDS); return; }
-    if (!agree) { showNotification('Please agree to the Terms of Service.', 'warning'); return; }
-
-    setAuthBusy('#signup-submit', true);
-    try {
-        const res = await Auth.register(name, email, password);
-        setAuthDone('#signup-submit');
-        $('#signup-recovery-code').text(res.recoveryCode);
-        $('#signup-recovery').removeClass('hidden');
-        $('#signup-submit, #signup-name, #signup-email, #signup-password, #signup-agree')
-            .prop('disabled', true);
-        showNotification('Account created. Save your recovery code before continuing.', 'warning');
-    } catch (err) {
-        if (err.status === 409) showFieldErrors({ email: err.message }, SIGNUP_FIELDS);
-        else showFieldErrors(err.errors, SIGNUP_FIELDS);
-        showNotification(API.describe(err), 'error');
-        setAuthBusy('#signup-submit', false);
-    }
-}
-
-// Resets the password with the email + recovery code (api/auth/reset_password.php).
-async function doForgot() {
-    if (authBusy) return;
-    clearFieldErrors();
-
-    const email = $('#forgot-email').val().trim();
-    const recoveryCode = $('#forgot-recovery-code').val().trim();
-    const newPassword = $('#forgot-newpw').val();
-    const confirmPassword = $('#forgot-confirmpw').val();
-    const errors = {};
-
-    if (!email) errors.email = 'Email is required.';
-    else if (!EMAIL_RE.test(email)) errors.email = 'Enter a valid email address.';
-    if (!recoveryCode) errors.recoveryCode = 'Recovery code is required.';
-    if (newPassword.length < 8) {
-        errors.newPassword = 'New password must be at least 8 characters.';
-    }
-    if (newPassword !== confirmPassword) {
-        errors.confirmPassword = 'Passwords do not match.';
-    }
-    if (Object.keys(errors).length) {
-        showFieldErrors(errors, FORGOT_FIELDS);
+// While typing: check the format, then (after a short pause) whether the email is registered.
+let emailTypingTimer = null;
+function onEmailTyping(final = false) {
+    clearTimeout(emailTypingTimer);
+    const email = $('#auth-email-input').val().trim().toLowerCase();
+    if (!email) { setEmailStatus(null); return; }
+    const problem = emailProblem(email);
+    if (problem) {
+        // Don't nag in the middle of typing: show format problems on a pause or when leaving the box
+        if (final) setEmailStatus('error', problem);
+        else { setEmailStatus(null); emailTypingTimer = setTimeout(() => onEmailTyping(true), 1200); }
         return;
     }
+    emailTypingTimer = setTimeout(async () => {
+        setEmailStatus('wait', 'Checking this email…');
+        try {
+            const info = await checkEmail(email);
+            if ($('#auth-email-input').val().trim().toLowerCase() === email) showEmailInfo(info);
+        } catch (err) {
+            setEmailStatus(err.status === 403 ? 'error' : null, err.status === 403 ? err.message : '');
+        }
+    }, final ? 0 : 450);
+}
 
-    setAuthBusy('#forgot-submit', true);
+// "Continue": check the email, then go to the right next step.
+async function doEmailContinue() {
+    if (authBusy) return;
+    const email = $('#auth-email-input').val().trim().toLowerCase();
+    const problem = emailProblem(email);
+    if (problem) { setEmailStatus('error', problem); return; }
+
+    setAuthBusy('#email-continue', true);
     try {
-        await Auth.resetPassword(email, recoveryCode, newPassword);
-        $('#forgot-email, #forgot-recovery-code, #forgot-newpw, #forgot-confirmpw').val('');
-        setAuthBusy('#forgot-submit', false);
-        showAuthPage('login');
-        showNotification('Password reset successfully. You can now sign in.', 'success');
+        authInfo = await checkEmail(email);
+        authEmail = email;
+        showEmailInfo(authInfo);
+        setAuthBusy('#email-continue', false);
+        if (authInfo.registered && authInfo.hasPassword) showAuthStep('choose');
+        else await sendCodeAndShow();
     } catch (err) {
-        showFieldErrors(err.errors, FORGOT_FIELDS);
+        setEmailStatus('error', err.errors && err.errors.email ? err.errors.email : API.describe(err));
+        setAuthBusy('#email-continue', false);
+    }
+}
+
+// ---------- Step 3b: the emailed code ----------
+// Sends a code to authEmail and opens the code step (the code step's labels depend on new / registered).
+async function sendCodeAndShow(btn = '#choose-code') {
+    setAuthBusy(btn, true);
+    try {
+        const res = await Auth.sendCode(authEmail);
+        setAuthBusy(btn, false);
+        openCodeStep(res.resendIn);
+        showNotification('We sent a 6-digit code to ' + authEmail + '.', 'success');
+    } catch (err) {
+        setAuthBusy(btn, false);
+        if (err.status === 429 && err.resendIn) { openCodeStep(err.resendIn); return; }   // a code was just sent
         showNotification(API.describe(err), 'error');
-        setAuthBusy('#forgot-submit', false);
+    }
+}
+
+function openCodeStep(resendIn) {
+    const isNew = authInfo && !authInfo.registered;
+    $('#code-title').text(isNew ? 'Confirm Your Email' : 'Check Your Email');
+    $('#code-submit-label').text(isNew ? 'Create Account' : 'Log In');
+    $('#code-use-password').prop('hidden', !(authInfo && authInfo.hasPassword));
+    $('#code-google-hint').prop('hidden', !(authInfo && authInfo.hasGoogle && !authInfo.hasPassword));
+    $('#code-boxes input').val('');
+    showAuthStep('code');
+    startResendCountdown(resendIn || 60);
+}
+
+// "resend the code" stays disabled for a minute after each code.
+function startResendCountdown(seconds) {
+    clearInterval(resendTimer);
+    const $btn = $('#code-resend');
+    let left = seconds;
+    const tick = () => {
+        if (left <= 0) { clearInterval(resendTimer); $btn.prop('disabled', false).text('resend the code'); return; }
+        $btn.prop('disabled', true).text('resend the code in ' + left + 's');
+        left--;
+    };
+    tick();
+    resendTimer = setInterval(tick, 1000);
+}
+
+// The 6 boxes act like one field: typing moves forward, Backspace moves back, pasting fills them all.
+function setupCodeBoxes() {
+    const $boxes = $('#code-boxes input');
+    const fill = (from, digits) => {
+        digits.split('').forEach((d, i) => { if ($boxes[from + i]) $boxes[from + i].value = d; });
+        const next = Math.min(from + digits.length, $boxes.length - 1);
+        $boxes[next].focus();
+        if (codeValue().length === 6) doVerifyCode();   // all 6 in: submit by itself
+    };
+    $boxes.each(function (i) {
+        $(this).on('input', function () {
+            const digits = this.value.replace(/\D/g, '').slice(0, 6 - i);
+            this.value = digits.charAt(0);
+            $('#code-boxes').removeClass('has-error');
+            if (digits) fill(i, digits);
+        }).on('keydown', function (e) {
+            if (e.key === 'Backspace' && !this.value && i > 0) { $boxes[i - 1].value = ''; $boxes[i - 1].focus(); e.preventDefault(); }
+            if (e.key === 'ArrowLeft' && i > 0) $boxes[i - 1].focus();
+            if (e.key === 'ArrowRight' && i < 5) $boxes[i + 1].focus();
+        }).on('paste', function (e) {
+            const digits = ((e.originalEvent.clipboardData || window.clipboardData).getData('text') || '').replace(/\D/g, '').slice(0, 6);
+            if (!digits) return;
+            e.preventDefault();
+            fill(0, digits);
+        }).on('focus', function () { this.select(); });
+    });
+}
+
+function codeValue() {
+    return $('#code-boxes input').map((i, el) => el.value).get().join('');
+}
+
+async function doVerifyCode() {
+    if (authBusy) return;
+    clearFieldErrors();
+    const code = codeValue();
+    if (!/^\d{6}$/.test(code)) {
+        $('#code-boxes').addClass('has-error');
+        $('#code-error').text('Enter the 6-digit code from your email.').prop('hidden', false);
+        return;
+    }
+    setAuthBusy('#code-submit', true);
+    try {
+        const res = await Auth.verifyCode(authEmail, code);
+        setAuthDone('#code-submit');
+        queueNotification(res.created
+            ? 'Welcome to Para! You can change your name in Account Settings.'
+            : 'Welcome back, ' + res.user.name + '!', 'success');
+        setTimeout(() => window.location.replace(homePageFor(res.user)), 600);
+    } catch (err) {
+        setAuthBusy('#code-submit', false);
+        $('#code-boxes').addClass('has-error');
+        $('#code-error').text(err.errors && err.errors.code ? err.errors.code : API.describe(err)).prop('hidden', false);
+        $('#code-boxes input').val('');
+        $('#code-boxes input:first').trigger('focus');
+    }
+}
+
+// ---------- Step 3a: password ----------
+async function doPasswordLogin() {
+    if (authBusy) return;
+    clearFieldErrors();
+    const password = $('#login-password').val();
+    if (!password) { showFieldErrors({ password: 'Password is required.' }, { password: 'login-password' }); return; }
+
+    setAuthBusy('#password-submit', true);
+    try {
+        const res = await Auth.login(authEmail, password);
+        setAuthDone('#password-submit');
+        queueNotification('Welcome back, ' + res.user.name + '!', 'success');
+        setTimeout(() => window.location.replace(homePageFor(res.user)), 600);
+    } catch (err) {
+        showFieldErrors({ password: err.status === 401 ? 'Incorrect password.' : API.describe(err) }, { password: 'login-password' });
+        if (err.status !== 401) showNotification(API.describe(err), 'error');
+        setAuthBusy('#password-submit', false);
     }
 }
 
@@ -336,8 +437,10 @@ window.onGoogleLibraryLoad = function () {
     google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onGoogleCredential });
 
     const isDark = document.documentElement.classList.contains('dark');
-    const buttonStyle = { theme: isDark ? 'filled_black' : 'outline', size: 'large', shape: 'pill', text: 'continue_with', width: 300 };
-    ['google-login-btn', 'google-signup-btn'].forEach(id => {
+    // locale: follow Para's EN / FIL choice instead of the browser's language
+    const buttonStyle = { theme: isDark ? 'filled_black' : 'outline', size: 'large', shape: 'pill', text: 'continue_with', width: 300,
+                          locale: typeof paraLang !== 'undefined' && paraLang === 'fil' ? 'fil' : 'en' };
+    ['google-login-btn'].forEach(id => {
         const box = document.getElementById(id);
         if (box) google.accounts.id.renderButton(box, buttonStyle);
     });
@@ -369,55 +472,48 @@ function setupPwToggle(btnId, inputId) {
 
 // AUTH PAGE SETUP (only runs on auth.html)
 document.addEventListener('DOMContentLoaded', () => {
-    if (!document.getElementById('auth-login')) return;
+    if (!document.getElementById('auth-email')) return;
 
-   const initialPage = ['login', 'signup', 'forgot'].includes(
-    window.location.hash.slice(1)
-) ? window.location.hash.slice(1) : 'login';
-showAuthPage(initialPage, false);
-Auth.ready().then(() => {
-    if (Auth.isLoggedIn()) {
-        window.location.replace(homePageFor(Auth.user));
-    }
-});
+    showAuthStep('email', false);   // links like auth.html#login or #signup all start at the email step
+    history.replaceState({ authStep: 'email' }, '', window.location.pathname);
+    Auth.ready().then(() => {
+        if (Auth.isLoggedIn()) window.location.replace(homePageFor(Auth.user));
+    });
 
     setupPwToggle('toggle-pw-login', 'login-password');
-    setupPwToggle('toggle-pw-signup', 'signup-password');
+    setupCodeBoxes();
 
+    $('#auth-email-input').on('input', () => onEmailTyping(false)).on('blur', () => onEmailTyping(true));
+    $('#email-continue').on('click', doEmailContinue);
+    $('#choose-code').on('click', () => sendCodeAndShow('#choose-code'));
+    $('#choose-password').on('click', () => showAuthStep('password'));
+    $('#password-submit').on('click', doPasswordLogin);
+    $('#password-use-code').on('click', e => { e.preventDefault(); sendCodeAndShow('#password-submit'); });
+    $('#code-submit').on('click', doVerifyCode);
+    $('#code-resend').on('click', () => sendCodeAndShow('#code-submit'));
+    $('#code-use-password a').on('click', e => { e.preventDefault(); showAuthStep('password'); });
+    $('[data-auth-back]').on('click', () => history.back());
+
+    // Enter submits the step on screen (not while a dialog is open)
     $(document).on('keydown', e => {
-        if (e.key !== 'Enter' || $('.pc-overlay').length) return;   // not while a dialog is open
-        if (!$('#auth-login').hasClass('hidden')) doLogin();
-        else if (!$('#auth-signup').hasClass('hidden')) doSignup();
-        else if (!$('#auth-forgot').hasClass('hidden')) doForgot();
+        if (e.key !== 'Enter' || $('.pc-overlay').length) return;
+        if (!$('#auth-email').hasClass('hidden')) doEmailContinue();
+        else if (!$('#auth-password').hasClass('hidden')) doPasswordLogin();
+        else if (!$('#auth-code').hasClass('hidden')) doVerifyCode();
     });
-
-    $('#login-submit').on('click', doLogin);
-    $('#signup-submit').on('click', doSignup);
-    $('#forgot-submit').on('click', doForgot);
-    $('#signup-recovery-continue').on('click', () => {
-        queueNotification('Welcome to Para, ' + Auth.getCurrentUser().name + '!', 'success');
-        window.location.replace(homePageFor(Auth.user));
-    });
-
-    const nav = (linkId, page) => $('#' + linkId).on('click', e => { e.preventDefault(); showAuthPage(page); });
-    nav('go-forgot', 'forgot');
-    nav('go-signup', 'signup');
-    nav('go-login-from-signup', 'login');
-    nav('go-login-from-forgot', 'login');
-    nav('go-signup-from-forgot', 'signup');
 
     $('[data-legal]').on('click', function (e) {
         e.preventDefault();
         showLegalDialog($(this).data('legal'));
     });
 
+    // The browser's Back button walks back through the steps
     window.addEventListener('popstate', event => {
-    const page = event.state?.authPage || 'login';
-    showAuthPage(page, false);
+        const state = event.state || {};
+        if (state.email) authEmail = state.email;
+        showAuthStep(state.authStep || 'email', false);
     });
-
 });
-
 // Shows the Terms of Service or Privacy Policy (from the <template id="legal-terms|legal-privacy"> in auth.html)
 // in a dialog that grows out of the clicked link. Close with the button, Escape, or a click outside.
 function showLegalDialog(kind) {

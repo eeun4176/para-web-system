@@ -27,7 +27,8 @@ const API = {
         return {
             status: xhr.status,
             message: (body && body.message) || 'Unexpected server response.',
-            errors: (body && body.errors) || {}
+            errors: (body && body.errors) || {},
+            resendIn: (body && body.resendIn) || null   // seconds to wait before another email code (429)
         };
     },
 

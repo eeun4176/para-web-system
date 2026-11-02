@@ -23,7 +23,7 @@ This page has everything needed to open and check the system.
 ## Passenger (End-User) Access
 
 - **As a guest:** open the passenger site and click **Start Your Commute**. No account is needed to compute fares.
-- **With an account:** click **Sign Up**, enter any name, email, and password (8 characters or more), and agree to the terms. Save the recovery code Para shows. Signed-in passengers also get saved trips, favorites, landmarks, and account settings.
+- **With an account:** click **Sign Up**, type an email you can open, and click **Continue**. Para emails a 6-digit code; enter it and the account is made (or use **Continue with Google**). A password can be added later in Account Settings. Signed-in passengers also get saved trips, favorites, landmarks, and account settings.
 
 ## How to Use Para (Quick Check, about 5 minutes)
 
@@ -56,7 +56,7 @@ The full guide is in [SYSTEM-GUIDE.md](SYSTEM-GUIDE.md).
 | **Database** | PostgreSQL on Supabase, 10 tables with keys and constraints (`database/para_db.pgsql.sql`). |
 | **Integration** | Front end ↔ PHP ↔ database, plus the map (MapLibre / OpenFreeMap), road routes (OSRM), place search (Photon / Nominatim), and Google sign-in. See [ARCHITECTURE.md](ARCHITECTURE.md). |
 | **User Experience** | Search that accepts half-typed names, road route with options, skeleton loading, toasts, English / Filipino, dark mode, the demo video. |
-| **Security** | bcrypt passwords, sign-in lockout, CSRF tokens, prepared SQL statements, role checks on every admin request, escaped output, security headers. See the Security part of [ARCHITECTURE.md](ARCHITECTURE.md). |
+| **Security** | Emailed one-time codes (hashed, 10 minutes, 5 tries), bcrypt passwords, sign-in lockout and rate limits, CSRF tokens, prepared SQL statements, role checks on every admin request, escaped output, security headers. See the Security part of [ARCHITECTURE.md](ARCHITECTURE.md). |
 
 ## Good to Know
 

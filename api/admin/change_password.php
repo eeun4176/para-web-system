@@ -1,6 +1,6 @@
 <?php
 // POST api/admin/change_password.php  {currentPassword, newPassword}
-// The admin has no email or recovery code, so the current password is enough (Admin Settings page).
+// The admin has no email, so the current password is what proves it is them (Admin Settings page).
 // Wrong guesses count toward the same 5-tries lock as signing in.
 require_once __DIR__ . '/../helpers.php';
 require_post();

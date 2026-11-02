@@ -12,6 +12,7 @@ function fetchFare(origin, dest, transport, passenger, road) {
     if (road) {
         params.roadKm = road.km.toFixed(3);
         if (road.fromRoadM !== null) params.fromRoadM = Math.round(road.fromRoadM);
+        if (road.startFromRoadM != null) params.startFromRoadM = Math.round(road.startFromRoadM);
     }
     return API.get('calculate.php', params).then(res => res.fare);
 }
@@ -72,6 +73,10 @@ async function loadFareOptions() {
             if (saved.defaultPassenger && $p.find('option[value="' + saved.defaultPassenger + '"]').length) {
                 $p.val(saved.defaultPassenger);
             }
+
+            // .val() fires no event: tell ui.js to highlight the matching chips (not 'change', which would
+            // recalculate; refreshFareCalculation() below does that once)
+            $t.add($p).trigger('sync');
         }
 
         refreshFareCalculation();

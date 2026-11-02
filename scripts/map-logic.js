@@ -30,7 +30,7 @@ var routeRequestId        = 0;
 var routeController       = null;
 
 // The road route for the current origin/destination, sent with the fare request (null = not known)
-var currentRoad = null;             // { km, fromRoadM, coords }
+var currentRoad = null;             // { km, fromRoadM (destination), startFromRoadM, coords }
 var roadOptions = [];               // every road route OSRM found for this trip (the first is the fastest)
 
 // True when the site is in dark mode.
@@ -339,9 +339,18 @@ async function _drawRoute() {
     if (data.code !== 'Ok' || !data.routes?.length) throw new Error(data.message || 'No road route found');
 
     const fromRoadM = data.waypoints?.[1]?.distance ?? null;   // how far the destination is from the nearest road
-    roadOptions = data.routes.map(r => ({ km: r.distance / 1000, fromRoadM: fromRoadM, coords: r.geometry.coordinates }));
+    roadOptions = data.routes.map(r => ({ km: r.distance / 1000, fromRoadM: fromRoadM, startFromRoadM: null, coords: r.geometry.coordinates }));
     selectRoadOption(0, false);
     _zoomToLine(roadOptions.flatMap(r => r.coords));   // fit every option on screen
+
+    // Jeepneys and buses only run on main roads: measure how far each end is from one (replaces the
+    // "nearest road" above, which counts small subdivision streets too)
+    const ends = await measureMainRoads(origin, destination);
+    if (requestId !== routeRequestId) return;
+    roadOptions.forEach(r => {
+      if (ends.dest !== null) r.fromRoadM = ends.dest;
+      r.startFromRoadM = ends.start;
+    });
   } catch (error) {
     if (requestId !== routeRequestId || error.name === 'AbortError') return;
     console.error('[MapLogic] Road routing error:', error);
@@ -353,6 +362,54 @@ async function _drawRoute() {
       refreshFareCalculation();
     }
   }
+}
+
+// ---------- Main roads (where jeepneys and buses run) ----------
+// Road classes of the map tiles (OpenMapTiles "transportation" layer). Smaller streets (minor, service, track)
+// are inside subdivisions and barangays, where a tricycle or walking is needed.
+const MAIN_ROAD_CLASSES = ['motorway', 'trunk', 'primary', 'secondary', 'tertiary'];
+
+// Metres from a point (anything with lng/lat) to the nearest main road in the tiles on screen,
+// or null when it can't be known (zoomed out too far for the smaller main roads, or no tiles loaded).
+function distanceToMainRoad(point) {
+  if (map.getZoom() < 11) return null;
+  const sources = map.getStyle().sources;
+  const tiles = Object.keys(sources).find(k => sources[k].type === 'vector');
+  if (!tiles) return null;
+  const k = Math.cos(point.lat * Math.PI / 180);   // degrees of longitude are shorter away from the equator
+  const metresPerDegree = 111320;
+  let best = null;
+  map.querySourceFeatures(tiles, { sourceLayer: 'transportation', filter: ['in', ['get', 'class'], ['literal', MAIN_ROAD_CLASSES]] })
+    .forEach(f => {
+      const g = f.geometry;
+      const lines = g.type === 'LineString' ? [g.coordinates] : g.type === 'MultiLineString' ? g.coordinates : [];
+      lines.forEach(line => {
+        for (let i = 1; i < line.length; i++) {
+          // distance from the point to segment i-1..i, on a flat local grid (fine over a few kilometres)
+          const ax = (line[i - 1][0] - point.lng) * k, ay = line[i - 1][1] - point.lat;
+          const bx = (line[i][0] - point.lng) * k, by = line[i][1] - point.lat;
+          const dx = bx - ax, dy = by - ay, len = dx * dx + dy * dy;
+          const t = len ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len)) : 0;
+          const d = Math.hypot(ax + t * dx, ay + t * dy) * metresPerDegree;
+          if (best === null || d < best) best = d;
+        }
+      });
+    });
+  return best === null ? null : Math.round(best);
+}
+
+// Waits until the map has stopped zooming to the route and its tiles are loaded, then measures both ends.
+// Checks every 250 ms; after 6 s it measures with whatever tiles are there, so a slow map never holds up the fare.
+function measureMainRoads(origin, destination) {
+  return new Promise(resolve => {
+    const startedAt = Date.now();
+    const timer = setInterval(() => {
+      const ready = !map.isMoving() && map.areTilesLoaded();
+      if (!ready && Date.now() - startedAt < 6000) return;
+      clearInterval(timer);
+      resolve({ start: distanceToMainRoad(origin), dest: distanceToMainRoad(destination) });
+    }, 250);
+  });
 }
 
 // Use road route number i: it becomes the green line, the others turn grey.

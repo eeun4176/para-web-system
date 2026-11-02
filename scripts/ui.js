@@ -208,7 +208,7 @@ function setupChips(selectId, chipsId) {
     $chips.on('click', '.chip', function () {
         $select.val($(this).data('value')).trigger('change');
     });
-    $select.on('change', () => syncChips($select, $chips));
+    $select.on('change sync', () => syncChips($select, $chips));   // 'sync': value set by code (saved preferences)
 }
 
 // ---------- 5. SKELETONS (grey copies of the real layout, then the real blocks appear one by one) ----------

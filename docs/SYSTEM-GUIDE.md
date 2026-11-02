@@ -14,11 +14,17 @@ How to use Para, for passengers and for the admin. Live site: **https://para-sjd
 
 ## Passengers
 
-### 1. Create an Account (optional)
+### 1. Log In or Create an Account (optional)
 
-1. Click **Sign Up** in the navbar.
-2. Enter your name, email, and a password, or click **Continue with Google**.
-3. With email sign-up, Para shows a **12-character recovery code** once. Save it: you need it to reset your password, change your password, or change your email.
+Logging in and signing up are the same steps:
+
+1. Click **Log In** or **Sign Up** in the navbar.
+2. Click **Continue with Google**, or type your email. While you type, the note under the box says if the email is missing an @, if it is **registered to Para**, or if it is new.
+3. Click **Continue**:
+   - **New email:** Para emails a **6-digit code**. Enter it and your account is made. Your name starts as the part of your email before the @ (change it in Account Settings).
+   - **Registered email with a password:** choose **Send Code to Email** or **Log In with Password**.
+   - **Registered email without a password** (made with Google or a code): Para emails a code.
+4. A code works once, for 10 minutes. You can ask for a new one after 1 minute; 5 wrong tries cancel it.
 
 You can also click **Continue as Guest** to use the calculator without an account.
 
@@ -33,7 +39,7 @@ You can also click **Continue as Guest** to use the calculator without an accoun
    - the **fare**, with the 20% discount applied for Student, Senior Citizen, and PWD;
    - the **fare breakdown** (base fare, added distance, discount);
    - the **distance**, the **travel time**, and the **arrival time**;
-   - a **note** when you need to walk or ride a tricycle for the last part, or when a long trip may need a transfer.
+   - a **note** when your starting point or your stop is away from the main roads that jeepneys and buses use (walk if it is close, ride a tricycle if it is far), or when a long trip may need a transfer.
 
 The fare follows the LTFRB fare matrix stored in Para's database: a base fare for the first kilometers, then a fixed amount for each kilometer after. The fare is rounded to the nearest peso (₱13.60 becomes ₱14.00); the breakdown shows the exact amount before rounding.
 Real fares and times can still change with the driver's road and traffic.
@@ -48,8 +54,8 @@ Real fares and times can still change with the driver's road and traffic.
 
 Open your profile picture → **Account Settings**. The tabs are:
 
-- **Profile:** name, email, and profile picture.
-- **Security:** change your password (needs your current password and recovery code).
+- **Profile:** name, email, and profile picture. Changing your email sends a code to the new address; it changes once you enter it.
+- **Security:** set a password (optional) or change it. Right after logging in (10 minutes), Para does not ask for your current password.
 - **Preferences:** the vehicle and passenger type the calculator starts with.
 - **Activity:** your saved trips, favorites, and landmarks, with delete buttons.
 
@@ -65,8 +71,7 @@ Profile picture → **Log Out**. After logging out, the browser's Back button wi
 
 ### Forgot Your Password?
 
-On the log-in page, click **Forgot Password?**, enter your email, your recovery code, and a new password.
-Accounts made only with Google sign in with Google and have no password to reset.
+Log in with a code instead: enter your email, choose **Send Code to Email** (or **Log in with a code instead** on the password step), then open **Account Settings → Security** and set a new password. No current password is needed right after logging in.
 
 ## Admin
 
@@ -97,4 +102,5 @@ The sidebar collapses to icons with the button next to the logo. Light and dark 
 | The road route does not appear (a dashed straight line stays) | The free routing service is busy. The fare still uses the straight-line distance; try again after a moment. |
 | A place cannot be found | Para only searches inside San Jose del Monte. Try a nearby landmark or a shorter name. |
 | "Too many attempts" on log in | Wait 15 minutes, then try again. |
+| The log-in code didn't arrive | Check the spam folder. After 1 minute, click **resend the code**, or log in with your password or Google. |
 | The page still looks signed in after logging out | Reload the page. |

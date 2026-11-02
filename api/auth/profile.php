@@ -7,7 +7,7 @@ $uid = require_login();
 
 $u = db()->prepare(
     'SELECT id, name, email, role, profile_picture, created_at,
-            default_passenger, default_transport
+            default_passenger, default_transport, password_hash IS NOT NULL AS has_password
      FROM users
      WHERE id = ?'
 );
@@ -35,7 +35,9 @@ ok([
         'profilePicture' => $user['profile_picture'],
         'createdAt' => $user['created_at'],
         'defaultPassenger' => $user['default_passenger'],
-        'defaultTransport' => $user['default_transport']
+        'defaultTransport' => $user['default_transport'],
+        'hasPassword' => (bool)$user['has_password'],
+        'recentLogin' => recently_signed_in()   // just signed in: password and email changes skip the current password
     ],
     'stats' => [
         'trips' => (int)$t['trips'],

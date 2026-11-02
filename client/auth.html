@@ -52,7 +52,7 @@
             <p class="auth-tagline">Know your fare before you ride.<small>Para · fare and route guide for San Jose del Monte</small></p>
         </aside>
 
-        <!-- RIGHT: the three forms (auth.js shows one at a time) -->
+        <!-- RIGHT: the log-in steps (auth.js shows one at a time): email, choose, password, code -->
         <main class="auth-main">
             <div class="auth-topbar">
                 <a href="index.html" class="auth-mlogo"><img src="../assets/logo-wordmark.png" alt="Para home" /></a>
@@ -62,11 +62,11 @@
                 </button>
             </div>
 
-            <!-- LOG IN -->
-            <section id="auth-login" class="auth-page" aria-labelledby="login-title">
+            <!-- STEP 1: EMAIL (or Google). The note under the box says if the email is registered to Para. -->
+            <section id="auth-email" class="auth-page" aria-labelledby="email-title">
                 <div class="auth-card">
-                    <h1 id="login-title">Welcome Back</h1>
-                    <p class="auth-sub">Log in to save your trips, favorite routes and landmarks.</p>
+                    <h1 id="email-title">Welcome to Para</h1>
+                    <p class="auth-sub">Log in or create a free account to save your trips, favorite routes and landmarks.</p>
 
                     <div class="google-btn" id="google-login-btn"></div>
                     <div class="auth-divider"><span>Or continue with email</span></div>
@@ -74,9 +74,35 @@
                     <div class="auth-field">
                         <div class="auth-input-group">
                             <i data-lucide="mail" class="auth-lead"></i>
-                            <span class="float-field"><input type="email" id="login-email" placeholder=" " autocomplete="email" /><label for="login-email">Email</label></span>
+                            <span class="float-field"><input type="email" id="auth-email-input" placeholder=" " autocomplete="email" inputmode="email" spellcheck="false" /><label for="auth-email-input">Email</label></span>
                         </div>
+                        <p class="email-status" id="email-status" aria-live="polite" hidden></p>
                     </div>
+
+                    <button class="btn-auth" id="email-continue" type="button"><span class="lbl">Continue</span><span class="busy">Checking</span><span class="done"><i data-lucide="check"></i> Done</span></button>
+
+                    <p class="auth-legal">By continuing, you agree to Para's <a href="#" data-legal="terms">Terms of Service</a> and <a href="#" data-legal="privacy">Privacy Policy</a>.</p>
+                </div>
+            </section>
+
+            <!-- STEP 2: a registered email that has a password picks how to log in -->
+            <section id="auth-choose" class="auth-page hidden" aria-labelledby="choose-title">
+                <div class="auth-card">
+                    <button type="button" class="auth-email-chip" data-auth-back><i data-lucide="arrow-left"></i><span class="chip-email"></span></button>
+                    <h1 id="choose-title">Welcome Back</h1>
+                    <p class="auth-sub">How do you want to log in?</p>
+
+                    <button class="btn-auth" id="choose-code" type="button"><span class="lbl"><i data-lucide="mail"></i> Send Code to Email</span><span class="busy">Sending Code</span><span class="done"><i data-lucide="check"></i> Code Sent</span></button>
+                    <button class="btn-auth btn-auth-outline" id="choose-password" type="button"><span class="lbl"><i data-lucide="lock"></i> Log In with Password</span></button>
+                </div>
+            </section>
+
+            <!-- STEP 3a: PASSWORD -->
+            <section id="auth-password" class="auth-page hidden" aria-labelledby="password-title">
+                <div class="auth-card">
+                    <button type="button" class="auth-email-chip" data-auth-back><i data-lucide="arrow-left"></i><span class="chip-email"></span></button>
+                    <h1 id="password-title">Enter Your Password</h1>
+                    <p class="auth-sub">Log in with the password of your Para account.</p>
 
                     <div class="auth-field">
                         <div class="auth-input-group">
@@ -86,108 +112,42 @@
                                 <i data-lucide="eye-off" class="pw-off"></i><i data-lucide="eye" class="pw-on"></i>
                             </button>
                         </div>
-                        <div class="auth-field-link"><a href="#" id="go-forgot">Forgot Password?</a></div>
                     </div>
 
-                    <button class="btn-auth" id="login-submit" type="button"><span class="lbl">Log In</span><span class="busy">Logging In</span><span class="done"><i data-lucide="check"></i> Logged In</span></button>
+                    <button class="btn-auth" id="password-submit" type="button"><span class="lbl">Log In</span><span class="busy">Logging In</span><span class="done"><i data-lucide="check"></i> Logged In</span></button>
 
-                    <p class="auth-link-row">New to Para? <a href="#" id="go-signup">Create an Account</a></p>
+                    <p class="auth-link-row">Forgot your password? <a href="#" id="password-use-code">Log in with a code instead</a></p>
                 </div>
             </section>
 
-            <!-- SIGN UP -->
-            <section id="auth-signup" class="auth-page hidden" aria-labelledby="signup-title">
+            <!-- STEP 3b: the 6-digit CODE sent to the email (new emails get an account when it is confirmed) -->
+            <section id="auth-code" class="auth-page hidden" aria-labelledby="code-title">
                 <div class="auth-card">
-                    <h1 id="signup-title">Create Your Account</h1>
-                    <p class="auth-sub">It's free. Save routes and get your discount every time.</p>
-
-                    <div class="google-btn" id="google-signup-btn"></div>
-                    <div class="auth-divider"><span>Or continue with email</span></div>
+                    <button type="button" class="auth-email-chip" data-auth-back><i data-lucide="arrow-left"></i><span class="chip-email"></span></button>
+                    <h1 id="code-title">Check Your Email</h1>
+                    <p class="auth-sub">We sent a 6-digit code to <b class="chip-email"></b>. It expires in 10 minutes.</p>
 
                     <div class="auth-field">
-                        <div class="auth-input-group">
-                            <i data-lucide="user" class="auth-lead"></i>
-                            <span class="float-field"><input type="text" id="signup-name" placeholder=" " autocomplete="name" /><label for="signup-name">Name</label></span>
+                        <div class="code-boxes" id="code-boxes" role="group" aria-label="6-digit code">
+                            <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="Digit 1" />
+                            <input type="text" inputmode="numeric" maxlength="6" aria-label="Digit 2" />
+                            <input type="text" inputmode="numeric" maxlength="6" aria-label="Digit 3" />
+                            <input type="text" inputmode="numeric" maxlength="6" aria-label="Digit 4" />
+                            <input type="text" inputmode="numeric" maxlength="6" aria-label="Digit 5" />
+                            <input type="text" inputmode="numeric" maxlength="6" aria-label="Digit 6" />
                         </div>
+                        <p class="field-error" id="code-error" hidden></p>
                     </div>
 
-                    <div class="auth-field">
-                        <div class="auth-input-group">
-                            <i data-lucide="mail" class="auth-lead"></i>
-                            <span class="float-field"><input type="email" id="signup-email" placeholder=" " autocomplete="email" /><label for="signup-email">Email</label></span>
-                        </div>
-                    </div>
+                    <button class="btn-auth" id="code-submit" type="button"><span class="lbl" id="code-submit-label">Log In</span><span class="busy">Checking Code</span><span class="done"><i data-lucide="check"></i> Done</span></button>
 
-                    <div class="auth-field">
-                        <div class="auth-input-group">
-                            <i data-lucide="lock" class="auth-lead"></i>
-                            <span class="float-field"><input type="password" id="signup-password" placeholder=" " autocomplete="new-password" /><label for="signup-password">Password</label></span>
-                            <button type="button" class="auth-input-icon" id="toggle-pw-signup" aria-label="Show password">
-                                <i data-lucide="eye-off" class="pw-off"></i><i data-lucide="eye" class="pw-on"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <label class="auth-checkbox">
-                        <input type="checkbox" id="signup-agree" />
-                        <span>I agree to the <a href="#" data-legal="terms">Terms of Service</a> and <a href="#" data-legal="privacy">Privacy Policy</a>.</span>
-                    </label>
-
-                    <button class="btn-auth" id="signup-submit" type="button"><span class="lbl">Create Account</span><span class="busy">Creating Your Account</span><span class="done"><i data-lucide="check"></i> Account Created</span></button>
-
-                    <div id="signup-recovery" class="recovery-panel hidden">
-                        <strong><i data-lucide="key-round"></i> Save your recovery code</strong>
-                        <p>This code is shown only once. You need it to reset your password, so keep it somewhere safe.</p>
-                        <code id="signup-recovery-code"></code>
-                        <button class="btn-auth" id="signup-recovery-continue" type="button">I Saved It, Continue</button>
-                    </div>
-
-
-                    <p class="auth-link-row">Already have an account? <a href="#" id="go-login-from-signup">Log In</a></p>
-                </div>
-            </section>
-
-            <!-- FORGOT PASSWORD -->
-            <section id="auth-forgot" class="auth-page hidden" aria-labelledby="forgot-title">
-                <div class="auth-card">
-                    <h1 id="forgot-title">Reset Your Password</h1>
-                    <p class="auth-sub">Use the 12-character recovery code you got when you signed up.</p>
-
-                    <div class="auth-field">
-                        <div class="auth-input-group">
-                            <i data-lucide="mail" class="auth-lead"></i>
-                            <span class="float-field"><input type="email" id="forgot-email" placeholder=" " autocomplete="email" /><label for="forgot-email">Email</label></span>
-                        </div>
-                    </div>
-
-                    <div class="auth-field">
-                        <div class="auth-input-group">
-                            <i data-lucide="key-round" class="auth-lead"></i>
-                            <span class="float-field"><input type="text" id="forgot-recovery-code" placeholder=" " autocomplete="off" maxlength="12" /><label for="forgot-recovery-code">Recovery code</label></span>
-                        </div>
-                    </div>
-
-                    <div class="auth-field">
-                        <div class="auth-input-group">
-                            <i data-lucide="lock" class="auth-lead"></i>
-                            <span class="float-field"><input type="password" id="forgot-newpw" placeholder=" " autocomplete="new-password" /><label for="forgot-newpw">New password</label></span>
-                        </div>
-                    </div>
-
-                    <div class="auth-field">
-                        <div class="auth-input-group">
-                            <i data-lucide="lock" class="auth-lead"></i>
-                            <span class="float-field"><input type="password" id="forgot-confirmpw" placeholder=" " autocomplete="new-password" /><label for="forgot-confirmpw">Confirm new password</label></span>
-                        </div>
-                    </div>
-
-                    <button class="btn-auth" id="forgot-submit" type="button"><span class="lbl">Reset Password</span><span class="busy">Resetting</span><span class="done"><i data-lucide="check"></i> Password Reset</span></button>
-
-                    <p class="auth-link-row">Remembered it? <a href="#" id="go-login-from-forgot">Log In</a></p>
-                    <p class="auth-link-row">No account yet? <a href="#" id="go-signup-from-forgot">Create One</a></p>
+                    <p class="auth-link-row">Didn't get it? Check your spam folder, or <button type="button" class="link-button" id="code-resend" disabled>resend the code</button></p>
+                    <p class="auth-link-row" id="code-use-password" hidden><a href="#">Use password instead</a></p>
+                    <p class="auth-link-row" id="code-google-hint" hidden>This account was made with Google. You can also go back and use Continue with Google.</p>
                 </div>
             </section>
         </main>
+
     </div>
 
     <!-- Terms of Service and Privacy Policy: shown in a dialog by showLegalDialog() in auth.js -->
@@ -201,8 +161,8 @@
         <p>Fares follow the LTFRB fare matrix saved in Para, but the actual fare and travel time can change with the driver's road, traffic, and fare updates. Always follow the fare posted in the vehicle or asked by the driver. Para is not responsible for differences between its estimate and the actual fare.</p>
         <h3>3. Your Account</h3>
         <ul>
-            <li>Give your real name and an email address you own.</li>
-            <li>Keep your password and recovery code private. Anyone who has them can use your account.</li>
+            <li>Use an email address that you own and can open.</li>
+            <li>Keep your password and your email account private. Anyone who can open your email can log in with a code sent to it.</li>
             <li>Choose only the passenger type that applies to you. Drivers may ask for a valid ID for Student, Senior Citizen, or PWD discounts.</li>
         </ul>
         <h3>4. Landmarks and Saved Data</h3>
@@ -221,11 +181,11 @@
         <p>Para follows the Data Privacy Act of 2012 (Republic Act No. 10173). This policy explains what Para keeps about you and why.</p>
         <h3>1. What We Collect</h3>
         <ul>
-            <li><b>Account:</b> your name, email address, and password (stored only as a secure hash, never as plain text). If you use Google, your Google account ID, name, and email.</li>
+            <li><b>Account:</b> your email address, a name (the part of your email before the @ until you change it), and your password if you set one (stored only as a secure hash, never as plain text). If you use Google, your Google account ID, name, and email.</li>
             <li><b>Profile picture:</b> only if you upload one.</li>
             <li><b>Your trips:</b> the start, destination, vehicle, passenger type, distance, and fare of trips you compute while signed in, plus your favorite routes and landmarks.</li>
             <li><b>Preferences:</b> your default vehicle and passenger type.</li>
-            <li><b>Security:</b> failed sign-in attempts with the IP address, to lock out password guessing, and a session cookie that keeps you signed in.</li>
+            <li><b>Security:</b> one-time log-in codes (stored only as a secure hash and valid for 10 minutes), failed sign-in attempts and code requests with the IP address, to stop guessing and spam, and a session cookie that keeps you signed in.</li>
         </ul>
         <p>Guests do not have an account, so Para does not save their trips.</p>
         <h3>2. How We Use It</h3>
@@ -236,7 +196,7 @@
         </ul>
         <p>Para does not sell your data or show ads.</p>
         <h3>3. Outside Services</h3>
-        <p>To draw the map and find places, the places you search and your route points are sent to OpenFreeMap, OSRM, Photon, and OpenStreetMap Nominatim. Google receives your sign-in only if you choose "Continue with Google". Your account data is stored in a Supabase (PostgreSQL) database.</p>
+        <p>To draw the map and find places, the places you search and your route points are sent to OpenFreeMap, OSRM, Photon, and OpenStreetMap Nominatim. Google receives your sign-in only if you choose "Continue with Google". Log-in codes are emailed through Brevo, which receives only your email address and the code. Your account data is stored in a Supabase (PostgreSQL) database.</p>
         <h3>4. Your Device</h3>
         <p>Para saves your theme, language, and recent places in your browser so they stay the same next time. You can clear them from your browser settings.</p>
         <h3>5. Your Choices</h3>
@@ -246,7 +206,7 @@
             <li>Email <a href="mailto:para@gmail.com">para@gmail.com</a> to delete your account. Deleting an account also deletes its trips, favorites, and landmarks.</li>
         </ul>
         <h3>6. Keeping It Safe</h3>
-        <p>Para uses HTTPS, hashed passwords, a sign-in lockout, and checks on every request so only you can see your data. No system is perfectly secure, so keep your password and recovery code private.</p>
+        <p>Para uses HTTPS, hashed passwords, a sign-in lockout, and checks on every request so only you can see your data. No system is perfectly secure, so keep your password and your email account private.</p>
     </template>
 
     <!-- Scripts -->

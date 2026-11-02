@@ -13,7 +13,7 @@ $active = filter_var($in['active'] ?? null, FILTER_VALIDATE_BOOLEAN, FILTER_NULL
 if (!isset($tables[$kind]) || $code === '' || strlen($code) > 30 || $active === null) fail(422, 'Invalid request.');
 $table = $tables[$kind];   // from the whitelist above, never from user input directly
 
-$r = db()->prepare("SELECT label FROM $table WHERE code = ?");
+$r = db()->prepare("SELECT label FROM $table WHERE code = ? AND is_deleted = 0");
 $r->execute([$code]);
 $label = $r->fetchColumn();
 if ($label === false) fail(404, 'Type not found.');

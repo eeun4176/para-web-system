@@ -14,7 +14,7 @@ $speed  = clean_number($in, 'avgSpeedKph', 5, 120, 'Average speed', $errors);
 if ($code === '' || strlen($code) > 30) $errors['code'] = 'Invalid transport type.';
 if ($errors) fail(422, 'Please fix the highlighted fields.', $errors);
 
-$o = db()->prepare('SELECT label, base_fare, base_km, excess_per_km, avg_speed_kph FROM transport_types WHERE code = ?');
+$o = db()->prepare('SELECT label, base_fare, base_km, excess_per_km, avg_speed_kph FROM transport_types WHERE code = ? AND is_deleted = 0');
 $o->execute([$code]);
 $old = $o->fetch();
 if (!$old) fail(404, 'Transport type not found.');

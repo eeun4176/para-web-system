@@ -381,18 +381,6 @@ html.dark .float-field input:focus + label {
     transform: translateY(-112%) scale(0.74);
 }
 
-/* "Forgot password?" under the password box */
-.auth-field-link {
-    margin-top: 8px;
-    text-align: right;
-    font-size: 0.84rem;
-    font-weight: 600;
-}
-
-.auth-field-link a:hover {
-    text-decoration: underline;
-}
-
 .auth-input-group input:disabled {
     cursor: not-allowed;
 }
@@ -539,26 +527,6 @@ html.dark .float-field input:focus + label {
     to   { background-position: -120% 0; }
 }
 
-.auth-checkbox {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    margin-top: 16px;
-    font-size: 0.84rem;
-    color: var(--text-muted);
-    line-height: 1.5;
-    cursor: pointer;
-}
-
-.auth-checkbox input {
-    width: 16px;
-    height: 16px;
-    margin-top: 2px;
-    flex-shrink: 0;
-    accent-color: var(--primary);
-    cursor: pointer;
-}
-
 .auth-link-row {
     margin-top: 22px;
     text-align: center;
@@ -599,42 +567,162 @@ html.dark .float-field input:focus + label {
     min-height: 44px;
 }
 
-/* Recovery code shown once after sign up */
-.recovery-panel {
-    margin-top: 18px;
-    padding: 18px;
-    border: 1.5px dashed var(--primary);
-    border-radius: 14px;
-    background: var(--green-light);
-    color: var(--text-main);
-    text-align: center;
+/* ---------- Email-first log-in steps (auth.js: showAuthStep) ---------- */
+
+/* Note under the email box: format problem / registered to Para / new email / checking */
+.email-status {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 8px 2px 0;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: var(--text-muted);
+    animation: error-in 0.25s ease;
 }
 
-.recovery-panel strong {
+.email-status .lucide {
+    width: 15px;
+    height: 15px;
+    flex: none;
+    margin-top: 1px;
+}
+
+.email-status.is-error { color: var(--red); }
+.email-status.is-ok { color: #1f9d55; }
+.email-status.is-wait .lucide { animation: email-spin 0.9s linear infinite; }
+
+html.dark .email-status.is-ok { color: var(--accent); }
+
+@keyframes email-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* "By continuing, you agree to..." under Continue */
+.auth-legal {
+    margin-top: 16px;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.auth-legal a {
+    color: var(--text-main);
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+/* The email the next steps are about; clicking it goes back to change it */
+.auth-email-chip {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+    max-width: 100%;
+    margin-bottom: 18px;
+    padding: 7px 14px 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-soft);
+    color: var(--text-main);
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color var(--transition), background var(--transition);
 }
 
-.recovery-panel p {
-    margin: 8px 0;
+.auth-email-chip:hover {
+    border-color: var(--text-muted);
+}
+
+.auth-email-chip .lucide {
+    width: 16px;
+    height: 16px;
+    flex: none;
+}
+
+.auth-email-chip .chip-email {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Second choice next to the main button ("Log In with Password") */
+.btn-auth.btn-auth-outline {
+    margin-top: 10px;
+    background: transparent;
+    color: var(--text-main);
+    box-shadow: inset 0 0 0 1.5px var(--border);
+}
+
+.btn-auth.btn-auth-outline:hover {
+    background: var(--bg-soft);
+    box-shadow: inset 0 0 0 1.5px var(--text-muted);
+}
+
+.btn-auth .lbl .lucide {
+    width: 17px;
+    height: 17px;
+}
+
+/* Six boxes for the emailed code */
+.code-boxes {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+}
+
+.code-boxes input {
+    width: 100%;
+    min-width: 0;
+    height: 54px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-input);
+    color: var(--text-main);
+    font: inherit;
+    font-size: 1.4rem;
+    font-weight: 800;
+    text-align: center;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.code-boxes input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.18);
+}
+
+.code-boxes.has-error input {
+    border-color: var(--red);
+    animation: auth-shake 380ms cubic-bezier(.32, .72, 0, 1);
+}
+
+#code-error {
+    margin: 8px 2px 0;
+    font-size: 0.8rem;
+}
+
+/* Text-style button inside a sentence ("resend the code") */
+.link-button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.link-button:hover:not(:disabled) {
+    text-decoration: underline;
+}
+
+.link-button:disabled {
     color: var(--text-muted);
-    font-size: 0.86rem;
-}
-
-.recovery-panel code {
-    display: block;
-    margin: 12px 0;
-    padding: 10px;
-    background: var(--bg-card);
-    border-radius: 10px;
-    color: var(--green-ink);
-    font-size: 1.2rem;
-    letter-spacing: 3px;
-}
-
-.recovery-panel .btn-auth {
-    margin-top: 6px;
+    font-weight: 500;
+    cursor: default;
 }
 
 /* ---------- Responsive: phones get only the form ---------- */

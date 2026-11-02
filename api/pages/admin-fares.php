@@ -166,7 +166,7 @@ try {
 
                     <p class="admin-hint" style="margin-top: 10px;">
                         Deactivating a type hides it from the calculator while keeping saved trips
-                        working. Deleting only works for types nobody has used.
+                        working, and you can turn it back on. Deleting removes it for good; saved trips that used it keep their fare.
                     </p>
                 </section>
 

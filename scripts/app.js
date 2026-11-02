@@ -711,11 +711,14 @@ async function runFareCalculation() {
         setResultVisible(true);
         autoSaveRecentTrip(routeForSave);
 
-        // Walk / tricycle / long-trip note from the server (api/fare_logic.php: access_info)
+        // Walk / tricycle / long-trip notes from the server (api/fare_logic.php: access_info), one line each
+        // (starting point, destination, long trip); the color follows the most serious one
         const icons = { walk: 'footprints', special_trip: 'bike', far: 'repeat' };
         if (icons[fare.access]) {
+            const notes = fare.accessNotes || [fare.accessMessage];
             $('#access-banner').attr('class', 'access-banner ' + fare.access).css('display', 'flex').empty().append(
-                $('<i>').attr('data-lucide', icons[fare.access]), $('<span>').text(fare.accessMessage)
+                $('<i>').attr('data-lucide', icons[fare.access]),
+                $('<div class="access-notes">').append(notes.map(n => $('<p>').text(n)))
             ).show();
         }
 
@@ -743,7 +746,8 @@ function getCurrentRoute() {
         destName: firstName(destData.name), destLat: destData.lat, destLng: destData.lng,
         transport: transport, passenger: passenger,
         roadKm: currentRoad ? currentRoad.km : null,
-        fromRoadM: currentRoad ? currentRoad.fromRoadM : null
+        fromRoadM: currentRoad ? currentRoad.fromRoadM : null,
+        startFromRoadM: currentRoad ? currentRoad.startFromRoadM : null
     };
 }
 
@@ -1548,6 +1552,7 @@ function injectUiStyles() {
     .pm-outline:hover{background:var(--green-light);color:var(--primary-hover)}
     .pm-danger{background:var(--red)}.pm-danger:hover{background:#c0392b;box-shadow:0 5px 12px rgba(231,76,60,.2)}
     .access-banner{display:none;align-items:flex-start;gap:8px;margin-top:12px;padding:10px 12px;border-radius:12px;font-size:.84rem;font-weight:700;line-height:1.4}.access-banner .lucide{flex:none;width:16px;height:16px;margin-top:1px}
+    .access-notes{display:grid;gap:6px}
     .access-banner.far{background:var(--bg-soft);color:var(--text-main);border:1px solid var(--border)}
     .access-banner.walk{background:#e8f4fd;color:#1a5f8a;border:1px solid #b6dcf3}
     .access-banner.special_trip{background:#fff3e0;color:#9a5b00;border:1px solid #ffd699}

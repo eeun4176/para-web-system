@@ -1,77 +1,59 @@
 <?php
-// POST api/auth/change_email.php {email, recoveryCode}
+// POST api/auth/change_email.php  (Account Settings > Profile > Email > Change), in two steps:
+//   1. {email, currentPassword?}  -> sends a 6-digit code to the NEW email
+//   2. {email, code}              -> checks the code and saves the new email (now verified)
+// Step 1 needs the current password when the account has one and the user did not just sign in.
 require_once __DIR__ . '/../helpers.php';
 require_post();
-$uid = require_login();
+$uid = require_passenger();
 
-$in = input();
-$email = strtolower(trim((string)($in['email'] ?? '')));
-$code = strtoupper(trim((string)($in['recoveryCode'] ?? '')));
+$in    = input();
+$email = clean_email($in['email'] ?? '');
+$code  = trim((string)($in['code'] ?? ''));
 
-$errors = [];
-if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 255) {
-    $errors['email'] = 'Enter a valid email address (max 255 characters).';
-}
-if (!preg_match('/^[A-F0-9]{12}$/', $code)) {
-    $errors['recoveryCode'] = 'Enter your 12-character recovery code.';
-}
-if ($errors) fail(422, 'Please fix the highlighted fields.', $errors);
+$s = db()->prepare('SELECT email, password_hash FROM users WHERE id = ?');
+$s->execute([$uid]);
+$me = $s->fetch();
+if (!$me) fail(401, 'Please log in first.');
+if ($email === $me['email']) fail(422, 'Please fix the highlighted fields.', ['email' => 'This is already your email.']);
 
-$current = db()->prepare('SELECT email FROM users WHERE id = ?');
-$current->execute([$uid]);
-$currentUser = $current->fetch();
-if (!$currentUser) fail(401, 'Please log in first.');
-if (login_locked($currentUser['email'])) {
-    fail(429, 'Too many failed attempts. Please try again in ' . LOGIN_LOCK_MINUTES . ' minutes.');
+$taken = db()->prepare('SELECT 1 FROM users WHERE email = ? AND id <> ?');
+$taken->execute([$email, $uid]);
+if ($taken->fetch()) {
+    fail(409, 'This email is already registered to Para.', ['email' => 'This email is already registered to Para.']);
 }
 
-$token = db()->prepare(
-    'SELECT id FROM password_reset_tokens
-     WHERE user_id = ? AND token_hash = ? AND expires_at > NOW()
-     ORDER BY created_at DESC LIMIT 1'
-);
-$token->execute([$uid, hash('sha256', $code)]);
-if (!$token->fetch()) {
-    record_failed_login($currentUser['email']);
-    fail(422, 'Please fix the highlighted fields.', [
-        'recoveryCode' => 'Recovery code is incorrect or expired.'
-    ]);
-}
-clear_failed_logins($currentUser['email']);
-
-$check = db()->prepare('SELECT id FROM users WHERE email = ? AND id <> ? LIMIT 1');
-$check->execute([$email, $uid]);
-
-if ($check->fetch()) {
-    fail(409, 'This email address is already registered.', [
-        'email' => 'This email address is already registered.'
-    ]);
+// ---------- Step 1: send the code ----------
+if ($code === '') {
+    if ($me['password_hash'] !== null && !recently_signed_in()) {
+        if (login_locked($me['email'])) {
+            fail(429, 'Too many failed attempts. Please try again in ' . LOGIN_LOCK_MINUTES . ' minutes.');
+        }
+        if (!password_verify((string)($in['currentPassword'] ?? ''), $me['password_hash'])) {
+            record_failed_login($me['email']);
+            fail(422, 'Please fix the highlighted fields.', ['currentPassword' => 'Current password is incorrect.']);
+        }
+        clear_failed_logins($me['email']);
+    } elseif ($me['password_hash'] === null && !recently_signed_in()) {
+        fail(403, 'For your safety, log out and log in again before changing your email.');
+    }
+    send_code_email($email, issue_code($email, 'change_email', $uid), 'change_email');
+    ok(['sent' => true, 'expiresIn' => CODE_MINUTES * 60, 'resendIn' => CODE_RESEND_SECONDS]);
 }
 
+// ---------- Step 2: check the code and save ----------
+check_code($email, 'change_email', $code, $uid);
 try {
-    $update = db()->prepare('UPDATE users SET email = ? WHERE id = ?');
-    $update->execute([$email, $uid]);
+    db()->prepare('UPDATE users SET email = ?, email_verified = 1 WHERE id = ?')->execute([$email, $uid]);
 } catch (PDOException $e) {
     if (db_error($e) === 'unique') {
-        fail(409, 'This email address is already registered.', [
-            'email' => 'This email address is already registered.'
-        ]);
+        fail(409, 'This email is already registered to Para.', ['email' => 'This email is already registered to Para.']);
     }
     throw $e;
 }
 
-$u = db()->prepare('SELECT id, name, email, role, created_at FROM users WHERE id = ?');
+$u = db()->prepare('SELECT id, name, email, role, profile_picture, created_at FROM users WHERE id = ?');
 $u->execute([$uid]);
 $user = $u->fetch();
 
-if (!$user) fail(401, 'Please log in first.');
-
-ok([
-    'user' => [
-        'id' => (int)$user['id'],
-        'name' => $user['name'],
-        'email' => $user['email'],
-        'role' => $user['role'],
-        'createdAt' => $user['created_at']
-    ]
-]);
+ok(['user' => user_reply($user) + ['createdAt' => $user['created_at']]]);

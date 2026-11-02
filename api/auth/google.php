@@ -48,7 +48,7 @@ $name     = mb_substr($name, 0, 100);
 // ---------- Step 3: find, link or create the Para account ----------
 function find_user(string $column, string $value): ?array {
     // $column is always one of our own literal column names below, never user input
-    $s = db()->prepare("SELECT id, name, email, role, profile_picture, google_sub FROM users WHERE $column = ?");
+    $s = db()->prepare("SELECT id, name, email, role, profile_picture, google_sub, email_verified FROM users WHERE $column = ?");
     $s->execute([$value]);
     return $s->fetch() ?: null;
 }
@@ -60,13 +60,21 @@ if (!$user) {
     if ($user && $user['google_sub'] !== null) {
         fail(409, 'This email is already linked to a different Google account.');
     }
+    if ($user && $user['role'] === 'admin') fail(403, 'Administrators sign in on the admin sign-in page.');
     if ($user) {
-        db()->prepare('UPDATE users SET google_sub = ? WHERE id = ?')->execute([$googleId, $user['id']]);
+        // Google proves this person owns the email. If the account was never proven to be theirs (an old
+        // sign-up without an email code), someone else may have made it and set the password: remove that
+        // password and sign out its other sessions, so only the real owner keeps access.
+        $unverified = !(int)$user['email_verified'];
+        db()->prepare('UPDATE users SET google_sub = ?, email_verified = 1'
+                      . ($unverified ? ', password_hash = NULL' : '') . ' WHERE id = ?')
+            ->execute([$googleId, $user['id']]);
+        if ($unverified) end_other_sessions((int)$user['id']);
     }
 }
 
 if (!$user) {                                         // brand-new user: create a passenger account (no password)
-    $s = db()->prepare('INSERT INTO users (name, email, google_sub) VALUES (?, ?, ?)
+    $s = db()->prepare('INSERT INTO users (name, email, google_sub, email_verified) VALUES (?, ?, ?, 1)
                         RETURNING id, name, email, role, profile_picture');
     $s->execute([$name, $email, $googleId]);
     $user = $s->fetch();
@@ -76,16 +84,6 @@ if (!$user) {                                         // brand-new user: create 
 if ($user['role'] === 'admin') fail(403, 'Administrators sign in on the admin sign-in page.');
 
 // ---------- Step 4: log in (same as login.php) ----------
-session_regenerate_id(true);
-$_SESSION['user_id'] = (int)$user['id'];
+sign_in((int)$user['id']);
 
-ok([
-    'user' => [
-        'id'             => (int)$user['id'],
-        'name'           => $user['name'],
-        'email'          => $user['email'],
-        'role'           => $user['role'],
-        'profilePicture' => $user['profile_picture'],
-    ],
-    'csrf' => csrf_token(),
-]);
+ok(['user' => user_reply($user), 'csrf' => csrf_token()]);

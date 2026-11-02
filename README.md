@@ -16,7 +16,7 @@ Para is a web app for commuters in San Jose del Monte, Bulacan. Search where you
 - Road route on the map with other route options, distance, travel time, and arrival time.
 - Fare with a full breakdown and automatic 20% discount for Student, Senior Citizen, and PWD.
 - Notes when the last part needs a walk or a tricycle, or when a long trip may need a transfer.
-- Free account (email or Google): recent trips saved by themselves, favorite routes, your own landmarks, and default vehicle and passenger type.
+- Free account with Google or just your email (log in with a 6-digit code sent to it, or an optional password): recent trips saved by themselves, favorite routes, your own landmarks, and default vehicle and passenger type.
 - English / Filipino switch and light / dark mode.
 
 **For the admin**
@@ -32,13 +32,13 @@ Para is a web app for commuters in San Jose del Monte, Bulacan. Search where you
 | Back end | PHP 8 (PDO) |
 | Database | PostgreSQL on Supabase |
 | Hosting | Vercel (`vercel-php` runtime) |
-| Sign-in | Email + password (bcrypt) and Google Identity Services |
+| Sign-in | Email code (sent through Brevo), optional password (bcrypt), and Google Identity Services |
 
 ## Run It Locally (XAMPP)
 
 1. Put the project in `htdocs` (or point Apache to it). PHP 8 with the `pdo_pgsql` extension turned on is required.
 2. Create the database: run `database/para_db.pgsql.sql` in the Supabase SQL Editor (or any PostgreSQL 15+).
-3. Copy `api/config/db.local.example.php` to `api/config/db.local.php` and fill in the connection details. This file is git-ignored; never commit it.
+3. Copy `api/config/db.local.example.php` to `api/config/db.local.php` and fill in the connection details. This file is git-ignored; never commit it. Without the Brevo email settings, log-in codes are written to `api/logs/mail.log` instead of being emailed.
 4. Open `http://localhost/para-web-system/` (or `php -S localhost:8000` from the project folder, then `http://localhost:8000/client/index.html`).
 
 The admin account is not created by `para_db.pgsql.sql`; create it once in the database (the team has the script) and sign in at `client/admin-login.html`. The sign-in for checking the live site is in [docs/NOTE.md](docs/NOTE.md).
@@ -46,7 +46,7 @@ The admin account is not created by `para_db.pgsql.sql`; create it once in the d
 ## Deploy (Vercel)
 
 1. Import the GitHub repository in Vercel.
-2. Add the environment variables `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS` (Supabase → Connect → Session pooler).
+2. Add the environment variables `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS` (Supabase → Connect → Session pooler), and for the log-in codes `BREVO_API_KEY` and `MAIL_FROM` (a sender address verified in Brevo).
 3. Deploy. `vercel.json` sends every `/api/*.php` request to `api/index.php`, so the whole API runs as one function.
 
 ## Project Structure

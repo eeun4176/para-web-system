@@ -31,19 +31,21 @@ if ($kind === 'transport') {
 }
 if ($errors) fail(422, 'Please fix the highlighted fields.', $errors);
 
-try {
-    if ($kind === 'transport') {
-        db()->prepare('INSERT INTO transport_types (code, label, base_fare, base_km, excess_per_km, avg_speed_kph) VALUES (?, ?, ?, ?, ?, ?)')
-            ->execute([$code, $label, round($fare, 2), round($km, 1), round($excess, 2), round($speed, 2)]);
-        audit('type_add', $label, 'New vehicle type "' . $code . '"');
-    } else {
-        db()->prepare('INSERT INTO passenger_types (code, label, discount_rate) VALUES (?, ?, ?)')
-            ->execute([$code, $label, round($rate, 2)]);
-        audit('type_add', $label, 'New passenger type "' . $code . '"');
-    }
-} catch (PDOException $e) {
-    if (db_error($e) === 'unique') fail(409, 'That code already exists.');
-    throw $e;
+// A code that belongs to a deleted type (kept for saved trips) is brought back with the new values;
+// a code in use is refused (the conflict update matches no row).
+if ($kind === 'transport') {
+    $s = db()->prepare('INSERT INTO transport_types (code, label, base_fare, base_km, excess_per_km, avg_speed_kph) VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT (code) DO UPDATE SET label = EXCLUDED.label, base_fare = EXCLUDED.base_fare, base_km = EXCLUDED.base_km,
+            excess_per_km = EXCLUDED.excess_per_km, avg_speed_kph = EXCLUDED.avg_speed_kph, is_active = 1, is_deleted = 0
+        WHERE transport_types.is_deleted = 1');
+    $s->execute([$code, $label, round($fare, 2), round($km, 1), round($excess, 2), round($speed, 2)]);
+} else {
+    $s = db()->prepare('INSERT INTO passenger_types (code, label, discount_rate) VALUES (?, ?, ?)
+        ON CONFLICT (code) DO UPDATE SET label = EXCLUDED.label, discount_rate = EXCLUDED.discount_rate, is_active = 1, is_deleted = 0
+        WHERE passenger_types.is_deleted = 1');
+    $s->execute([$code, $label, round($rate, 2)]);
 }
+if ($s->rowCount() === 0) fail(409, 'That code already exists.');
+audit('type_add', $label, 'New ' . ($kind === 'transport' ? 'vehicle' : 'passenger') . ' type "' . $code . '"');
 
 ok(['code' => $code], 201);
