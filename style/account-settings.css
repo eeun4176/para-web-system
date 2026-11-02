@@ -163,6 +163,8 @@
     font-size: 2.6rem;
     font-weight: 650;
     box-shadow: 0 5px 15px rgba(46, 204, 113, 0.2);
+    grid-template: 100% / 100%;   /* the cell is the circle, so a tall or wide photo can't stretch it into an oval */
+    overflow: hidden;
 }
 
 .avatar-wrap {

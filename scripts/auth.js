@@ -70,6 +70,27 @@ const PASSENGER_PAGES = ['', 'index.html', 'calculate.html', 'aboutus.html'];
 // Signed-in passengers only need the calculator: Home and About are for guests.
 const GUEST_PAGES = ['', 'index.html', 'aboutus.html'];
 
+// Navbar greeting for a signed-in passenger, placed before the profile picture:
+//   | MONDAY, NOV 2 2026        (date in Manila; uppercase by CSS)
+//   | Good Morning, Ian!        (morning before 12, afternoon before 6 PM, evening after)
+// The "|" divider separates it from the language and theme toggles. i18n.js translates both lines.
+function buildNavGreeting(user) {
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', hourCycle: 'h23', timeZone: 'Asia/Manila' })
+        .formatToParts(now);
+    const part = type => (parts.find(p => p.type === type) || {}).value || '';
+    const hour = Number(part('hour'));
+    const timeOfDay = hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening';
+    const firstName = (user.name || '').trim().split(/\s+/)[0] || 'there';
+    return [
+        $('<span class="nav-divider" aria-hidden="true">'),
+        $('<div class="nav-greeting">').append(
+            $('<span class="nav-greeting-date">').text(`${part('weekday')}, ${part('month')} ${part('day')} ${part('year')}`),
+            $('<span class="nav-greeting-hello">').text(`Good ${timeOfDay}, ${firstName}!`).attr('title', user.name || '')
+        )
+    ];
+}
+
 // Where a user goes after signing in: admins to the dashboard, passengers to the calculator.
 function homePageFor(user) {
     if (!user) return 'index.html';

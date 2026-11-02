@@ -449,6 +449,15 @@ const FIL_PATTERNS = [
     [/^Welcome back, (.+)!$/, 'Maligayang pagbabalik, $1!'],
     [/^Welcome to Para, (.+)!$/, 'Maligayang pagdating sa Para, $1!'],
     [/^Welcome, (.+)!$/, 'Maligayang pagdating, $1!'],
+    [/^Good Morning, (.+)!$/, 'Magandang Umaga, $1!'],
+    [/^Good Afternoon, (.+)!$/, 'Magandang Hapon, $1!'],
+    [/^Good Evening, (.+)!$/, 'Magandang Gabi, $1!'],
+    // Navbar date "Monday, Nov 2 2026" -> "Lunes, Nob 2 2026"
+    [/^(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday), (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{1,2}) (\d{4})$/,
+        (_, day, month, date, year) => ({ Sunday: 'Linggo', Monday: 'Lunes', Tuesday: 'Martes', Wednesday: 'Miyerkules',
+            Thursday: 'Huwebes', Friday: 'Biyernes', Saturday: 'Sabado' })[day] + ', ' +
+            ({ Jan: 'Ene', Feb: 'Peb', Mar: 'Mar', Apr: 'Abr', May: 'May', Jun: 'Hun', Jul: 'Hul', Aug: 'Ago',
+               Sep: 'Set', Oct: 'Okt', Nov: 'Nob', Dec: 'Dis' })[month] + ` ${date} ${year}`],
     [/^Public landmark · (.+)$/, 'Pampublikong landmark · $1'],
     [/^Your landmark · (.+)$/, 'Landmark mo · $1'],
     [/^Personal landmark · (.+)$/, 'Personal na landmark · $1'],

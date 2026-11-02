@@ -484,6 +484,49 @@ html.dark .toggle-knob .icon-dark {
     flex-shrink: 0;
 }
 
+/* Signed-in passenger: "|" divider, then the date and greeting before the profile picture (buildNavGreeting in auth.js) */
+.nav-divider {
+    width: 1px;
+    height: 28px;
+    margin: 0 10px 0 8px;
+    background: var(--border);
+}
+
+.nav-greeting {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin-right: 8px;
+    line-height: 1.2;
+    text-align: right;
+}
+
+.nav-greeting-date {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.nav-greeting-hello {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.92rem;
+    font-weight: 750;
+    color: var(--text-main);
+}
+
+/* Phones: not enough room next to the menu button */
+@media (max-width: 600px) {
+    .nav-divider,
+    .nav-greeting {
+        display: none;
+    }
+}
+
 /* Hamburger: hidden on desktop, shown on phones/tablets */
 .hamburger-btn {
     display: none;

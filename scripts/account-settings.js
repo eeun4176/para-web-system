@@ -43,7 +43,7 @@
                 : $('<span>').text((user.name || '?').trim().charAt(0).toUpperCase() || '?'));
         const $menu = $('<div class="settings-profile-menu" role="menu">');
         $profileWrap.append($profile, $menu);
-        $('#nav-auth-area').empty().append($profileWrap);
+        $('#nav-auth-area').empty().append(buildNavGreeting(user), $profileWrap);
         $('#sidebar-auth-area').empty().append(user ? $('<button class="sidebar-auth-btn" type="button">').text('Log Out').on('click', logout) : $('<a class="sidebar-auth-btn" href="auth.html">').text('Log In'));
 
         $profile.on('click', function (event) {

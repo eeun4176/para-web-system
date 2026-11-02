@@ -104,7 +104,7 @@ Motion:
 | Primary button | `.btn-primary-lg` (`global.css`) | Black pill with white text (white with black text in dark mode), `14px 26px` padding |
 | Ghost button | `.btn-ghost-lg` | Card-colored pill with a border, for the second action ("Watch Demo") |
 | Outline flood button | `.btn-outline-flood` | Fills with color from the left on hover ("Start Your Commute" in the hero) |
-| Navbar | `.navbar` | Frosted glass (`--navbar-bg` + blur); the active page has a small green dot |
+| Navbar | `.navbar` | Frosted glass (`--navbar-bg` + blur); the active page has a small green dot. Signed-in passengers see a `|` divider (`.nav-divider`), then the date and "Good Morning / Afternoon / Evening, Name!" (`.nav-greeting`) before the profile picture; hidden under 600px |
 | Language / theme toggles | `.lang-toggle`, `#dark-toggle` | EN / FIL pill and a sun / moon switch, top right on every passenger page |
 | Segmented control | `.seg`, `.seg-btn`, `.seg-glider` | A highlight slides between the options (settings tabs, Trip / Saved) |
 | Chips | `.chip`, `.chip.is-selected` (`calculate.css`) | Vehicle and passenger choices |

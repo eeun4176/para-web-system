@@ -119,7 +119,7 @@ function updateNavAuth() {
 
         if (kind === 'nav') {
             // Guests get two clear buttons; logged-in users get their profile picture with a menu
-            if (user) el.appendChild(buildProfileMenu(user));
+            if (user) $(el).append(buildNavGreeting(user), buildProfileMenu(user));
             else $(el).append(
                 '<a href="auth.html#login" class="nav-login-link">Log In</a>',
                 '<a href="auth.html#signup" class="nav-auth-btn">Sign Up</a>'
@@ -1529,7 +1529,7 @@ function injectUiStyles() {
     .pm-btn.pm-logout{background:none;color:var(--red);border:1px solid var(--border)}
     .pm-btn.pm-logout:hover{background:rgba(231,76,60,.1);color:var(--red);box-shadow:none}
     .pm-identity{display:flex;align-items:center;gap:11px;padding:4px 3px 14px;border-bottom:1px solid var(--border)}
-    .pm-avatar{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:50%;background:var(--primary);color:var(--on-primary);font-size:1.1rem;font-weight:650;box-shadow:0 4px 10px rgba(46,204,113,.2);overflow:hidden}
+    .pm-avatar{display:grid;grid-template:100% / 100%;place-items:center;flex:none;width:42px;height:42px;border-radius:50%;background:var(--primary);color:var(--on-primary);font-size:1.1rem;font-weight:650;box-shadow:0 4px 10px rgba(46,204,113,.2);overflow:hidden}
     .pm-identity-copy{min-width:0}
     .pm-name{font-weight:650;font-size:1rem;line-height:1.2;overflow-wrap:anywhere}
     .pm-email{font-size:.78rem;color:var(--text-muted);word-break:break-all;margin-top:4px}
