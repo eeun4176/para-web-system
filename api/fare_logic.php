@@ -8,6 +8,8 @@
 const WALK_FROM_ROAD_M     = 150;   // farther than this from a main road: walk that part
 const TRICYCLE_FROM_ROAD_M = 600;   // farther than this: ride a tricycle (special trip) for that part
 const LONG_TRIP_KM         = 8;     // longer trips may need a transfer to another jeepney/bus
+const SHORT_TRIP_KM        = 0.5;   // shorter trips: suggest walking instead of riding
+const SAME_PLACE_KM        = 0.05;  // closer than this: the same place, nothing to compute
 
 // The note for one end of the trip ($isStart: the starting point, else the destination), or null.
 function access_note(?float $fromRoadM, bool $isStart): ?array {
@@ -26,7 +28,14 @@ function access_note(?float $fromRoadM, bool $isStart): ?array {
 
 // The walk / tricycle / long-trip notes for a trip. 'access' is the most serious one (for the banner color);
 // 'accessNotes' lists each note (start, destination, long trip) and 'accessMessage' joins them.
+// A trip under 0.5 km only gets the "short walk" note (the road notes would be about getting to a ride).
 function access_info(float $distKm, ?float $fromRoadM, ?float $startFromRoadM = null): array {
+    if ($distKm < SHORT_TRIP_KM) {
+        $m   = (int) round($distKm * 1000 / 10) * 10;
+        $min = max(1, (int) round($distKm / 5 * 60));   // walking at about 5 km/h
+        $msg = "Your stop is only about {$m} m away, about {$min} min on foot. Walking may be easier than riding.";
+        return ['access' => 'walk', 'accessMessage' => $msg, 'accessNotes' => [$msg]];
+    }
     $notes = array_filter([access_note($startFromRoadM, true), access_note($fromRoadM, false)]);
     if ($distKm > LONG_TRIP_KM) $notes[] = ['far', 'Long trip: You may need to transfer to another jeepney or bus on the way.'];
     $rank   = ['normal' => 0, 'far' => 1, 'walk' => 2, 'special_trip' => 3];
@@ -67,7 +76,7 @@ function compute_fare(float $olat, float $olng, float $dlat, float $dlng, string
     if (!$pa) fail(422, 'Invalid request.', ['passenger' => 'Unknown or unavailable passenger type.']);
 
     $straight = haversine_km($olat, $olng, $dlat, $dlng);
-    if ($straight <= 0.3) {
+    if ($straight < SAME_PLACE_KM) {
         fail(422, 'Invalid route.', ['destination' => 'Origin and destination must be different locations.']);
     }
 

@@ -616,6 +616,7 @@ async function loadPublicLandmarks() {
     const $tb = $('#public-table tbody');
     skeletonTable($tb, 4);
     const res = await API.get('landmarks/list.php', { public: 1 });
+    showPublicLandmarksOnMap(res.landmarks);
     if (!res.landmarks.length) { emptyRow($tb, 4, 'No public landmarks yet.'); return; }
     $tb.empty();
     res.landmarks.forEach(lm => {
@@ -631,14 +632,33 @@ async function loadPublicLandmarks() {
 }
 
 // ---- Add a public landmark: click the map to pick the spot ----
-let newLandmarkSpot = null;     // { lat, lng } chosen on the map
-let newLandmarkMarker = null;   // green pin showing that spot
+let newLandmarkSpot = null;      // { lat, lng } chosen on the map
+let newLandmarkMarker = null;    // green pin showing that spot
+let landmarkMap = null;          // the map on the Public Landmarks page
+let publicLandmarkPins = [];     // one round pin per saved public landmark
+
+// Shows every saved public landmark on the map (round pins in the theme color; click one for its name).
+// Markers are page elements, so they stay when the map style changes with dark mode.
+function showPublicLandmarksOnMap(landmarks) {
+    if (!landmarkMap) return;
+    publicLandmarkPins.forEach(pin => pin.remove());
+    publicLandmarkPins = landmarks.map(lm => {
+        const category = String(lm.category || 'other').replace(/^./, c => c.toUpperCase());
+        const dot = $('<button type="button" class="admin-lm-pin">').attr({ title: lm.name, 'aria-label': lm.name })[0];
+        return new maplibregl.Marker({ element: dot })
+            .setLngLat([lm.lng, lm.lat])
+            .setPopup(new maplibregl.Popup({ offset: 12, closeButton: false }).setText(lm.name + ' · ' + category))
+            .addTo(landmarkMap);
+    });
+}
 
 // Map where the admin clicks the spot of a new public landmark.
 function setupAddLandmarkMap() {
     const map = createAdminMap('admin-landmark-map');
+    landmarkMap = map;
 
     map.on('click', e => {
+        if (e.originalEvent.target.closest('.admin-lm-pin')) return;   // clicked a saved landmark: just show its name
         newLandmarkSpot = { lat: e.lngLat.lat, lng: e.lngLat.lng };
         if (!newLandmarkMarker) {
             newLandmarkMarker = new maplibregl.Marker({ color: '#2ECC71' }).setLngLat(e.lngLat).addTo(map);

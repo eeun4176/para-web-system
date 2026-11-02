@@ -1189,3 +1189,19 @@ html.rail-collapsed .rail-toggle .when-closed {
         padding-inline: max(28px, calc((100vw - 16px - var(--sidebar-width) - 1120px) / 2 + 28px));
     }
 }
+
+/* Saved public landmarks on the Public Landmarks map (admin.js: showPublicLandmarksOnMap) */
+.admin-lm-pin {
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: 2.5px solid var(--bg-card);
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+}
+
+.admin-lm-pin:hover {
+    background: var(--accent);
+}

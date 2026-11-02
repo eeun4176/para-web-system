@@ -477,6 +477,8 @@ const FIL = {
 
 // Texts with numbers or names inside: [pattern, Filipino version]
 const FIL_PATTERNS = [
+    [/^Your stop is only about (\d+) m away, about (\d+) min on foot\. Walking may be easier than riding\.$/,
+        'Mga $1 m lang ang layo ng hintuan mo, mga $2 min kung lalakarin. Mas madali sigurong maglakad kaysa sumakay.'],
     [/^We sent a 6-digit code to (.+)\.$/, 'Nagpadala kami ng 6-digit na code sa $1.'],
     [/^Enter the 6-digit code sent to (.+)$/, 'Ilagay ang 6-digit na code na ipinadala sa $1'],
     [/^resend the code in (\d+)s$/, 'ipadala ulit ang code sa loob ng $1s'],

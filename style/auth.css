@@ -369,12 +369,20 @@ html.dark .float-field input:focus + label {
     color: var(--accent);
 }
 
-/* Browser autofill: Chrome paints the input light blue and keeps the label down. The very long
-   background transition keeps our own field color; the text keeps the theme color. */
+/* Browser autofill: Chrome paints a saved email or password light blue (a box that doesn't fill the rounded
+   field) and keeps the label down. A large inset shadow in the field's own color covers that blue, so
+   autofilled fields look like typed ones; the text keeps the theme color. */
 .float-field input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset;
+    box-shadow: 0 0 0 1000px var(--bg-input) inset;
     -webkit-text-fill-color: var(--text-main);
     caret-color: var(--text-main);
-    transition: background-color 100000s 0s, color 100000s 0s;
+}
+
+/* Focused fields turn card-colored, so the cover follows */
+.auth-input-group:focus-within .float-field input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-card) inset;
+    box-shadow: 0 0 0 1000px var(--bg-card) inset;
 }
 
 .float-field input:-webkit-autofill + label {
